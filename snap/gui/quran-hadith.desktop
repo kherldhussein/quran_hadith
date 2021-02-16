@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0.0
+Name=Qur’ān Hadith
+Comment=Qur’ān Hadith is an Online reader with fashion interface, smooth performance and more features. It sharpens your focus on what you are reading or listening.
+Exec=qh
+Icon=${SNAP}/meta/gui/logo.png
+Terminal=false
+Type=Application
+Categories=Education
+Keywords=Education,Flutter,Islam,Quran,Hadith;
