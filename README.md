@@ -10,7 +10,7 @@
 - Android
 - Mac OS
 - Windows
-- Linux
+- Linux<br>
 **Currently developed for desktop 😊️**
 
 ### Implemented Features
