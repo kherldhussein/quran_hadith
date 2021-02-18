@@ -40,7 +40,7 @@ class _SettingsState extends State<Settings> {
 }
 
 class SettingsSpacer extends StatelessWidget {
-  const SettingsSpacer({Key key}) : super(key: key);
+  const SettingsSpacer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) => SizedBox(height: 8);
@@ -49,7 +49,7 @@ class SettingsSpacer extends StatelessWidget {
 class SettingsTitle extends StatelessWidget {
   final String title;
 
-  const SettingsTitle({Key key, @required this.title}) : super(key: key);
+  const SettingsTitle({Key? key, required this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +65,11 @@ class SettingsButton extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const SettingsButton({
-    Key key,
-    @required this.title,
-    @required this.subtitle,
-    @required this.value,
-    @required this.onChanged,
+    Key? key,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
   }) : super(key: key);
 
   @override

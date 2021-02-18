@@ -1,6 +1,6 @@
 
 class HadithList {
-  final List<Hadith> hadiths;
+  final List<Hadith>? hadiths;
 
   HadithList({this.hadiths});
 
@@ -13,10 +13,10 @@ class HadithList {
 }
 
 class Hadith {
-  final String collection;
-  final String bookNumber;
-  final int chapterId;
-  final int hadithNumber;
+  final String? collection;
+  final String? bookNumber;
+  final int? chapterId;
+  final int? hadithNumber;
 
 // final String page;
   Hadith({this.collection, this.bookNumber, this.chapterId, this.hadithNumber});

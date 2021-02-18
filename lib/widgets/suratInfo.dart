@@ -2,12 +2,12 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class SurahInformation extends StatefulWidget {
-  final int surahNumber;
-  final String arabicName;
-  final String englishName;
-  final String englishNameTranslation;
-  final int ayahs;
-  final String revelationType;
+  final int? surahNumber;
+  final String? arabicName;
+  final String? englishName;
+  final String? englishNameTranslation;
+  final int? ayahs;
+  final String? revelationType;
 
   SurahInformation(
       {this.arabicName,
@@ -57,15 +57,15 @@ class _SurahInformationState extends State<SurahInformation>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Text(
-                    widget.englishName,
+                    widget.englishName!,
                     style: Theme.of(context).textTheme.bodyText1,
                   ),
                   AutoSizeText(
-                    widget.arabicName,
+                    widget.arabicName!,
                     textDirection: TextDirection.rtl,
                     style: Theme.of(context)
                         .textTheme
-                        .bodyText1
+                        .bodyText1!
                         .copyWith(fontFamily: 'Amiri'),
                   ),
                 ],

@@ -16,7 +16,7 @@ class QuranAPI {
     }
   }
 
-  Future<JuzModel> getJuzz({int index}) async {
+  Future<JuzModel> getJuzz({int? index}) async {
     String url = "http://api.alquran.cloud/v1/juz/$index/quran-uthmani";
     final response = await http.get(url);
     if (response.statusCode == 200) {
@@ -26,7 +26,7 @@ class QuranAPI {
     }
   }
 
-  Future<SurahsList> getSearch({String keyWord}) async {
+  Future<SurahsList> getSearch({String? keyWord}) async {
     String url = "http://api.alquran.cloud/v1/search/$keyWord/all/en";
     final response = await http.get(url);
     if (response.statusCode == 200) {
@@ -37,7 +37,7 @@ class QuranAPI {
     }
   }
 
-  Future<SurahsList> getSuratAudio({String suratNo}) async {
+  Future<SurahsList> getSuratAudio({String? suratNo}) async {
     String url = "http://api.alquran.cloud/v1/surah/$suratNo/en.ahmedali";
     final response = await http.get(url);
     if (response.statusCode == 200) {
@@ -48,7 +48,7 @@ class QuranAPI {
   }
 
   // TODO: find out > cdn.alquran.cloud/media/audio
-  Future<Ayah> getAyaAudio({int ayaNo}) async {
+  Future<Ayah> getAyaAudio({int? ayaNo}) async {
     String url = "https://cdn.alquran.cloud/media/audio/$ayaNo/ar.alafasy/1";
     final response = await http.get(url);
     if (response.statusCode == 200) {

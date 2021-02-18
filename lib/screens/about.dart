@@ -41,7 +41,7 @@ class _AboutViewState extends State<AboutView>
     Tab(text: "Author"),
     Tab(text: "Licenses")
   ];
-  TabController _tabController;
+  TabController? _tabController;
 
   @override
   void initState() {
@@ -51,7 +51,7 @@ class _AboutViewState extends State<AboutView>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _tabController!.dispose();
     super.dispose();
   }
 
@@ -150,7 +150,7 @@ class _AboutViewState extends State<AboutView>
                     trailing: InkWell(
                       child: Text(
                         'kherld11@gmail.com',
-                        style: theme.headline6.copyWith(
+                        style: theme.headline6!.copyWith(
                             fontSize: isSmall ? 10 : 20,
                             decoration: TextDecoration.underline,
                             fontFamily: 'Quattrocento',
@@ -178,7 +178,7 @@ class _AboutViewState extends State<AboutView>
                 InkWell(
                   child: Text(
                     "http://www.gnu.org/licenses/",
-                    style: theme.headline6.copyWith(color: kLinkC),
+                    style: theme.headline6!.copyWith(color: kLinkC),
                   ),
                   onTap: () => launch("http://www.gnu.org/licenses/"),
                 )

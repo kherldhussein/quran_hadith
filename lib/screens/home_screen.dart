@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   final searchController = TextEditingController();
-  ValueNotifier<bool> _isExtended;
+  late ValueNotifier<bool> _isExtended;
 
   //eef2f5
   @override
@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           hintStyle: const TextStyle(fontWeight: FontWeight.w700),
           hintText: '   Search',
-          // fillColor: Colors.grey[200],
+          fillColor: Colors.grey[200]!.withOpacity(0.2),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(40),
             borderSide: BorderSide(color: Color(0xffeef2f5)),

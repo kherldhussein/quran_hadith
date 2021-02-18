@@ -5,7 +5,7 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
-class SearchWidget extends SearchDelegate<SurahsList> {
+class SearchWidget extends SearchDelegate<SurahsList?> {
   @override
   List<Widget> buildActions(BuildContext context) {
     return <Widget>[
@@ -63,6 +63,5 @@ class SearchWidget extends SearchDelegate<SurahsList> {
   }
 
   @override
-  // ignore: missing_return
   Widget buildSuggestions(BuildContext context) {}
 }

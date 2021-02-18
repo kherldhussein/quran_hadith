@@ -11,24 +11,23 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/screens/home_screen.dart';
-import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
 class QPageView extends StatefulWidget {
-  final List<Ayah> ayahList;
-  final String suratName;
-  final String suratEnglishName;
-  final String englishMeaning;
-  final int suratNo;
-  final VoidCallback openContainer;
-  final Surah surah;
-  final Ayah aya;
-  final bool isFavorite;
+  final List<Ayah>? ayahList;
+  final String? suratName;
+  final String? suratEnglishName;
+  final String? englishMeaning;
+  final int? suratNo;
+  final VoidCallback? openContainer;
+  final Surah? surah;
+  final Ayah? aya;
+  final bool? isFavorite;
 
   const QPageView(
-      {Key key,
+      {Key? key,
       this.ayahList,
       this.surah,
       this.suratName,
@@ -44,16 +43,15 @@ class QPageView extends StatefulWidget {
   _QPageViewState createState() => _QPageViewState();
 }
 
-class _QPageViewState extends State<QPageView>
-    with AutomaticKeepAliveClientMixin {
+class _QPageViewState extends State<QPageView> {
   var controller;
-  AudioPlayer _audio;
-  Surah surah;
+  late AudioPlayer _audio;
+  late Surah surah;
   bool _isPLaying = false;
   bool isLoaded = false;
   bool isLoading = false;
   var list;
-  String _url;
+  String? _url;
   var currentPlaying;
   AudioPlayer _audioPlayer = AudioPlayer();
   final quranApi = QuranAPI();
@@ -65,12 +63,12 @@ class _QPageViewState extends State<QPageView>
     ///  to hide only status bar:
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
     controller = AutoScrollController(axis: Axis.vertical);
-    if (SchedulerBinding.instance.schedulerPhase ==
+    if (SchedulerBinding.instance!.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (widget.surah.readVerseCount > 0) {
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
+        if (widget.surah!.readVerseCount > 0) {
           controller.scrollToIndex(
-            widget.surah.readVerseCount,
+            widget.surah!.readVerseCount,
             preferPosition: AutoScrollPosition.middle,
           );
         }
@@ -81,7 +79,6 @@ class _QPageViewState extends State<QPageView>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final isSmall = isDisplaySmallDesktop(context);
     var quranAPI = Provider.of<QuranAPI>(context);
     return Scaffold(
@@ -92,7 +89,7 @@ class _QPageViewState extends State<QPageView>
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: Text(
-          widget.suratName,
+          widget.suratName!,
           style: TextStyle(
               fontFamily: 'Quran',
               color: Colors.black54,
@@ -193,7 +190,7 @@ class _QPageViewState extends State<QPageView>
                                 index: index,
                                 child: qTile(index, context));
                           },
-                          childCount: widget.ayahList.length,
+                          childCount: widget.ayahList!.length,
                         ),
                       ),
                     ),
@@ -208,7 +205,7 @@ class _QPageViewState extends State<QPageView>
   }
 
   Future<void> _playAyah(Ayah aya) async {
-    String ayaNum;
+    String? ayaNum;
     if (_audioPlayer.state == AudioPlayerState.PLAYING) {
       await _audioPlayer.stop();
     }
@@ -221,7 +218,7 @@ class _QPageViewState extends State<QPageView>
   }
 
   void _showSnackBarOnCopyFailure(Object exception) {
-    Get.snackbar('Failed to copy ', exception);
+    Get.snackbar('Failed to copy ', exception as String);
   }
 
   Widget qTile(int index, context) {
@@ -234,20 +231,19 @@ class _QPageViewState extends State<QPageView>
         title: AutoSizeText(
           locale.languageCode == 'ar'
               ? replaceArabicNumber(
-                  "${widget.suratNo}:${widget.ayahList[index].number.toString()}")
+                  "${widget.suratNo}:${widget.ayahList![index].number.toString()}")
               : replaceArabicNumber(
-                  "${widget.suratNo}:${widget.ayahList[index].number.toString()}"),
+                  "${widget.suratNo}:${widget.ayahList![index].number.toString()}"),
           style: TextStyle(
             color: Color(0xff01AC68),
             height: 2.5,
             fontFamily: 'Amiri',
           ),
         ),
-
         subtitle: Column(
           children: [
             AutoSizeText(
-              widget.ayahList[index].text.replaceFirst(
+              widget.ayahList![index].text!.replaceFirst(
                   'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
                   '\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ'),
               textAlign: TextAlign.right,
@@ -278,7 +274,7 @@ class _QPageViewState extends State<QPageView>
                       color: Theme.of(context).buttonColor,
                     ),
                     onPressed: () => share.showShareDialog(
-                        context: context, text: widget.ayahList[index].text)),
+                        context: context, text: widget.ayahList![index].text)),
                 StreamBuilder(
                     stream: _audio.onPlayerStateChanged,
                     builder: (_, AsyncSnapshot<AudioPlayerState> audioState) {
@@ -291,16 +287,16 @@ class _QPageViewState extends State<QPageView>
                                   return audioState?.data !=
                                           AudioPlayerState.PLAYING
                                       ? IconButton(
-                                    color: Theme.of(context).buttonColor,
+                                          color: Theme.of(context).buttonColor,
                                           icon: FaIcon(
                                               FontAwesomeIcons.playCircle),
                                           onPressed: audioState?.data !=
                                                   AudioPlayerState.PLAYING
-                                              ? () => _playAyah(widget.aya)
+                                              ? () => _playAyah(widget.aya!)
                                               : null,
                                         )
                                       : IconButton(
-                                    color: Theme.of(context).buttonColor,
+                                          color: Theme.of(context).buttonColor,
                                           icon: FaIcon(
                                               FontAwesomeIcons.pauseCircle),
                                           onPressed: () async =>
@@ -316,7 +312,7 @@ class _QPageViewState extends State<QPageView>
                     ),
                     onPressed: () {
                       Clipboard.setData(
-                        ClipboardData(text: widget.ayahList[index].text),
+                        ClipboardData(text: widget.ayahList![index].text),
                       )
                           .then(
                             (value) => Get.snackbar(
@@ -351,7 +347,4 @@ class _QPageViewState extends State<QPageView>
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     super.dispose();
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

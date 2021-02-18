@@ -19,7 +19,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   bool isLoaded = false;
   bool isLoading = false;
   var list;
-  AudioPlayer audioPlayer;
+  AudioPlayer? audioPlayer;
   var currentPlaying;
 
   @override
@@ -143,7 +143,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               style: TextStyle(color: Color(0xffdae1e7))),
                           SizedBox(height: 10),
                           Text(
-                            'Indeed, We have revealed to you, [O Muhammad], the Book in truth so you'
+                            'Indeed, We have revealed to you, [O Muhammad], the Book in truth so you '
                             'may judge between the people by that which God has shown you ...',
                             style: TextStyle(
                                 color: Color(0xffdae1e7), letterSpacing: 2),
@@ -156,32 +156,33 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           ),
                           InkWell(
                             onTap: () => Get.dialog(
-                              Container(
-                                height: size.height / 2,
-                                width: size.width / 3,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFFAFAFC).withOpacity(0.1),
-                                  border: Border.all(color: Colors.transparent),
-                                  image: DecorationImage(
-                                      image:
-                                          AssetImage('assets/images/frame.png'),
-                                      fit: BoxFit.cover,
-                                      matchTextDirection: true),
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(5),
-                                  ),
-                                ),
-                                child: Card(
-                                  child: ListTile(
-                                    title: Text(
-                                      '''
-Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judge between the people by that which God has shown you. And do not be for the deceitful an advocate.''',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w300,
-                                        color: Colors.black,
-                                      ),
+                              AlertDialog(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                content: Container(
+                                  height: size.height / 2,
+                                  width: size.width / 3,
+                                  decoration: BoxDecoration(
+                                    color: Color(0xFFFAFAFC).withOpacity(0.1),
+                                    border:
+                                        Border.all(color: Colors.transparent),
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(15),
                                     ),
-                                    subtitle: Text('Sūrah 4: an-Nisā’ [105]'),
+                                  ),
+                                  child: Card(
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.all(10),
+                                      title: Text(
+                                        '''
+Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judge between the people by that which Allah has shown you. And do not be for the deceitful an advocate.''',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w200,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                      subtitle: Text('Sūrah 4: an-Nisā’ [105]'),
+                                    ),
                                   ),
                                 ),
                               ),

@@ -2,15 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ListItems extends StatelessWidget {
-  ListItems({Key key, this.children}) : super(key: key);
-  final List<Widget> children;
+  ListItems({Key? key, this.children}) : super(key: key);
+  final List<Widget>? children;
 
   @override
   Widget build(BuildContext context) {
     return Scrollbar(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: ListView(padding: const EdgeInsets.all(8), children: children),
+        child: ListView(padding: const EdgeInsets.all(8), children: children!),
       ),
     );
   }
@@ -20,7 +20,7 @@ class MItems extends StatelessWidget {
   final String text;
   final Function pressed;
 
-  const MItems({Key key, @required this.text, @required this.pressed})
+  const MItems({Key? key, required this.text, required this.pressed})
       : super(key: key);
 
   @override
@@ -34,7 +34,7 @@ class MItems extends StatelessWidget {
           constraints: BoxConstraints(minHeight: height / 12),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(text)),
-      onTap: pressed,
+      onTap: pressed as void Function()?,
     );
   }
 }

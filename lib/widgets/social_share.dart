@@ -6,7 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void showShareDialog({@required BuildContext context, text}) {
+void showShareDialog({required BuildContext context, text}) {
   assert(context != null);
   showAnimatedDialog<void>(
     context: context,
@@ -17,9 +17,9 @@ void showShareDialog({@required BuildContext context, text}) {
 }
 
 class SocialShare extends StatelessWidget {
-  final String text;
+  final String? text;
 
-  const SocialShare({Key key, @required this.text}) : super(key: key);
+  const SocialShare({Key? key, required this.text}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

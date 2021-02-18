@@ -2,7 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 
 class QhNav extends StatefulWidget {
-  const QhNav({@required this.child}) : assert(child != null);
+  const QhNav({required this.child}) : assert(child != null);
 
   final Widget child;
 
@@ -33,8 +33,8 @@ class _QhNavState extends State<QhNav> {
 
 class FadeThroughTransitionSwitcher extends StatelessWidget {
   const FadeThroughTransitionSwitcher({
-    @required this.fillColor,
-    @required this.child,
+    required this.fillColor,
+    required this.child,
   })  : assert(fillColor != null),
         assert(child != null);
 

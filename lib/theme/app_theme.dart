@@ -30,9 +30,9 @@ final circularIndicator = CircularProgressIndicator(
 );
 
 double height =
-    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.height;
+    MediaQueryData.fromWindow(WidgetsBinding.instance!.window).size.height;
 double width =
-    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
+    MediaQueryData.fromWindow(WidgetsBinding.instance!.window).size.width;
 
 ThemeData get darkTheme {
   final base = ThemeData.dark();
@@ -70,7 +70,7 @@ ThemeData get darkTheme {
         unselectedIconTheme: IconThemeData(color: kLight),
         labelType: NavigationRailLabelType.all,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2.copyWith(color: kAccentColor)),
+            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     textTheme: _buildTextTheme(base.textTheme, kTextLight, kTextLighter),
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
@@ -78,7 +78,7 @@ ThemeData get darkTheme {
         _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kDark,
-      contentTextStyle: base.textTheme.bodyText1.copyWith(
+      contentTextStyle: base.textTheme.bodyText1!.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
         color: kTextLight,
@@ -125,7 +125,7 @@ ThemeData get theme {
         unselectedIconTheme: IconThemeData(color: kDarkColor),
         backgroundColor: kBackgroundLight,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2.copyWith(color: kAccentColor)),
+            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     cardTheme: base.cardTheme.copyWith(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -143,7 +143,7 @@ ThemeData get theme {
     textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kLight,
-      contentTextStyle: base.textTheme.bodyText1.copyWith(
+      contentTextStyle: base.textTheme.bodyText1!.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
         color: kTextDark,
@@ -155,21 +155,21 @@ ThemeData get theme {
 TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
   return base
       .copyWith(
-        headline5: base.headline5.copyWith(
+        headline5: base.headline5!.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
           fontSize: 20,
         ),
-        headline6: base.headline6.copyWith(
+        headline6: base.headline6!.copyWith(
           fontWeight: FontWeight.w500,
           letterSpacing: 0.5,
           fontSize: 20,
         ),
-        bodyText1: base.bodyText1.copyWith(
+        bodyText1: base.bodyText1!.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 16.0,
         ),
-        subtitle1: base.bodyText1.copyWith(
+        subtitle1: base.bodyText1!.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 16.0,
         ),

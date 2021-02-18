@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SurahsList extends ChangeNotifier {
-  final List<Surah> surahs;
+  final List<Surah>? surahs;
 
   SurahsList({this.surahs});
 
@@ -13,11 +13,11 @@ class SurahsList extends ChangeNotifier {
   }
 
   Surah get currentSurah =>
-      surahs.firstWhere((surah) => surah.number == _selectedSurahNo);
+      surahs!.firstWhere((surah) => surah.number == _selectedSurahNo);
 
-  Set<int> starredSurat = {};
+  Set<int?> starredSurat = {};
 
-  bool isSuratStarred(int number) => surahs
+  bool isSuratStarred(int number) => surahs!
       .any((surah) => surah.number == number && starredSurat.contains(number));
 
   bool get isCurrentSurahStarred => starredSurat.contains(currentSurah.number);
@@ -31,7 +31,7 @@ class SurahsList extends ChangeNotifier {
     notifyListeners();
   }
 
-  starSurah(int number) {
+  starSurah(int? number) {
     starredSurat.add(number);
     notifyListeners();
   }
@@ -47,13 +47,13 @@ class Surah {
       this.readVerseCount = 0,
       this.englishNameTranslation});
 
-  final int number;
-  final String name;
+  final int? number;
+  final String? name;
   int readVerseCount;
-  final List<Ayah> ayahs;
-  final String englishName;
-  final String revelationType;
-  final String englishNameTranslation;
+  final List<Ayah>? ayahs;
+  final String? englishName;
+  final String? revelationType;
+  final String? englishNameTranslation;
 
   factory Surah.fromJSON(Map<String, dynamic> json) {
     Iterable ayahs = json['ayahs'];
@@ -73,8 +73,8 @@ class Surah {
 class Ayah {
   Ayah({this.text, this.number});
 
-  final String text;
-  final int number;
+  final String? text;
+  final int? number;
 
   factory Ayah.fromJSON(Map<String, dynamic> json) {
     return Ayah(text: json['text'], number: json['numberInSurah']);
@@ -84,8 +84,8 @@ class Ayah {
 class Audio {
   Audio({this.number, this.url});
 
-  final String url;
-  final Ayah number;
+  final String? url;
+  final Ayah? number;
 
   factory Audio.fromJson(Map<String, dynamic> json) {
     return Audio(number: json[''], url: json['']);

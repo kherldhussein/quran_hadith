@@ -3,7 +3,7 @@ import 'package:quran_hadith/models/search/surah.dart';
 
 class Search {
   List<Surah> surahList = [];
-  int repeated;
+  int? repeated;
 
   Future<void> loadSurah() async {
     for (int i = 1; i < 114; i++) {
@@ -17,12 +17,12 @@ class Search {
     String normalisedWord = normalise(word);
     List<Aya> ayahs = [];
     for (var s in surahList) {
-      for (int i = 1; i < s.ayahCount + 1; i++) {
-        for (String vWord in s.verses['verse_$i'].toString().split(" ")) {
+      for (int i = 1; i < s.ayahCount! + 1; i++) {
+        for (String vWord in s.verses!['verse_$i'].toString().split(" ")) {
           String normalisedVWord = normalise(vWord);
           if (normalisedVWord == normalisedWord) {
             repeated++;
-            ayahs.add(Aya(i, s.verses['verse_$i'].toString(), s.name));
+            ayahs.add(Aya(i, s.verses!['verse_$i'].toString(), s.name));
           }
         }
       }

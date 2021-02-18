@@ -5,10 +5,10 @@ import 'package:quran_hadith/layout/adaptive.dart';
 import 'menu_list_items.dart';
 
 class RoundCustomButton extends StatelessWidget {
-  final IconData icon;
-  final List<Widget> children;
+  final IconData? icon;
+  final List<Widget>? children;
 
-  const RoundCustomButton({Key key, this.icon, this.children})
+  const RoundCustomButton({Key? key, this.icon, this.children})
       : super(key: key);
 
   @override

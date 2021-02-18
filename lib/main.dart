@@ -8,7 +8,6 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/screens/home_screen.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 
-import 'locale/appLocale.dart';
 import 'theme/app_theme.dart';
 
 final quranApi = QuranAPI();
@@ -28,7 +27,7 @@ class QuranHadith extends StatefulWidget {
 }
 
 class _QuranHadithState extends State<QuranHadith> {
-  Locale localeCallback(locale, supportedLocales) {
+  Locale? localeCallback(locale, supportedLocales) {
     for (var supportedLocale in supportedLocales) {
       if (supportedLocale.languageCode == locale.languageCode &&
           supportedLocale.countryCode == locale.countryCode)
@@ -40,7 +39,7 @@ class _QuranHadithState extends State<QuranHadith> {
   @override
   Widget build(BuildContext context) {
     final isPlatformDark =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+        WidgetsBinding.instance!.window.platformBrightness == Brightness.dark;
     final initTheme = isPlatformDark ? darkTheme : theme;
     return ThemeProvider(
       initTheme: initTheme,
@@ -59,7 +58,7 @@ class _QuranHadithState extends State<QuranHadith> {
           // localeResolutionCallback: localeCallback,
           supportedLocales:
               QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
-          title: 'Qur’ān Hadith', 
+          title: 'Qur’ān Hadith',
           darkTheme: darkTheme,
           themeMode: ThemeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           theme: theme,

@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class ParticleCanvas extends StatefulWidget {
-  const ParticleCanvas({Key key, this.height, this.width}) : super(key: key);
+  const ParticleCanvas({Key? key, this.height, this.width}) : super(key: key);
 
-  final double height;
-  final double width;
+  final double? height;
+  final double? width;
 
   @override
   _ParticleCanvasState createState() => _ParticleCanvasState();
@@ -14,15 +14,15 @@ class ParticleCanvas extends StatefulWidget {
 
 class _ParticleCanvasState extends State<ParticleCanvas>
     with TickerProviderStateMixin {
-  Animation<double> animation;
+  Animation<double>? animation;
   List<Offset> dots = [];
   List<List> lines = [];
-  AnimationController controller, mouseController;
+  late AnimationController controller, mouseController;
   Duration mouseDuration = Duration(milliseconds: 600);
   var random = Random();
   List<bool> rndDirection = [];
   List<double> rndPos = [];
-  double speed = 1, temp = 0, dx, dy, mradius = 50;
+  double? speed = 1, temp = 0, dx, dy, mradius = 50;
   int totalDots = 250;
 
   @override
@@ -43,23 +43,23 @@ class _ParticleCanvasState extends State<ParticleCanvas>
           speed = speed;
           for (var i = 0; i < dots.length; i++) {
             if (rndDirection[i]) {
-              temp = -speed;
+              temp = -speed!;
             } else {
               temp = speed;
             }
-            dx = dots[i].dx + (temp * rndPos[i]);
-            dy = dots[i].dy + rndPos[i] * speed;
-            if (dx > widget.width) {
-              dx = dx - widget.width;
-            } else if (dx < 0) {
-              dx = dx + widget.width;
+            dx = dots[i].dx + (temp! * rndPos[i]);
+            dy = dots[i].dy + rndPos[i] * speed!;
+            if (dx! > widget.width!) {
+              dx = dx! - widget.width!;
+            } else if (dx! < 0) {
+              dx = dx! + widget.width!;
             }
-            if (dy > widget.height) {
-              dy = dy - widget.height;
-            } else if (dy < 0) {
-              dy = dy + widget.height;
+            if (dy! > widget.height!) {
+              dy = dy! - widget.height!;
+            } else if (dy! < 0) {
+              dy = dy! + widget.height!;
             }
-            dots[i] = Offset(dx, dy);
+            dots[i] = Offset(dx!, dy!);
           }
           drawlines();
         });
@@ -71,8 +71,8 @@ class _ParticleCanvasState extends State<ParticleCanvas>
 
   addDots() {
     for (var i = 0; i < totalDots; i++) {
-      dots.add(Offset(random.nextDouble() * widget.width,
-          random.nextDouble() * widget.height));
+      dots.add(Offset(random.nextDouble() * widget.width!,
+          random.nextDouble() * widget.height!));
       rndPos.add(random.nextDouble());
       rndDirection.add(random.nextBool());
     }
@@ -97,7 +97,7 @@ class _ParticleCanvasState extends State<ParticleCanvas>
   onHover(dx, dy) {
     mouseController = AnimationController(vsync: this, duration: mouseDuration);
     mouseController.reset();
-    double mdx, mdy;
+    double? mdx, mdy;
     var stopDistance = 60.0;
     mouseController.forward();
     for (var i = 0; i < dots.length; i++) {
@@ -105,9 +105,9 @@ class _ParticleCanvasState extends State<ParticleCanvas>
           sqrt(aMinusBSquare(dx, dots[i].dx) + aMinusBSquare(dy, dots[i].dy));
       mdx = (dx - dots[i].dx) / stopDistance;
       mdy = (dy - dots[i].dy) / stopDistance;
-      if (stopDistance < mradius) {
-        var x = dots[i].dx - (mradius - stopDistance) * mdx;
-        var y = dots[i].dy - (mradius - stopDistance) * mdy;
+      if (stopDistance < mradius!) {
+        var x = dots[i].dx - (mradius! - stopDistance) * mdx!;
+        var y = dots[i].dy - (mradius! - stopDistance) * mdy!;
         setState(() {
           dots[i] = Offset(x, y);
         });
@@ -141,21 +141,21 @@ class _ParticleCanvasState extends State<ParticleCanvas>
 class DotsPainter extends CustomPainter {
   DotsPainter({this.lines, this.dots});
 
-  final List<Offset> dots;
-  final List<List> lines;
+  final List<Offset>? dots;
+  final List<List>? lines;
   List<double> sizes = [1, 2, 3];
   var random = Random();
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (var i = 0; i < dots.length; i++) {
+    for (var i = 0; i < dots!.length; i++) {
       canvas.drawCircle(
-          dots[i], sizes[random.nextInt(2)], Paint()..color = Colors.white);
+          dots![i], sizes[random.nextInt(2)], Paint()..color = Colors.white);
     }
-    lines.forEach((element) {
+    lines!.forEach((element) {
       var paint = Paint()
         ..color = Colors.white
-        ..strokeWidth = 2 * (1 - element[2] / 50);
+        ..strokeWidth = 2 * (1 - element[2] / 50 as double);
       canvas.drawLine(element[0], element[1], paint);
     });
   }

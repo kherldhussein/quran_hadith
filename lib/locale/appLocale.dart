@@ -7,13 +7,13 @@ import 'package:quran_hadith/main.dart';
 
 class AppLocale {
   final Locale locale;
-  static Map<dynamic, dynamic> _localisedValues;
+  static Map<dynamic, dynamic>? _localisedValues;
 
   AppLocale(this.locale) {
     _localisedValues = {};
   }
 
-  static AppLocale of(BuildContext context) {
+  static AppLocale? of(BuildContext context) {
     return Localizations.of<AppLocale>(context, AppLocale);
   }
 
@@ -27,11 +27,11 @@ class AppLocale {
     return appTranslations;
   }
 
-  String text(String key) => _localisedValues[key] ?? '';
+  String text(String key) => _localisedValues![key] ?? '';
 }
 
 class _AppLocaleDelegate extends LocalizationsDelegate<AppLocale> {
-  final Locale newLocale;
+  final Locale? newLocale;
 
   const _AppLocaleDelegate({this.newLocale});
 

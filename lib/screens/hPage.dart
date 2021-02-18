@@ -5,7 +5,7 @@ import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 
 class HPage extends StatefulWidget {
-  HPage({Key key}) : super(key: key);
+  HPage({Key? key}) : super(key: key);
 
   @override
   _HPageState createState() => _HPageState();
