@@ -27,7 +27,7 @@ The app is fully in Dart. You **just need** [setup](https://flutter.dev) to spin
 
 <br>
 
-Design greatly inspired by: [Tanvir Ahassan Anik](https://dribbble.com/shots/14241258-Islamic-Web-App-Concept) ~ UI / Visual Design, Product Design, UX Design / Research
+| Design greatly inspired by: [Tanvir Ahassan Anik](https://dribbble.com/shots/14241258-Islamic-Web-App-Concept) ~ UI / Visual Design, Product Design, UX Design / Research
 
 
 #### Please see the changelog file for recent improvements and the issue tracker for short-term plans.
