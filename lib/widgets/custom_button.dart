@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:popover/popover.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 
@@ -22,15 +23,17 @@ class RoundCustomButton extends StatelessWidget {
           border: Border.all(color: Color(0xffeef2f5)),
           borderRadius: BorderRadius.circular(isSmall ? 30 : 50),
         ),
-        child: Popover(
-          backgroundColor: Color(0xffeef2f5),
-          bodyBuilder: (BuildContext context) => ListItems(children: children),
-          child: IconButton(
-              onPressed: () {},
-              splashRadius: 10,
-              icon: Icon(icon),
-              color: Colors.black),
-        ),
+        child: IconButton(
+            onPressed: () {
+              showPopover(
+                  context: context,
+                  backgroundColor: Theme.of(context).cardColor,
+                  bodyBuilder: (BuildContext context) =>
+                      ListItems(children: children));
+            },
+            splashRadius: 1,
+            icon: FaIcon(icon),
+            color: Colors.black),
       ),
     );
   }
