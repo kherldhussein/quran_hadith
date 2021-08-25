@@ -17,24 +17,21 @@ class ListItems extends StatelessWidget {
 }
 
 class MItems extends StatelessWidget {
-  final String text;
-  final Function pressed;
+  final String? text;
+  final VoidCallback? pressed;
 
-  const MItems({Key? key, required this.text, required this.pressed})
-      : super(key: key);
+  const MItems({Key? key, this.text, this.pressed}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     double height = MediaQuery.of(context).size.height;
-    final PopupMenuThemeData popupMenuTheme = PopupMenuTheme.of(context);
     return InkWell(
       child: Container(
           alignment: AlignmentDirectional.centerStart,
           constraints: BoxConstraints(minHeight: height / 12),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(text)),
-      onTap: pressed as void Function()?,
+          child: Text(text!)),
+      onTap: () => pressed!(),
     );
   }
 }
