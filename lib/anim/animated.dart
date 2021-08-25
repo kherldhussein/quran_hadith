@@ -72,7 +72,5 @@ class WidgetAnimator extends StatelessWidget {
   WidgetAnimator(this.child);
 
   @override
-  Widget build(BuildContext context) {
-    return Animator(child, wait());
-  }
+  Widget build(BuildContext context) => Animator(child, wait());
 }

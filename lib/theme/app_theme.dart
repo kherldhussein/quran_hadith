@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 const kLightSecondaryColor = Color(0xffdae1e7);
 const kDarkSecondaryColor = Color(0xff01AC68);
 const kLightPrimaryColor = Color(0xffdae1e7);
-const kDarkPrimaryColor = Color(0xFF262626);
+const kDarkPrimaryColor = Color(0xFF1B1B1B);
 const kBackgroundLight = Color(0xffffffff);
 const kBackgroundDark = Color(0xFF2A2A2A);
 const kDividerLight = Color(0xFFFFFFFF);
@@ -70,12 +70,12 @@ ThemeData get darkTheme {
         unselectedIconTheme: IconThemeData(color: kLight),
         labelType: NavigationRailLabelType.all,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+        base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     textTheme: _buildTextTheme(base.textTheme, kTextLight, kTextLighter),
     primaryTextTheme:
-        _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
+    _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
     accentTextTheme:
-        _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
+    _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kDark,
       contentTextStyle: base.textTheme.bodyText1!.copyWith(
@@ -102,7 +102,6 @@ ThemeData get theme {
     buttonColor: kAccentColor,
     buttonTheme: base.buttonTheme.copyWith(buttonColor: kAccentColor),
     canvasColor: kLightPrimaryColor,
-    primaryColor: kDark,
     cardColor: kDividerLight,
     primaryColorLight: kLightPrimaryColor,
     platform: TargetPlatform.linux,
@@ -125,7 +124,7 @@ ThemeData get theme {
         unselectedIconTheme: IconThemeData(color: kDarkColor),
         backgroundColor: kBackgroundLight,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+        base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     cardTheme: base.cardTheme.copyWith(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -137,9 +136,9 @@ ThemeData get theme {
         brightness: Brightness.light, color: kBackgroundLight, elevation: 0.0),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryTextTheme:
-        _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
+    _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
     accentTextTheme:
-        _buildTextTheme(base.accentTextTheme, kTextDark, kTextDarker),
+    _buildTextTheme(base.accentTextTheme, kTextDark, kTextDarker),
     textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kLight,
@@ -155,27 +154,27 @@ ThemeData get theme {
 TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
   return base
       .copyWith(
-        headline5: base.headline5!.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          fontSize: 20,
-        ),
-        headline6: base.headline6!.copyWith(
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-          fontSize: 20,
-        ),
-        bodyText1: base.bodyText1!.copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 16.0,
-        ),
-        subtitle1: base.bodyText1!.copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 16.0,
-        ),
-      )
+    headline5: base.headline5!.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.5,
+      fontSize: 20,
+    ),
+    headline6: base.headline6!.copyWith(
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.5,
+      fontSize: 20,
+    ),
+    bodyText1: base.bodyText1!.copyWith(
+      fontWeight: FontWeight.w500,
+      fontSize: 16.0,
+    ),
+    subtitle1: base.bodyText1!.copyWith(
+      fontWeight: FontWeight.w500,
+      fontSize: 16.0,
+    ),
+  )
       .apply(
-          fontFamily: 'Amiri',
-          displayColor: displayColor,
-          bodyColor: bodyColor);
+      fontFamily: 'Amiri',
+      displayColor: displayColor,
+      bodyColor: bodyColor);
 }
