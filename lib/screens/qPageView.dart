@@ -1,4 +1,3 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,10 +9,11 @@ import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/models/surahModel.dart';
-import 'package:quran_hadith/screens/home_screen.dart';
+import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QPageView extends StatefulWidget {
   final List<Ayah>? ayahList;
@@ -22,14 +22,15 @@ class QPageView extends StatefulWidget {
   final String? englishMeaning;
   final int? suratNo;
   final VoidCallback? openContainer;
-  final Surah? surah;
+
+  // final Surah surah;
   final Ayah? aya;
   final bool? isFavorite;
 
   const QPageView(
       {Key? key,
       this.ayahList,
-      this.surah,
+      // this.surah,
       this.suratName,
       this.aya,
       this.isFavorite,
@@ -45,33 +46,27 @@ class QPageView extends StatefulWidget {
 
 class _QPageViewState extends State<QPageView> {
   var controller;
-  late AudioPlayer _audio;
-  late Surah surah;
-  bool _isPLaying = false;
+  Surah? surah;
   bool isLoaded = false;
   bool isLoading = false;
   var list;
-  String? _url;
   var currentPlaying;
-  AudioPlayer _audioPlayer = AudioPlayer();
   final quranApi = QuranAPI();
 
   @override
   void initState() {
-    _audio = AudioPlayer(mode: PlayerMode.MEDIA_PLAYER);
-
     ///  to hide only status bar:
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
     controller = AutoScrollController(axis: Axis.vertical);
     if (SchedulerBinding.instance!.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
       SchedulerBinding.instance!.addPostFrameCallback((_) {
-        if (widget.surah!.readVerseCount > 0) {
-          controller.scrollToIndex(
-            widget.surah!.readVerseCount,
-            preferPosition: AutoScrollPosition.middle,
-          );
-        }
+        // if (widget.surah.readVerseCount > 0) {
+        //   controller.scrollToIndex(
+        //     widget.surah.readVerseCount,
+        //     preferPosition: AutoScrollPosition.middle,
+        //   );
+        // }
       });
     }
     super.initState();
@@ -81,17 +76,17 @@ class _QPageViewState extends State<QPageView> {
   Widget build(BuildContext context) {
     final isSmall = isDisplaySmallDesktop(context);
     var quranAPI = Provider.of<QuranAPI>(context);
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.appBarTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: Text(
           widget.suratName!,
           style: TextStyle(
-              fontFamily: 'Quran',
               color: Colors.black54,
               fontSize: 30,
               letterSpacing: 3,
@@ -103,7 +98,7 @@ class _QPageViewState extends State<QPageView> {
                 color: Theme.of(context).buttonColor),
             splashRadius: 10,
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: () => Get.to(HomeScreen()),
+            onPressed: Get.back,
           )
         ],
       ),
@@ -112,7 +107,9 @@ class _QPageViewState extends State<QPageView> {
         child: Container(
           constraints: BoxConstraints(minHeight: 0, minWidth: 0),
           decoration: BoxDecoration(
-            color: Color(0xffeef2f5),
+            color: Get.theme.brightness == Brightness.light
+                ? Color(0xffeef2f5)
+                : kDarkPrimaryColor,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
@@ -143,36 +140,41 @@ class _QPageViewState extends State<QPageView> {
                                 future: quranAPI.getSuratList(),
                                 builder: (BuildContext context,
                                     AsyncSnapshot snapshot) {
-                                  if (!snapshot.hasData) return Container();
-                                  return ListView.builder(
-                                    // separatorBuilder: (_, index) => Divider(),
-                                    itemCount: snapshot.data.surahs.length,
-                                    controller: controller,
-                                    itemBuilder: (context, index) {
-                                      return SuratTile(
-                                        colorO: Color(0xffe0f5f0),
-                                        radius: 8,
-                                        colorI: Color(0xff01AC68),
-                                        ayahList:
-                                            snapshot.data.surahs[index].ayahs,
-                                        suratNo:
-                                            snapshot.data.surahs[index].number,
-                                        icon: FontAwesomeIcons.heart,
-                                        onFavorite: SurahsList().starSurah(
-                                            snapshot.data.surahs[index].number),
-                                        isFavorite: false,
-                                        revelationType: snapshot
-                                            .data.surahs[index].revelationType,
-                                        englishTrans: snapshot
-                                            .data
-                                            .surahs[index]
-                                            .englishNameTranslation,
-                                        englishName: snapshot
-                                            .data.surahs[index].englishName,
-                                        name: snapshot.data.surahs[index].name,
-                                      );
-                                    },
-                                  );
+                                  if (!snapshot.hasData) {
+                                    return Container();
+                                  } else {
+                                    return ListView.builder(
+                                      itemCount: snapshot.data.surahs.length,
+                                      // controller: controller,
+                                      itemBuilder: (context, index) {
+                                        return SuratTile(
+                                          colorO: Color(0xffe0f5f0),
+                                          radius: 8,
+                                          colorI: Color(0xff01AC68),
+                                          ayahList:
+                                              snapshot.data.surahs[index].ayahs,
+                                          suratNo: snapshot
+                                              .data.surahs[index].number,
+                                          icon: FontAwesomeIcons.heart,
+                                          onFavorite: () {
+                                            // setFavorite(snapshot
+                                            //     .data.surahs[index].number);
+                                          },
+                                          isFavorite: false,
+                                          revelationType: snapshot.data
+                                              .surahs[index].revelationType,
+                                          englishTrans: snapshot
+                                              .data
+                                              .surahs[index]
+                                              .englishNameTranslation,
+                                          englishName: snapshot
+                                              .data.surahs[index].englishName,
+                                          name:
+                                              snapshot.data.surahs[index].name,
+                                        );
+                                      },
+                                    );
+                                  }
                                 }),
                           ),
                     Container(
@@ -204,21 +206,25 @@ class _QPageViewState extends State<QPageView> {
     );
   }
 
-  Future<void> _playAyah(Ayah aya) async {
-    String? ayaNum;
-    if (_audioPlayer.state == AudioPlayerState.PLAYING) {
-      await _audioPlayer.stop();
+  setFavorite(int? index) async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    if (sp.getStringList('favorite')!.contains('$index')) {
+      // add to favorite
+      String newValue = '$index';
+      List<String> oldFavorite = sp.getStringList('favorite')!;
+      oldFavorite.add(newValue);
+      List<String> favorite = oldFavorite;
+      sp.setStringList('favorite', favorite);
+      setState(() {});
+    } else {
+      // remove from favorite
+      String newValue = '$index';
+      List<String> oldFavorite = sp.getStringList('favorite')!;
+      oldFavorite.remove(newValue);
+      List<String> favorite = oldFavorite;
+      sp.setStringList('favorite', favorite);
+      setState(() {});
     }
-    quranApi.getAyaAudio(ayaNo: aya.number);
-    await _audioPlayer
-        .play('https://cdn.alquran.cloud/media/audio/$ayaNum/ar.alafasy/1')
-        .then((void _) {
-      print('Ayah ${surah.ayahs} is playing');
-    });
-  }
-
-  void _showSnackBarOnCopyFailure(Object exception) {
-    Get.snackbar('Failed to copy ', exception as String);
   }
 
   Widget qTile(int index, context) {
@@ -255,19 +261,25 @@ class _QPageViewState extends State<QPageView> {
               ),
               textDirection: TextDirection.rtl,
             ),
-            Divider(
-              height: 64,
-              endIndent: 32,
-              indent: 32,
-            ),
+            Divider(height: 64, endIndent: 32, indent: 32),
             Row(
               children: [
-                IconButton(
-                    icon: Icon(
-                      FontAwesomeIcons.heart,
-                      color: Theme.of(context).buttonColor,
-                    ),
-                    onPressed: () {}),
+                FutureBuilder(
+                    future: favorite(widget.ayahList![index].number),
+                    builder: (context, snapshot) {
+                      return IconButton(
+                        icon: Icon(
+                          snapshot.data == true
+                              ? FontAwesomeIcons.heart
+                              : FontAwesomeIcons.solidHeart,
+                          color: snapshot.data == true
+                              ? Theme.of(context).buttonColor
+                              : Colors.greenAccent,
+                        ),
+                        onPressed: () =>
+                            setFavorite(widget.ayahList![index].number),
+                      );
+                    }),
                 IconButton(
                     icon: Icon(
                       FontAwesomeIcons.shareAlt,
@@ -275,36 +287,6 @@ class _QPageViewState extends State<QPageView> {
                     ),
                     onPressed: () => share.showShareDialog(
                         context: context, text: widget.ayahList![index].text)),
-                StreamBuilder(
-                    stream: _audio.onPlayerStateChanged,
-                    builder: (_, AsyncSnapshot<AudioPlayerState> audioState) {
-                      return StreamBuilder(
-                          stream: _audio.onDurationChanged,
-                          builder: (_, AsyncSnapshot<Duration> totalDuration) {
-                            return StreamBuilder(
-                                stream: _audio.onAudioPositionChanged,
-                                builder: (_, AsyncSnapshot<Duration> progress) {
-                                  return audioState?.data !=
-                                          AudioPlayerState.PLAYING
-                                      ? IconButton(
-                                          color: Theme.of(context).buttonColor,
-                                          icon: FaIcon(
-                                              FontAwesomeIcons.playCircle),
-                                          onPressed: audioState?.data !=
-                                                  AudioPlayerState.PLAYING
-                                              ? () => _playAyah(widget.aya!)
-                                              : null,
-                                        )
-                                      : IconButton(
-                                          color: Theme.of(context).buttonColor,
-                                          icon: FaIcon(
-                                              FontAwesomeIcons.pauseCircle),
-                                          onPressed: () async =>
-                                              await _audio.pause(),
-                                        );
-                                });
-                          });
-                    }),
                 IconButton(
                     icon: Icon(
                       FontAwesomeIcons.copy,
@@ -313,12 +295,7 @@ class _QPageViewState extends State<QPageView> {
                     onPressed: () {
                       Clipboard.setData(
                         ClipboardData(text: widget.ayahList![index].text),
-                      )
-                          .then(
-                            (value) => Get.snackbar(
-                                'Copied', 'Ayah Copied To Clipboard'),
-                          )
-                          .catchError(_showSnackBarOnCopyFailure);
+                      );
                     }),
               ],
             )
@@ -346,5 +323,14 @@ class _QPageViewState extends State<QPageView> {
   void dispose() {
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     super.dispose();
+  }
+}
+
+favorite(index) async {
+  SharedPreferences sp = await SharedPreferences.getInstance();
+  if (sp.getStringList('favorite')!.contains('$index')) {
+    return true;
+  } else {
+    return false;
   }
 }

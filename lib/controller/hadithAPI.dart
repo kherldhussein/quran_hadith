@@ -1,21 +1,20 @@
 import 'dart:convert';
 
-// ignore: import_of_legacy_library_into_null_safe
 import 'package:http/http.dart' as http;
 import 'package:quran_hadith/models/hadithModel.dart';
-//
+
 class HadithAPI {
   String url = "https://api.sunnah.com/v1/hadiths";
   static const headers = {
     'x-api-key': "SqD712P3E82xnwOAEOkGd5JZH8s9wRR24TqNFzjk",
   };
 
-   Future<HadithList>getHadithList() async {
-    final response = await http.get(url,headers: headers);
+  Future<HadithList> getHadithList() async {
+    final response = await http.get(Uri.parse(url), headers: headers);
     if (response.statusCode == 200) {
-      HadithList.fromJson(json.decode(response.body));
-    }else{
-      throw Exception("Failed  to Load Data");
+      return HadithList.fromJson(json.decode(response.body));
+    } else {
+      return throw Exception("Failed  to Load Data");
     }
   }
 }

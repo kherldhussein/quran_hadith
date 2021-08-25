@@ -5,11 +5,16 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
-class SearchWidget extends SearchDelegate<SurahsList?> {
+class SearchWidget extends SearchDelegate<SurahsList> {
+  final Future<QuranAPI> quran;
+
+  SearchWidget(this.quran);
+
   @override
   List<Widget> buildActions(BuildContext context) {
     return <Widget>[
       IconButton(
+        splashRadius: 10,
         tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
         icon: const FaIcon(FontAwesomeIcons.times),
         onPressed: () {
@@ -23,13 +28,14 @@ class SearchWidget extends SearchDelegate<SurahsList?> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
+      splashRadius: 10,
       icon: AnimatedIcon(
         icon: AnimatedIcons.menu_arrow,
         progress: transitionAnimation,
       ),
       onPressed: () {
         /// Take control back to previous page
-        this.close(context, null);
+        // this.close(context,context);
       },
     );
   }
@@ -54,7 +60,7 @@ class SearchWidget extends SearchDelegate<SurahsList?> {
                   icon: FontAwesomeIcons.heart,
                   revelationType: snapshot.data.surahs[index].revelationType,
                   englishTrans:
-                      snapshot.data.surahs[index].englishNameTranslation,
+                  snapshot.data.surahs[index].englishNameTranslation,
                   englishName: snapshot.data.surahs[index].englishName,
                   name: snapshot.data.surahs[index].name,
                 );
@@ -63,5 +69,16 @@ class SearchWidget extends SearchDelegate<SurahsList?> {
   }
 
   @override
-  Widget buildSuggestions(BuildContext context) {}
+  Widget buildSuggestions(BuildContext context) {
+    return FutureBuilder(
+        future: quran,
+        builder: (context, AsyncSnapshot<QuranAPI> snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: Text('Nothing was found'));
+          }
+          return ListView(
+            // children: snapshot.data,
+          );
+        });
+  }
 }

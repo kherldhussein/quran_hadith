@@ -1,8 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 import 'package:get/get.dart';
+import 'package:popover/popover.dart';
 import 'package:quran_hadith/anim/animated.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/models/surahModel.dart';
@@ -27,10 +27,10 @@ class SuratTile extends StatefulWidget {
     Key? key,
     this.ayahList,
     this.onFavorite,
-    required this.suratNo,
+    this.suratNo,
     this.isFavorite,
-    required this.englishName,
-    required this.englishTrans,
+    this.englishName,
+    this.englishTrans,
     this.name,
     this.icon,
     this.revelationType,
@@ -45,34 +45,16 @@ class SuratTile extends StatefulWidget {
 
 class _SuratTileState extends State<SuratTile> {
   Surah? surah;
-  bool _isPLaying = false;
+
   bool isLoaded = false;
   bool isLoading = false;
   var list;
-  String? _url;
   var currentPlaying;
-  AudioPlayer _audioPlayer = AudioPlayer();
   final quranApi = QuranAPI();
 
   @override
   void initState() {
-    _audioPlayer = AudioPlayer(mode: PlayerMode.MEDIA_PLAYER);
-    _audioPlayer.onPlayerStateChanged.listen((event) {
-      if (event == AudioPlayerState.PLAYING) {
-        _isPLaying = true;
-      } else {
-        _isPLaying = false;
-      }
-      setState(() {});
-    });
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    _url =
-        'https://cdn.alquran.cloud/media/audio/${widget.ayahList}/ar.alafasy/1';
-    super.didChangeDependencies();
   }
 
   @override
@@ -86,26 +68,24 @@ class _SuratTileState extends State<SuratTile> {
           onTap: () {
             Get.to(QPageView(
               ayahList: widget.ayahList,
-              suratName: widget.name,isFavorite: widget.isFavorite,
+              suratName: widget.name,
+              isFavorite: widget.isFavorite,
               suratEnglishName: widget.englishName,
               englishMeaning: widget.englishTrans,
               suratNo: widget.suratNo,
             ));
           },
           onLongPress: () {
-            showAnimatedDialog(
+            showPopover(
                 context: context,
-                barrierDismissible: true,
-                animationType: DialogTransitionType.fadeScale,
-                builder: (context) {
-                  return SurahInformation(
-                    surahNumber: widget.suratNo,
-                    ayahs: widget.ayahList!.length,
-                    englishName: widget.englishName,
-                    arabicName: widget.name,
-                    revelationType: widget.revelationType,
-                  );
-                });
+                backgroundColor: Theme.of(context).cardColor,
+                bodyBuilder: (context) => SurahInformation(
+                  surahNumber: widget.suratNo,
+                  ayahs: widget.ayahList!.length,
+                  englishName: widget.englishName,
+                  arabicName: widget.name,
+                  revelationType: widget.revelationType,
+                ));
           },
           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           title: Row(
@@ -117,18 +97,16 @@ class _SuratTileState extends State<SuratTile> {
                       ? replaceArabicNumber(widget.suratNo.toString())
                       : replaceArabicNumber(widget.suratNo.toString()),
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: widget.colorO,
-                    fontFamily: 'Amiri',
-                  ),
+                  style: TextStyle(color: widget.colorO, fontFamily: 'Amiri'),
                 ),
                 backgroundColor: widget.colorI,
               ),
               IconButton(
-                  icon: Icon(widget.icon,
-                      color:
-                          widget.isFavorite! ? Colors.green : Colors.lightGreen),
-                  onPressed: () {})
+                icon: Icon(widget.icon,
+                    color:
+                    widget.isFavorite! ? Colors.green : Colors.lightGreen),
+                onPressed: widget.onFavorite,
+              )
             ],
           ),
           enableFeedback: true,
@@ -138,7 +116,7 @@ class _SuratTileState extends State<SuratTile> {
               AutoSizeText(
                 widget.englishName!,
                 style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               AutoSizeText(
                 widget.englishTrans!,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
 import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
+import 'package:quran_hadith/theme/app_theme.dart';
 
 class HPage extends StatefulWidget {
   HPage({Key? key}) : super(key: key);
@@ -17,16 +19,19 @@ class _HPageState extends State<HPage> {
     var size = MediaQuery.of(context).size;
     final isSmall = isDisplayVerySmallDesktop(context);
     return Scaffold(
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: Container(
         constraints: BoxConstraints(minWidth: 0,minHeight: 0),
-        color: Colors.white,
+        color: Theme.of(context).appBarTheme.backgroundColor,
         child: SingleChildScrollView(scrollDirection: Axis.horizontal,
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             Container(
               constraints: BoxConstraints(minWidth: 0),
               width: isSmall ? size.width - 300 : size.width - 320,
               decoration: BoxDecoration(
-                color: Color(0xffeef2f5),
+                color: Get.theme.brightness == Brightness.light
+                    ? Color(0xffeef2f5)
+                    : kDarkPrimaryColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
@@ -57,7 +62,7 @@ class _HPageState extends State<HPage> {
                     ),
                     // hoverColor: Colors.green,
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
                       children: [Text('AL FATIHA'), Text('Ayah no. 3')],
                     ),
@@ -73,7 +78,7 @@ class _HPageState extends State<HPage> {
                       style: TextStyle(color: Color(0xff01AC68)),
                     ),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
                       children: [Text('AL FATIHA'), Text('Ayah no. 3')],
                     ),
@@ -97,7 +102,7 @@ class _HPageState extends State<HPage> {
                         SizedBox(height: 10),
                         Text(
                           'It is Allah who erected the heavens without pillars that you[can] see; '
-                          'then He established Himself above the Throne ...',
+                              'then He established Himself above the Throne ...',
                           style: TextStyle(
                               color: Color(0xffdae1e7), letterSpacing: 2),
                         ),

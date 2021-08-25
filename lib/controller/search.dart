@@ -3,7 +3,7 @@ import 'package:quran_hadith/models/search/surah.dart';
 
 class Search {
   List<Surah> surahList = [];
-  int? repeated;
+  late int repeated;
 
   Future<void> loadSurah() async {
     for (int i = 1; i < 114; i++) {

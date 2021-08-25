@@ -4,9 +4,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
+import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
 class QPage extends StatefulWidget {
@@ -21,17 +23,20 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   var list;
   AudioPlayer? audioPlayer;
   var currentPlaying;
+  bool turnF = false;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     var quranAPI = Provider.of<QuranAPI>(context);
     var size = MediaQuery.of(context).size;
+    var theme = Theme.of(context);
     final isSmall = isDisplayVerySmallDesktop(context);
     return Scaffold(
+      backgroundColor: theme.appBarTheme.backgroundColor,
       body: Container(
         constraints: BoxConstraints(minWidth: 0),
-        color: kBackgroundLight,
+        color: theme.appBarTheme.backgroundColor,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -40,7 +45,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
               Container(
                 constraints: BoxConstraints(minWidth: 0),
                 decoration: BoxDecoration(
-                  color: Color(0xffeef2f5),
+                  color: Get.theme.brightness == Brightness.light
+                      ? Color(0xffeef2f5)
+                      : kDarkPrimaryColor,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -49,17 +56,17 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                 width: isSmall ? size.width - 300 : size.width - 320,
                 child: FutureBuilder(
                     future: quranAPI.getSuratList(),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    builder: (context,AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
                             child: ParticleCanvas(
-                                height: size.height, width: size.width));
+                                height: size.height, width: size.width - 150));
                       } else {
                         return GridView.builder(
                           padding: EdgeInsets.symmetric(
                               horizontal: 30.0, vertical: 40.0),
                           gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
+                          SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: isSmall ? 3 : 4,
                             crossAxisSpacing: 20,
                             mainAxisSpacing: 20,
@@ -70,17 +77,26 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             return SuratTile(
                               colorO: kAccentColor,
                               isFavorite: true,
+                              onFavorite: () {
+                                setState(() {
+                                  Provider.of<OnFavorite>(context,
+                                      listen: false)
+                                      .addFavorite(true);
+                                  turnF = true;
+                                  SpUtil.setFavorite(true);
+                                });
+                              },
                               colorI: Color(0xffe0f5f0),
                               radius: 20,
                               ayahList: snapshot.data.surahs[index].ayahs,
                               suratNo: snapshot.data.surahs[index].number,
                               icon: FontAwesomeIcons.heart,
                               revelationType:
-                                  snapshot.data.surahs[index].revelationType,
+                              snapshot.data.surahs[index].revelationType,
                               englishTrans: snapshot
                                   .data.surahs[index].englishNameTranslation,
                               englishName:
-                                  snapshot.data.surahs[index].englishName,
+                              snapshot.data.surahs[index].englishName,
                               name: snapshot.data.surahs[index].name,
                             );
                           },
@@ -92,6 +108,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                 constraints: BoxConstraints(minWidth: 0),
                 padding: EdgeInsets.symmetric(vertical: 20),
                 height: size.height,
+                color: theme.appBarTheme.backgroundColor,
                 margin: EdgeInsets.symmetric(horizontal: isSmall ? 10 : 20),
                 width: isSmall ? 180 : 200,
                 child: ListView(
@@ -103,7 +120,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                       ),
                       // hoverColor: Colors.green,
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       subtitle: Column(
                         children: [Text("AL FATIHA"), Text('Ayah no. 3')],
                       ),
@@ -119,7 +136,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                         style: TextStyle(color: kAccentColor),
                       ),
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       subtitle: Column(
                         children: [Text('AL FATIHA'), Text('Ayah no. 3')],
                       ),
@@ -132,7 +149,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                     Container(
                       // height: 100,
                       padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       decoration: BoxDecoration(
                           color: kAccentColor,
                           borderRadius: BorderRadius.circular(10)),
@@ -144,12 +161,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           SizedBox(height: 10),
                           Text(
                             'Indeed, We have revealed to you, [O Muhammad], the Book in truth so you '
-                            'may judge between the people by that which God has shown you ...',
+                                'may judge between the people by that which God has shown you ...',
                             style: TextStyle(
                                 color: Color(0xffdae1e7), letterSpacing: 2),
                           ),
                           Divider(
-                            height: 65,
+                            height: 20,
                             endIndent: 30,
                             indent: 30,
                             color: Color(0xffdae1e7),
@@ -163,9 +180,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                   height: size.height / 2,
                                   width: size.width / 3,
                                   decoration: BoxDecoration(
-                                    color: Color(0xFFFAFAFC).withOpacity(0.1),
+                                    color: Color(0xFFFAFAFC).withOpacity(.1),
                                     border:
-                                        Border.all(color: Colors.transparent),
+                                    Border.all(color: Colors.transparent),
                                     borderRadius: BorderRadius.all(
                                       Radius.circular(15),
                                     ),

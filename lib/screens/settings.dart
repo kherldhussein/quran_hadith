@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Settings extends StatefulWidget {
   @override
@@ -11,27 +10,66 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).appBarTheme.color,
       body: Center(
         child: Container(
+          width: 400,
+          height: 250,
           decoration: BoxDecoration(
-            color: Color(0xFFFAFAFC).withOpacity(0.2),
+            color: Theme.of(context).cardColor,
             border: Border.all(color: Theme.of(context).backgroundColor),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: ListView(
-            children: [
-              AppBar(
-                title: Text('Preferences'),
-                backgroundColor: Colors.transparent,
-              ),
-              SettingsTitle(title: 'General'),
-              SettingsButton(
-                title: 'Dark Theme',
-                subtitle: 'Switch to join the dark side',
-                value: ThemeState.isDarkMode,
-                onChanged: (value) => SettingsModel().updateAppTheme(context),
-              ),
-            ],
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AppBar(
+                  title: Text('Preferences'),
+                  centerTitle: true,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
+                SettingsTitle(title: 'Customize Your Experience'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ActionChip(
+                      label: Text('Light'),
+                      onPressed: () =>
+                          ThemeState.to.updateTheme(ThemeMode.light),
+                    ),
+                    ActionChip(
+                      label: Text('Dark'),
+                      onPressed: () =>
+                          ThemeState.to.updateTheme(ThemeMode.dark),
+                    ),
+                  ],
+                ),
+                /// Upgrade
+                // Row(
+                //   children: [
+                //     Container(
+                //       decoration: BoxDecoration(
+                //         color: Theme.of(context).chipTheme.backgroundColor,
+                //         borderRadius: BorderRadius.only(
+                //             topLeft: Radius.circular(20),
+                //             bottomLeft: Radius.circular(20)),
+                //       ),
+                //       child: Center(child: Text("Light")),width: 50,
+                //     ),  SettingsTitle(title: 'Customize Your Experience'),  Container(
+                //       decoration: BoxDecoration(
+                //         color: Theme.of(context).primaryColorDark,
+                //         borderRadius: BorderRadius.only(
+                //             topRight: Radius.circular(20),
+                //             bottomRight: Radius.circular(20)),
+                //       ),
+                //       child: Center(child: Text("Dark")),width: 50,
+                //     ),
+                //   ],
+                // )
+              ],
+            ),
           ),
         ),
       ),
@@ -39,59 +77,14 @@ class _SettingsState extends State<Settings> {
   }
 }
 
-class SettingsSpacer extends StatelessWidget {
-  const SettingsSpacer({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) => SizedBox(height: 8);
-}
-
 class SettingsTitle extends StatelessWidget {
-  final String title;
+  final String? title;
 
-  const SettingsTitle({Key? key, required this.title}) : super(key: key);
+  const SettingsTitle({Key? key, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: EdgeInsets.fromLTRB(6, 8, 6, 8), child: Text(title));
-  }
-}
-
-class SettingsButton extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const SettingsButton({
-    Key? key,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: Switch(value: value, onChanged: onChanged),
-      ),
-    );
-  }
-}
-
-ThemeState themeState = ThemeState();
-
-class SettingsModel extends ChangeNotifier {
-  updateAppTheme(BuildContext context) async {
-    bool boolVal = !ThemeState.isDarkMode;
-    themeState.updateTheme(boolVal);
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    pref.setBool('isdarkmode', boolVal);
-    notifyListeners();
+        padding: EdgeInsets.fromLTRB(6, 8, 6, 8), child: Text(title!));
   }
 }

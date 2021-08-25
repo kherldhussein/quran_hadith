@@ -6,8 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void showShareDialog({required BuildContext context, text}) {
-  assert(context != null);
+void showShareDialog({ required BuildContext context, text}) {
   showAnimatedDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -19,7 +18,7 @@ void showShareDialog({required BuildContext context, text}) {
 class SocialShare extends StatelessWidget {
   final String? text;
 
-  const SocialShare({Key? key, required this.text}) : super(key: key);
+  const SocialShare({Key? key,  this.text}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +43,9 @@ class SocialShare extends StatelessWidget {
               SizedBox(height: 30),
               Semantics(
                   child: Text(
-                '━═══◎Share◎═══━',
-                style: TextStyle(color: Theme.of(context).primaryColorDark),
-              )),
+                    '━═══◎Share◎═══━',
+                    style: TextStyle(color: Theme.of(context).primaryColorDark),
+                  )),
               SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -103,13 +102,13 @@ class SocialShare extends StatelessWidget {
                     ),
                     child: IconButton(
                         tooltip:
-                            MaterialLocalizations.of(context).copyButtonLabel,
+                        MaterialLocalizations.of(context).copyButtonLabel,
                         icon: Icon(FontAwesomeIcons.link, color: Colors.white),
                         onPressed: () {
                           // Todo: implement flash
                           HapticFeedback.heavyImpact();
                           Clipboard.setData(ClipboardData(text: message)).then(
-                            (value) => Get.snackbar(
+                                (value) => Get.snackbar(
                               "copied!",
                               'Link copied',
                               messageText: Row(

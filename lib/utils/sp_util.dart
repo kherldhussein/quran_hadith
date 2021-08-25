@@ -1,6 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:quran_hadith/utils/shared_p.dart';
 class SpUtil {
-  static bool isdarkmode = false;
-
+  static String isFavorite = 'FAVORITE';
+  static bool? getFavorite() => appSP.getBool(isFavorite);
+  static Future<bool> setFavorite(bool value) => appSP.setBool(isFavorite, value);
 }

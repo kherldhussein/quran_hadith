@@ -2,8 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 
 class SharedAxisTransitionSwitcher extends StatelessWidget {
-  const SharedAxisTransitionSwitcher({required this.child})
-      : assert(child != null);
+  const SharedAxisTransitionSwitcher({required this.child});
 
   final Widget child;
 
@@ -12,7 +11,7 @@ class SharedAxisTransitionSwitcher extends StatelessWidget {
     return PageTransitionSwitcher(
       transitionBuilder: (child, animation, secondaryAnimation) {
         return SharedAxisTransition(
-          fillColor: Colors.transparent,
+          fillColor: Theme.of(context).appBarTheme.color,
           animation: animation,
           secondaryAnimation: secondaryAnimation,
           transitionType: SharedAxisTransitionType.scaled,
