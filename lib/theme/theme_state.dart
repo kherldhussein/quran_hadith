@@ -7,9 +7,9 @@ class ThemeState extends GetxController {
   static ThemeState get to => Get.find();
 
   late SharedPreferences prefs;
-  ThemeMode? _themeMode;
+  late ThemeMode _themeMode;
 
-  ThemeMode? get themeMode => _themeMode;
+  ThemeMode get themeMode => _themeMode;
 
   Future<void> updateTheme(ThemeMode themeMode) async {
     Get.changeThemeMode(themeMode);
