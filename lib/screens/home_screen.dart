@@ -54,7 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final isSmall = isDisplayVerySmallDesktop(context);
     final isSmallX = isDisplaySmallDesktop(context);
-    double height = MediaQuery.of(context).size.height;
+    double height = MediaQuery
+        .of(context)
+        .size
+        .height;
     final theme = Theme.of(context);
     final searchFocusNode = FocusNode();
     final _searchBox = Padding(
@@ -98,16 +101,17 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
                 child: isSmall
                     ? AnimSearchBar(
-                        width: isSmall ? 200 : 400,color: Get.theme.brightness == Brightness.light
-                    ? Color(0xffeef2f5)
-                    : kDarkPrimaryColor,
-                        textController: searchController,
-                        onSuffixTap: () {
-                          setState(() {
-                            searchController.clear();
-                          });
-                        },
-                      )
+                  width: isSmall ? 200 : 400,
+                  color: Get.theme.brightness == Brightness.light
+                      ? Color(0xffeef2f5)
+                      : kDarkPrimaryColor,
+                  textController: searchController,
+                  onSuffixTap: () {
+                    setState(() {
+                      searchController.clear();
+                    });
+                  },
+                )
                     : _searchBox,
                 width: isSmall ? 100 : 350),
             SingleChildScrollView(
@@ -141,66 +145,67 @@ class _HomeScreenState extends State<HomeScreen> {
             isSmall
                 ? Container()
                 : Padding(
-                    padding: EdgeInsets.symmetric(
-                        vertical: height * 0.01, horizontal: isSmall ? 15 : 20),
-                    child: InkWell(
-                      onTap: () {
-                        showPopover(
-                          context: context,
-                          backgroundColor: theme.cardColor,
-                          bodyBuilder: (BuildContext context) => ListItems(
-                            children: [
-                              MItems(
-                                  text: 'Donate on Patreon',
-                                  pressed: () {
-                                    launch(
-                                        "https://www.patreon.com/join/kherld/checkout?ru=undefined");
-                                    Get.back();
-                                  }),
-                              MItems(
-                                  text: 'Bug Report',
-                                  pressed: () {
-                                    launch(
-                                        "https://github.com/kherld-hussein/quran_hadith/issues/");
-                                    Get.back();
-                                  }),
-                              MItems(
-                                  text: 'Feature Request',
-                                  pressed: () {
-                                    launch(
-                                        "https://github.com/kherld-hussein/quran_hadith/issues/");
-                                    Get.back();
-                                  }),
-                              MItems(
-                                  text: 'About',
-                                  pressed: () {
-                                    Get.back();
-                                    showDialog(
-                                        context: context,
-                                        builder: (context) => About());
-                                  })
-                            ],
-                          ),
-                        );
-                      },
-                      hoverColor: theme.appBarTheme.backgroundColor,
-                      splashColor: theme.appBarTheme.backgroundColor,
-                      highlightColor: theme.appBarTheme.backgroundColor,
-                      child: Container(
-                        constraints: BoxConstraints(minWidth: 0, minHeight: 0),
-                        padding: EdgeInsets.symmetric(
-                            horizontal: isSmall ? 10 : 20,
-                            vertical: isSmall ? 7 : 10),
-                        decoration: BoxDecoration(
-                          color: kAccentColor,
-                          borderRadius:
-                              BorderRadius.circular(isSmall ? 17 : 20),
+              padding: EdgeInsets.symmetric(
+                  vertical: height * 0.01, horizontal: isSmall ? 15 : 20),
+              child: InkWell(
+                onTap: () {
+                  showPopover(
+                    context: context,
+                    backgroundColor: theme.cardColor,
+                    bodyBuilder: (BuildContext context) =>
+                        ListItems(
+                          children: [
+                            MItems(
+                                text: 'Donate on Patreon',
+                                pressed: () {
+                                  launch(
+                                      "https://www.patreon.com/join/kherld/checkout?ru=undefined");
+                                  Get.back();
+                                }),
+                            MItems(
+                                text: 'Bug Report',
+                                pressed: () {
+                                  launch(
+                                      "https://github.com/kherld-hussein/quran_hadith/issues/");
+                                  Get.back();
+                                }),
+                            MItems(
+                                text: 'Feature Request',
+                                pressed: () {
+                                  launch(
+                                      "https://github.com/kherld-hussein/quran_hadith/issues/");
+                                  Get.back();
+                                }),
+                            MItems(
+                                text: 'About',
+                                pressed: () {
+                                  Get.back();
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => About());
+                                })
+                          ],
                         ),
-                        child: Text('Support',
-                            style: TextStyle(color: kLightPrimaryColor)),
-                      ),
-                    ),
-                  )
+                  );
+                },
+                hoverColor: theme.appBarTheme.backgroundColor,
+                splashColor: theme.appBarTheme.backgroundColor,
+                highlightColor: theme.appBarTheme.backgroundColor,
+                child: Container(
+                  constraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: isSmall ? 10 : 20,
+                      vertical: isSmall ? 7 : 10),
+                  decoration: BoxDecoration(
+                    color: kAccentColor,
+                    borderRadius:
+                    BorderRadius.circular(isSmall ? 17 : 20),
+                  ),
+                  child: Text('Support',
+                      style: TextStyle(color: kLightPrimaryColor)),
+                ),
+              ),
+            )
           ],
           leading: Padding(
             padding: const EdgeInsets.only(left: 15.0, top: 5.0),
@@ -224,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   clipBehavior: Clip.antiAlias,
                   child: ConstrainedBox(
                     constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight),
+                    BoxConstraints(minHeight: constraints.maxHeight),
                     child: IntrinsicHeight(
                       child: ValueListenableBuilder<bool>(
                           valueListenable: _isExtended,
@@ -272,11 +277,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                               labelType: NavigationRailLabelType.all,
                               trailing: IconButton(
-                                tooltip: 'Exit',
-                                icon: FaIcon(FontAwesomeIcons.signOutAlt),
-                                onPressed: () =>
-                                //todo: get dialog
-                                    SystemNavigator.pop(animated: true),
+                                  tooltip: 'Exit',
+                                  icon: FaIcon(FontAwesomeIcons.signOutAlt),
+                                  onPressed: ()
+                                  //todo: get dialog
+                                  {
+                                    SystemNavigator.pop(animated: true);
+                                  }
                               ),
                             );
                           }),
