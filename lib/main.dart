@@ -55,7 +55,7 @@ class _QuranHadithState extends State<QuranHadith> {
       ],
       localeResolutionCallback: localeCallback,
       supportedLocales:
-          QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
+      QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
       title: 'Qur’ān Hadith',
       darkTheme: darkTheme,
       themeMode: ThemeState.to.themeMode,
