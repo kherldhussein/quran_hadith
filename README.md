@@ -4,12 +4,11 @@ Qur’ān Hadith is an Online Islamic application with a fashion interface, smoo
 
 
 ### Supported Platforms
-- iOS
-- Android
-- Mac OS
 - Windows
-- Linux<br>
-**Currently developed for desktop 😊️**
+- Linux
+- ``` MacOs ```
+
+**Currently developed for desktop :)**
 
 ### Implemented Features
 
