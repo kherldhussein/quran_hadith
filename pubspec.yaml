@@ -31,8 +31,12 @@ dependencies:
   popover: ^0.2.6+2
   anim_search_bar: ^2.0.2
   animated_theme_switcher: ^2.0.1
-#  platform_device_id:
-#  process_run:
+  get_storage:
+  platform_device_id:
+  process_run:
+  just_audio: ^0.9.13
+  audio_video_progress_bar: ^0.9.0
+  rxdart: ^0.27.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -52,13 +56,7 @@ flutter:
         - asset: assets/fonts/Philosopher-Bold.ttf
         - asset: assets/fonts/Philosopher-Regular.ttf
         - asset: assets/fonts/Philosopher-Italic.ttf
-    - family: ReemKufi
-      fonts:
-        - asset: assets/fonts/ReemKufi-Regular.ttf
     - family: Quattrocento
       fonts:
         - asset: assets/fonts/Quattrocento-Regular.ttf
         - asset: assets/fonts/Quattrocento-Bold.ttf
-    - family: Quran 1
-      fonts:
-        - asset: assets/fonts/ar-Quran1.ttf
