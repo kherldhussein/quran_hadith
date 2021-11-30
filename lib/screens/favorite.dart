@@ -1,10 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/favorite.dart';
+import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
 class Favorite extends StatefulWidget {
@@ -20,6 +24,8 @@ class _FavoriteState extends State<Favorite> {
 
   @override
   Widget build(BuildContext context) {
+    bool favorite = Provider.of<OnFavorite>(context, listen: false).favorite;
+    var quranAPI = Provider.of<QuranAPI>(context);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
     final isSmall = isDisplayVerySmallDesktop(context);
@@ -45,37 +51,53 @@ class _FavoriteState extends State<Favorite> {
               Container(
                 height: size.height / 2,
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     // topRight: Radius.circular(30),
                   ),
                 ),
                 child: FutureBuilder(
-                    future: null,
-                    builder: (context,AsyncSnapshot snapshot) {
+                    future: quranAPI.getSuratList(),
+                    builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
-                        return Center(
-                          child: Lottie.asset('assets/anim/pulse.json'),
-                        );
+                        if (favorite == true)
+                          return GridView.builder(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isSmall ? 4 : 5,
+                                crossAxisSpacing: 20,
+                                mainAxisSpacing: 20,
+                                childAspectRatio: 1.6,
+                              ),
+                              itemCount: snapshot.data.length!,
+                              itemBuilder: (context, index) {
+                                return SuratTile(
+                                  colorO: kAccentColor,
+                                  isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
+                                  colorI: Color(0xffe0f5f0),
+                                  onFavorite: () {
+                                    setState(() {
+                                      Provider.of<OnFavorite>(context, listen: false).addFavorite(false, 4);
+                                      SpUtil.setFavorite(false);
+                                    });
+                                  },
+                                  radius: 20,
+                                  ayahList: snapshot.data.surahs[index].ayahs,
+                                  suratNo: snapshot.data.surahs[index].number,
+                                  icon: FontAwesomeIcons.heart,
+                                  revelationType:
+                                  snapshot.data.surahs[index].revelationType,
+                                  englishTrans: snapshot
+                                      .data.surahs[index].englishNameTranslation,
+                                  englishName:
+                                  snapshot.data.surahs[index].englishName,
+                                  name: snapshot.data.surahs[index].name,
+                                );
+                              });
                       }
-                      return ListView.builder(
-                          itemCount: snapshot.data.length!,
-                          itemBuilder: (context, index) {
-                            return SuratTile(
-                              colorO: kAccentColor,
-                              isFavorite: true,
-                              colorI: Color(0xffe0f5f0),
-                              radius: 20,
-                              ayahList: snapshot.data!.ayahList,
-                              suratNo: snapshot.data!.suratIndex,
-                              icon: FontAwesomeIcons.heart,
-                              revelationType: snapshot.data!.suratRevelation,
-                              englishTrans: snapshot.data.englishTrans,
-                              englishName: snapshot.data.suratEnName,
-                              name: snapshot.data.suratName,
-                            );
-                          });
+                      return Container(
+                        child: Center(child: CupertinoActivityIndicator(radius: 50)),
+                      );
                     }),
               ),
               FutureBuilder(
@@ -83,16 +105,17 @@ class _FavoriteState extends State<Favorite> {
                   builder: (context, snapshot) {
                     return Container(
                       child: Card(
-                        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        margin:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
-                          contentPadding:
-                          EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 20),
                         ),
                       ),
                     );
-                  }
-              )
+                  })
             ],
           ),
         ),

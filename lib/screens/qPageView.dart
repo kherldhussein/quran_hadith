@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/notifications.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -45,30 +49,40 @@ class QPageView extends StatefulWidget {
 }
 
 class _QPageViewState extends State<QPageView> {
-  var controller;
+  PlayerState? _audioPlayerState;
+  PlayerState _playerState = PlayerState.STOPPED;
+  AutoScrollController controller = AutoScrollController();
   Surah? surah;
   bool isLoaded = false;
   bool isLoading = false;
   var list;
   var currentPlaying;
   final quranApi = QuranAPI();
+  Duration? _position;
+  Duration? _duration;
+  late AudioPlayer _audioPlayer;
+  PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
+
+  bool get _isPlaying => _playerState == PlayerState.PLAYING;
+
+  bool get _isPlayingThroughEarpiece =>
+      _playingRouteState == PlayingRoute.EARPIECE;
+
+  String get _positionText => _position?.toString().split('.').first ?? '';
+
+  bool get _isPaused => _playerState == PlayerState.PAUSED;
+
+  String get _durationText => _duration?.toString().split('.').first ?? '';
+  StreamSubscription? _durationSubscription;
+  StreamSubscription? _positionSubscription;
+  StreamSubscription? _playerCompleteSubscription;
+  StreamSubscription? _playerErrorSubscription;
+  StreamSubscription? _playerStateSubscription;
+  StreamSubscription<PlayerControlCommand>? _playerControlCommandSubscription;
 
   @override
   void initState() {
-    ///  to hide only status bar:
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-    controller = AutoScrollController(axis: Axis.vertical);
-    if (SchedulerBinding.instance!.schedulerPhase ==
-        SchedulerPhase.persistentCallbacks) {
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
-        // if (widget.surah.readVerseCount > 0) {
-        //   controller.scrollToIndex(
-        //     widget.surah.readVerseCount,
-        //     preferPosition: AutoScrollPosition.middle,
-        //   );
-        // }
-      });
-    }
+    _initAudioPlayer();
     super.initState();
   }
 
@@ -206,26 +220,26 @@ class _QPageViewState extends State<QPageView> {
     );
   }
 
-  setFavorite(int? index) async {
-    SharedPreferences sp = await SharedPreferences.getInstance();
-    if (sp.getStringList('favorite')!.contains('$index')) {
-      // add to favorite
-      String newValue = '$index';
-      List<String> oldFavorite = sp.getStringList('favorite')!;
-      oldFavorite.add(newValue);
-      List<String> favorite = oldFavorite;
-      sp.setStringList('favorite', favorite);
-      setState(() {});
-    } else {
-      // remove from favorite
-      String newValue = '$index';
-      List<String> oldFavorite = sp.getStringList('favorite')!;
-      oldFavorite.remove(newValue);
-      List<String> favorite = oldFavorite;
-      sp.setStringList('favorite', favorite);
-      setState(() {});
-    }
-  }
+  // setFavorite(int? index) async {
+  //   SharedPreferences sp = await SharedPreferences.getInstance();
+  //   if (sp.getStringList('FAVORITE')!.contains('$index')) {
+  //     // add to favorite
+  //     String newValue = '$index';
+  //     List<String> oldFavorite = sp.getStringList('FAVORITE')!;
+  //     oldFavorite.add(newValue);
+  //     List<String> favorite = oldFavorite;
+  //     sp.setStringList('FAVORITE', favorite);
+  //     setState(() {});
+  //   } else {
+  //     // remove from favorite
+  //     String newValue = '$index';
+  //     List<String> oldFavorite = sp.getStringList('FAVORITE')!;
+  //     oldFavorite.remove(newValue);
+  //     List<String> favorite = oldFavorite;
+  //     sp.setStringList('FAVORITE', favorite);
+  //     setState(() {});
+  //   }
+  // }
 
   Widget qTile(int index, context) {
     Locale locale = Localizations.localeOf(context);
@@ -250,7 +264,7 @@ class _QPageViewState extends State<QPageView> {
           children: [
             AutoSizeText(
               widget.ayahList![index].text!.replaceFirst(
-                  'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                  'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيم',
                   '\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ'),
               textAlign: TextAlign.right,
               style: TextStyle(
@@ -276,8 +290,9 @@ class _QPageViewState extends State<QPageView> {
                               ? Theme.of(context).buttonColor
                               : Colors.greenAccent,
                         ),
-                        onPressed: () =>
-                            setFavorite(widget.ayahList![index].number),
+                        onPressed: () {
+                          // setFavorite(widget.ayahList![index].number)
+                        },
                       );
                     }),
                 IconButton(
@@ -298,12 +313,68 @@ class _QPageViewState extends State<QPageView> {
                       );
                     }),
               ],
-            )
-            // FutureBuilder(
-            //     // future: quranApi.getAyaAudio(ayaNo: widget.aya.number),
-            //     builder: (context, snapshot) {
-            //       return ;
-            //     })
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  key: const Key('play_button'),
+                  onPressed: () {
+                    _isPlaying ? null : _play(widget.ayahList![index].number!);
+                  },
+                  icon: const Icon(FontAwesomeIcons.playCircle),
+                ),
+                Visibility(
+                  visible: _isPlaying,
+                  child: IconButton(
+                    key: const Key('pause_button'),
+                    onPressed: _isPlaying ? _pause : null,
+                    icon: const Icon(FontAwesomeIcons.pause),
+                  ),
+                ),
+                Visibility(
+                  visible: _isPlaying,
+                  child: IconButton(
+                    key: const Key('stop_button'),
+                    onPressed: _isPlaying || _isPaused ? _stop : null,
+                    icon: const Icon(FontAwesomeIcons.stopCircle),
+                  ),
+                ),
+                Visibility(
+                  visible: _isPlaying,
+                  child: IconButton(
+                    onPressed: _earpieceOrSpeakersToggle,
+                    icon: _isPlayingThroughEarpiece
+                        ? const Icon(FontAwesomeIcons.volumeUp)
+                        : const Icon(FontAwesomeIcons.headset),
+                  ),
+                ),
+              ],
+            ),
+            Visibility(
+              visible: _isPlaying,
+              child: Slider(
+                onChanged: (v) {
+                  final duration = _duration;
+                  if (duration == null) {
+                    return;
+                  }
+                  final Position = v * duration.inMilliseconds;
+                  _audioPlayer.seek(Duration(milliseconds: Position.round()));
+                },
+                value: (_position != null &&
+                        _duration != null &&
+                        _position!.inMilliseconds > 0 &&
+                        _position!.inMilliseconds < _duration!.inMilliseconds)
+                    ? _position!.inMilliseconds / _duration!.inMilliseconds
+                    : 0.0,
+                label: _position != null
+                    ? '$_positionText / $_durationText'
+                    : _duration != null
+                        ? _durationText
+                        : '',
+              ),
+            ),
           ],
         ),
       ),
@@ -321,14 +392,136 @@ class _QPageViewState extends State<QPageView> {
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+    _audioPlayer.dispose();
+    _durationSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+    _playerErrorSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    _playerControlCommandSubscription?.cancel();
     super.dispose();
+  }
+
+  void _initAudioPlayer() {
+    _audioPlayer = AudioPlayer();
+
+    _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
+      setState(() => _duration = duration);
+
+      if (Theme.of(context).platform == TargetPlatform.iOS) {
+        // optional: listen for notification updates in the background
+        _audioPlayer.notificationService.startHeadlessService();
+
+        // set at least title to see the notification bar on ios.
+        _audioPlayer.notificationService.setNotification(
+          title: 'Qur’ān Hadith',
+          artist: 'Hani Rifai',
+          albumTitle: 'Qur’ān',
+          imageUrl: 'URL',
+          forwardSkipInterval: const Duration(seconds: 30),
+          backwardSkipInterval: const Duration(seconds: 30),
+          duration: duration,
+          enableNextTrackButton: true,
+          enablePreviousTrackButton: true,
+        );
+      }
+    });
+
+    _positionSubscription =
+        _audioPlayer.onAudioPositionChanged.listen((p) => setState(() {
+              _position = p;
+            }));
+
+    _playerCompleteSubscription =
+        _audioPlayer.onPlayerCompletion.listen((event) {
+      _onComplete();
+      setState(() {
+        _position = _duration;
+      });
+    });
+
+    _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
+      setState(() {
+        _playerState = PlayerState.STOPPED;
+        _duration = const Duration();
+        _position = const Duration();
+      });
+    });
+
+    _playerControlCommandSubscription =
+        _audioPlayer.notificationService.onPlayerCommand.listen((command) {});
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _audioPlayerState = state;
+        });
+      }
+    });
+
+    _audioPlayer.onNotificationPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() => _audioPlayerState = state);
+      }
+    });
+
+    _playingRouteState = PlayingRoute.SPEAKERS;
+  }
+
+  Future<int> _play(int ayaNo) async {
+    final playPosition = (_position != null &&
+            _duration != null &&
+            _position!.inMilliseconds > 0 &&
+            _position!.inMilliseconds < _duration!.inMilliseconds)
+        ? _position
+        : null;
+    final result = await _audioPlayer.play(
+        'https://cdn.alquran.cloud/media/audio/ayah/Hani Rifai/$ayaNo',
+        position: playPosition);
+    if (result == 1) {
+      setState(() => _playerState = PlayerState.PLAYING);
+    }
+// بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ يَٰٓأَيُّهَا ٱلنَّاسُ ٱتَّقُوا۟ رَبَّكُمُ ٱلَّذِى خَلَقَكُم مِّن نَّفْسٍۢ وَٰحِدَةٍۢ وَخَلَقَ مِنْهَا زَوْجَهَا وَبَثَّ مِنْهُمَا رِجَالًۭا كَثِيرًۭا وَنِسَآءًۭ ۚ وَٱتَّقُوا۟ ٱللَّهَ ٱلَّذِى تَسَآءَلُونَ بِهِۦ وَٱلْأَرْحَامَ ۚ إِنَّ ٱللَّهَ كَانَ عَلَيْكُمْ رَقِيبًۭا
+    _audioPlayer.setPlaybackRate();
+
+    return result;
+  }
+
+  Future<int> _pause() async {
+    final result = await _audioPlayer.pause();
+    if (result == 1) {
+      setState(() => _playerState = PlayerState.PAUSED);
+    }
+    return result;
+  }
+
+  Future<int> _earpieceOrSpeakersToggle() async {
+    final result = await _audioPlayer.earpieceOrSpeakersToggle();
+    if (result == 1) {
+      setState(() => _playingRouteState = _playingRouteState.toggle());
+    }
+    return result;
+  }
+
+  Future<int> _stop() async {
+    final result = await _audioPlayer.stop();
+    if (result == 1) {
+      setState(() {
+        _playerState = PlayerState.STOPPED;
+        _position = const Duration();
+      });
+    }
+    return result;
+  }
+
+  void _onComplete() {
+    setState(() => _playerState = PlayerState.STOPPED);
   }
 }
 
 favorite(index) async {
   SharedPreferences sp = await SharedPreferences.getInstance();
-  if (sp.getStringList('favorite')!.contains('$index')) {
+  if (sp.getStringList('FAVORITE')!.contains('$index')) {
     return true;
   } else {
     return false;

@@ -25,66 +25,62 @@ class _SettingsState extends State<Settings> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 AppBar(
-                  title: Text('Preferences'),
+                  title: Text(
+                    'Preferences',
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyText2?.color),
+                  ),
                   centerTitle: true,
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                 ),
-                SettingsTitle(title: 'Customize Your Experience'),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(6, 8, 6, 8),
+                  child: Text('Customize Your Experience'),
+                ),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ActionChip(
                       label: Text('Light'),
+                      backgroundColor:
+                          Theme.of(context).chipTheme.backgroundColor,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Theme.of(context).backgroundColor),
+                        borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20)),
+                      ),
                       onPressed: () =>
                           ThemeState.to.updateTheme(ThemeMode.light),
                     ),
                     ActionChip(
+                      label: Text('System Theme'),
+                      tooltip: 'On supported device only`',
+                      onPressed: () =>
+                          ThemeState.to.updateTheme(ThemeMode.system),
+                    ),
+                    ActionChip(
                       label: Text('Dark'),
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Theme.of(context).backgroundColor),
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            bottomLeft: Radius.circular(20)),
+                      ),
                       onPressed: () =>
                           ThemeState.to.updateTheme(ThemeMode.dark),
                     ),
                   ],
-                ),
-                /// Upgrade
-                // Row(
-                //   children: [
-                //     Container(
-                //       decoration: BoxDecoration(
-                //         color: Theme.of(context).chipTheme.backgroundColor,
-                //         borderRadius: BorderRadius.only(
-                //             topLeft: Radius.circular(20),
-                //             bottomLeft: Radius.circular(20)),
-                //       ),
-                //       child: Center(child: Text("Light")),width: 50,
-                //     ),  SettingsTitle(title: 'Customize Your Experience'),  Container(
-                //       decoration: BoxDecoration(
-                //         color: Theme.of(context).primaryColorDark,
-                //         borderRadius: BorderRadius.only(
-                //             topRight: Radius.circular(20),
-                //             bottomRight: Radius.circular(20)),
-                //       ),
-                //       child: Center(child: Text("Dark")),width: 50,
-                //     ),
-                //   ],
-                // )
+                )
               ],
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-class SettingsTitle extends StatelessWidget {
-  final String? title;
-
-  const SettingsTitle({Key? key, this.title}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-        padding: EdgeInsets.fromLTRB(6, 8, 6, 8), child: Text(title!));
   }
 }
