@@ -4,25 +4,28 @@ import 'package:bubble_tab_indicator/bubble_tab_indicator.dart';
 import 'package:flutter/material.dart';
 
 /// Application theme
-
+// 013f2f
+// #209f6f
+// #021a13
+// #06291d
 const kLightSecondaryColor = Color(0xffdae1e7);
-const kDarkSecondaryColor = Color(0xff01AC68);
+const kDarkSecondaryColor = Color(0xff013f2f);
 const kLightPrimaryColor = Color(0xffdae1e7);
 const kDarkPrimaryColor = Color(0xFF1B1B1B);
 const kBackgroundLight = Color(0xffffffff);
 const kBackgroundDark = Color(0xFF2A2A2A);
 const kDividerLight = Color(0xFFFFFFFF);
 const kDividerDark = Color(0xFF3D3D3D);
-const kAccentColor = Color(0xff01AC68);
+const kAccentColor = Color(0xff209f6f);
 const kTextLighter = Color(0xFFFBFBFB);
 const kTextDarker = Color(0xFF17262A);
 const kTextDark = Color(0xFF3D3D3D);
 const kTextLight = Color(0xFFEEEEEE);
 const kDarkColor = Color(0xFF000000);
 const kIconDark = Color(0xFF666666);
-const kOrange = Color(0xff01AC68);
+const kOrange = Color(0xff021a13);
 const kLight = Color(0xFFFDFDFD);
-const kDark = Color(0xFF262626);
+const kDark = Color(0xff021a13);
 const kLinkC = Color(0xFF249ffd);
 
 final circularIndicator = CircularProgressIndicator(

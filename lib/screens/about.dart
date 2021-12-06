@@ -100,7 +100,7 @@ class _AboutViewState extends State<AboutView>
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        Image.asset('assets/images/logo.png', scale: 9),
+                        Image.asset('assets/images/Logo.png',color: Color(0xff06291d),scale: 7,),
                         HeaderText(size: isSmall ? 30 : 40),
                       ],
                     ),
