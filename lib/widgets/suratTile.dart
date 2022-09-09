@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:popover/popover.dart';
@@ -16,6 +19,7 @@ class SuratTile extends StatefulWidget {
   final String? englishName;
   final bool? isFavorite;
   final IconData? icon;
+  final int? itemCount;
   final double? radius;
   final Color? colorI;
   final Color? colorO;
@@ -32,6 +36,7 @@ class SuratTile extends StatefulWidget {
     this.suratNo,
     this.ayahList,
     this.onFavorite,
+    this.itemCount,
     this.englishName,
     this.englishTrans,
     this.revelationType,
@@ -61,72 +66,62 @@ class _SuratTileState extends State<SuratTile> {
     return WidgetAnimator(
       Card(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(widget.radius!)),
-        child: ListTile(
-          onTap: () {
-            Get.to(QPageView(
-              suratName: widget.name,
-              suratNo: widget.suratNo,
-              ayahList: widget.ayahList,
-              isFavorite: widget.isFavorite,
-              englishMeaning: widget.englishTrans,
-              suratEnglishName: widget.englishName,
-            ));
-          },
-          onLongPress: () {
-            showPopover(
-              width: 230,
-              height: 230,
-              context: context,
-              backgroundColor: Theme.of(context).canvasColor,
-              bodyBuilder: (context) => SurahInformation(
-                revelationType: widget.revelationType,
-                englishName: widget.englishName,
-                ayahs: widget.ayahList!.length,
-                surahNumber: widget.suratNo,
-                arabicName: widget.name,
-              ),
-            );
-          },
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Chip(
-                label: AutoSizeText(
-                  locale.languageCode == 'ar'
-                      ? replaceArabicNumber(widget.suratNo.toString())
-                      : replaceArabicNumber(widget.suratNo.toString()),
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: widget.colorO, fontFamily: 'Amiri'),
+          borderRadius: BorderRadius.circular(widget.radius!),
+        ),
+        child: Listener(
+          onPointerDown: _onPopoverDown,
+          child: ListTile(
+            onTap: () {
+              Get.to(QPageView(
+                suratName: widget.name,
+                suratNo: widget.suratNo,
+                ayahList: widget.ayahList,
+                isFavorite: widget.isFavorite,
+                englishMeaning: widget.englishTrans,
+                suratEnglishName: widget.englishName,
+              ));
+            },
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Chip(
+                  label: AutoSizeText(
+                    locale.languageCode == 'ar'
+                        ? replaceArabicNumber(widget.suratNo.toString())
+                        : replaceArabicNumber(widget.suratNo.toString()),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: widget.colorO, fontFamily: 'Amiri'),
+                  ),
+                  backgroundColor: widget.colorI,
                 ),
-                backgroundColor: widget.colorI,
-              ),
-              IconButton(
-                icon: Icon(widget.icon,
-                    color:
-                        widget.isFavorite! ? Colors.green : Colors.lightGreen),
-                onPressed: widget.onFavorite,
-              )
-            ],
+                IconButton(
+                  icon: Icon(widget.icon,
+                      color: widget.isFavorite!
+                          ? Colors.green
+                          : Colors.lightGreen),
+                  onPressed: widget.onFavorite,
+                )
+              ],
+            ),
+            enableFeedback: true,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AutoSizeText(
+                  widget.englishName!,
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+                AutoSizeText(
+                  widget.englishTrans!,
+                  style: TextStyle(
+                      color: Color(0xffdae1e7), fontWeight: FontWeight.w300),
+                ),
+              ],
+            ),
+            // trailing: AutoSizeText(widget.name),
           ),
-          enableFeedback: true,
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AutoSizeText(
-                widget.englishName!,
-                style:
-                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              AutoSizeText(
-                widget.englishTrans!,
-                style: TextStyle(
-                    color: Color(0xffdae1e7), fontWeight: FontWeight.w300),
-              ),
-            ],
-          ),
-          // trailing: AutoSizeText(widget.name),
         ),
       ),
     );
@@ -139,5 +134,26 @@ class _SuratTileState extends State<SuratTile> {
       input = input.replaceAll(english[i], arabic[i]);
     }
     return input;
+  }
+
+  /// Callback when mouse clicked on `Listener` wrapped widget.
+  Future<void> _onPopoverDown(PointerDownEvent event) async {
+    // Check if right mouse button clicked
+    if (event.kind == PointerDeviceKind.mouse &&
+        event.buttons == kSecondaryMouseButton) {
+      showPopover(
+        width: 230,
+        height: 230,
+        context: context,
+        backgroundColor: Theme.of(context).canvasColor,
+        bodyBuilder: (context) => SurahInformation(
+          revelationType: widget.revelationType,
+          englishName: widget.englishName,
+          ayahs: widget.ayahList!.length,
+          surahNumber: widget.suratNo,
+          arabicName: widget.name,
+        ),
+      );
+    }
   }
 }
