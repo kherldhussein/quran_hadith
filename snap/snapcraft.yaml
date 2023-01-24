@@ -8,10 +8,16 @@ confinement: strict
 base: core18
 grade: stable # must be 'stable' to release into candidate/stable channels
 
+slots:
+  dbus-quran-hadith:
+    interface: dbus
+    bus: session
+    name: com.kherld.quran_hadith
+
 apps:
   quran-hadith:
-    command: quran-hadith
-    extensions: [flutter-master] # Where "master" defines which Flutter channel to use for the build
+    command: quran_hadith
+    extensions: [flutter-stable] # Where "stable" defines which Flutter channel to use for the build
     plugs:
       - network
 
