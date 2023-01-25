@@ -7,4 +7,5 @@ Icon=${SNAP}/meta/gui/logo.png
 Terminal=false
 Type=Application
 Categories=Education
+GenericName=QH
 Keywords=Education,Flutter,Islam,Quran,Hadith;
