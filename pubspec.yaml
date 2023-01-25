@@ -4,43 +4,42 @@ description: Qur'an & Hadith
 publish_to: none
 version: 1.0.0+1
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.18.6 <3.0.0'
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.3
-  http: ^0.13.3
-  intl: ^0.17.0
-  font_awesome_flutter: ^9.1.0
-  bubble_tab_indicator: ^0.1.6
-  shimmer: ^2.0.0
-  shared_preferences: ^2.0.7
-  auto_size_text: ^3.0.0-nullsafety.0
-  url_launcher: ^6.0.9
-  lottie: ^1.1.0
-  provider: ^6.0.0
-  get: ^4.3.8
-  adaptive_breakpoints: ^0.1.0
-  audioplayers: ^0.19.1
-  package_info: ^2.0.2
-  flutter_animated_dialog: ^2.0.1
-  scroll_to_index: ^2.0.0
-  animations: ^2.0.1
-  popover: ^0.2.6+2
-  anim_search_bar: ^2.0.2
-  animated_theme_switcher: ^2.0.1
+  http:
+  intl:
+  font_awesome_flutter:
+  bubble_tab_indicator:
+  shimmer:
+  shared_preferences:
+  auto_size_text:
+  lottie:
+  provider:
+  get:
+  adaptive_breakpoints:
+#  audioplayers: ^0.19.1
+  package_info:
+  flutter_animated_dialog:
+  scroll_to_index:
+  animations:
+  popover:
+  anim_search_bar:
+  animated_theme_switcher:
   get_storage:
   platform_device_id:
   process_run:
-  just_audio: ^0.9.13
-  audio_video_progress_bar: ^0.9.0
-  rxdart: ^0.27.2
-  coachmaker: ^0.1.1
-  desktop_notifications: ^0.6.1
-  macos_ui: ^0.10.0+1
-  dropdown_button2: ^1.0.6
+  just_audio:
+  audio_video_progress_bar:
+  rxdart:
+  coachmaker:
+  desktop_notifications:
+  dropdown_button2:
+  url_launcher: ^6.0.20
 dev_dependencies:
   flutter_test:
     sdk: flutter
