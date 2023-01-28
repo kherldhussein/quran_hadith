@@ -66,7 +66,7 @@ class _AboutViewState extends State<AboutView>
       appBar: AppBar(
         actions: [
           IconButton(
-            icon: FaIcon(FontAwesomeIcons.timesCircle),
+            icon: FaIcon(FontAwesomeIcons.circleXmark),
             tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
             onPressed: () => Navigator.of(context).pop(),
             splashRadius: 10,
@@ -100,7 +100,11 @@ class _AboutViewState extends State<AboutView>
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        Image.asset('assets/images/Logo.png',color: Color(0xff06291d),scale: 7,),
+                        Image.asset(
+                          'assets/images/Logo.png',
+                          color: Color(0xff06291d),
+                          scale: 7,
+                        ),
                         HeaderText(size: isSmall ? 30 : 40),
                       ],
                     ),
@@ -112,7 +116,7 @@ class _AboutViewState extends State<AboutView>
                   SizedBox(height: 20),
                   Text(
                     'Qur’ān Hadith is an Online Quran and Hadith application with fashion interface, smooth performance and more features '
-                        'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
+                    'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
                     style: theme.headline6,
                   )
                 ],
@@ -131,7 +135,7 @@ class _AboutViewState extends State<AboutView>
                   child: Container(
                     child: SingleChildScrollView(
                       scrollDirection:
-                      isSmall ? Axis.horizontal : Axis.vertical,
+                          isSmall ? Axis.horizontal : Axis.vertical,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -167,7 +171,8 @@ class _AboutViewState extends State<AboutView>
                             fontFamily: 'Quattrocento',
                             color: kLinkC),
                       ),
-                      onTap: () => launch('mailto:kherld11@gmail.com'),
+                      onTap: () =>
+                          launchUrl(Uri.parse('mailto:kherld11@gmail.com')),
                     ),
                   ),
                 ),
@@ -177,15 +182,15 @@ class _AboutViewState extends State<AboutView>
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
             child: Scrollbar(
-              isAlwaysShown: true,
+              thumbVisibility: true,
               controller: ScrollController(),
               child: ListView(
                 padding: EdgeInsets.all(10),
                 children: [
                   Text(
                     "Qur’ān Hadith is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
-                        "the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah, "
-                        "You should have received a copy of the GNU General Public License along with this program. \nIf not, see",
+                    "the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah, "
+                    "You should have received a copy of the GNU General Public License along with this program. \nIf not, see",
                     style: theme.headline6,
                   ),
                   InkWell(
@@ -196,7 +201,8 @@ class _AboutViewState extends State<AboutView>
                       "http://www.gnu.org/licenses/",
                       style: theme.headline6!.copyWith(color: kLinkC),
                     ),
-                    onTap: () => launch("http://www.gnu.org/licenses/"),
+                    onTap: () =>
+                        launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
                   )
                 ],
               ),
