@@ -6,11 +6,8 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
-import 'package:quran_hadith/controller/audio_reciter.dart';
-import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
@@ -29,21 +26,23 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   bool isLoading = false;
   var list;
   final audioPlayer = AudioPlayer();
-  List<String> surahList = SuratList().surahName;
+
+  // List<String> surahList = SuratList().surahName;
   List<String> linkList = [];
   var currentPlaying;
   List<String> reciterList = [];
-  Map<String, String> map = AudioList().map;
+
+  // Map<String, String> map = AudioList().map;
   late Stream<DurationState> durationState;
 
   @override
   void initState() {
-    map.forEach(
-      (key, val) {
-        reciterList.add(key);
-        linkList.add(val);
-      },
-    );
+    // map.forEach(
+    //   (key, val) {
+    //     reciterList.add(key);
+    //     linkList.add(val);
+    //   },
+    // );
 
     durationState =
         rx.Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
@@ -109,15 +108,15 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           itemBuilder: (context, index) {
                             return SuratTile(
                               colorO: kAccentColor,
-                              isFavorite: Provider.of<OnFavorite>(context,
-                                      listen: false)
-                                  .favorite,
+                              // isFavorite: Provider.of<OnFavorite>(context,
+                              //         listen: false)
+                              //     .favorite,
                               onFavorite: () {
                                 setState(() {
-                                  Provider.of<OnFavorite>(context,
-                                          listen: false)
-                                      .addFavorite(true,
-                                          snapshot.data.surahs[index].number);
+                                  // Provider.of<OnFavorite>(context,
+                                  //         listen: false)
+                                  //     .addFavorite(true,
+                                  //         snapshot.data.surahs[index].number);
                                   SpUtil.setFavorite(true);
                                 });
                               },
@@ -174,8 +173,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       subtitle: Column(
                         children: [
-                          Text(
-                              'Sūrah ${Provider.of<AudioReciter>(context, listen: false).surah! + surahList[surahIndex]}'),
+                          Text('Sūrah'),
                           GestureDetector(
                               onTap: () {
                                 Get.dialog(
@@ -202,13 +200,13 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                                       RegExp(r'_'), ' ')),
                                               onTap: () {
                                                 setState(() {
-                                                  Provider.of<AudioReciter>(
-                                                          context,
-                                                          listen: false)
-                                                      .getReciters(
-                                                          reciterList[index]);
-                                                  SpUtil.setReciter(
-                                                      reciterList[index]);
+                                                  // Provider.of<AudioReciter>(
+                                                  //         context,
+                                                  //         listen: false)
+                                                  //     .getReciters(
+                                                  //         reciterList[index]);
+                                                  // SpUtil.setReciter(
+                                                  //     reciterList[index]);
                                                 });
                                                 Get.back();
                                               },
@@ -218,21 +216,22 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                   ),
                                 );
                               },
-                              child: Text(
-                                  'Reciter: ${Provider.of<AudioReciter>(context, listen: false).reciters!.capitalizeFirst!.replaceAll(RegExp(r'_'), ' ')}'))
+                              child: Text('Reciter: '))
                         ],
                       ),
                       trailing: IconButton(
-                        icon: FaIcon(FontAwesomeIcons.headphonesAlt),
+                        icon: FaIcon(FontAwesomeIcons.headphonesSimple),
                         onPressed: () {
                           Get.dialog(
                             AlertDialog(
-                              backgroundColor: Colors.transparent,elevation: 0,
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
                               content: Container(
                                 width: MediaQuery.of(context).size.width * 0.7,
                                 color: Colors.transparent,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     GestureDetector(
                                       onTap: () async {
@@ -256,8 +255,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         audioPlayer.play();
                                       },
                                       child: Container(
-                                        height: MediaQuery.of(context).size.width * 0.12,
-                                        width: MediaQuery.of(context).size.width * 0.12,
+                                        height:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
@@ -285,12 +288,16 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         audioPlayer.setVolume(1);
                                       },
                                       child: Container(
-                                        height: MediaQuery.of(context).size.width * 0.15,
-                                        width: MediaQuery.of(context).size.width * 0.15,
+                                        height:
+                                            MediaQuery.of(context).size.width *
+                                                0.15,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.15,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image:
-                                            AssetImage('assets/images/logo.png'),
+                                            image: AssetImage(
+                                                'assets/images/logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
@@ -301,12 +308,16 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         await audioPlayer.pause();
                                       },
                                       child: Container(
-                                        height: MediaQuery.of(context).size.width * 0.12,
-                                        width: MediaQuery.of(context).size.width * 0.12,
+                                        height:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image:
-                                            AssetImage('assets/images/logo.png'),
+                                            image: AssetImage(
+                                                'assets/images/logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
@@ -331,8 +342,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         audioPlayer.play();
                                       },
                                       child: Container(
-                                        height: MediaQuery.of(context).size.width * 0.12,
-                                        width: MediaQuery.of(context).size.width * 0.12,
+                                        height:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.12,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
@@ -369,7 +384,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               baseBarColor:
                                   CupertinoColors.extraLightBackgroundGray,
                               onSeek: (duration) {
-                               audioPlayer.seek(duration);
+                                audioPlayer.seek(duration);
                               },
                             );
                           }),
