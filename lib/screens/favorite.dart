@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
@@ -24,16 +23,16 @@ class _FavoriteState extends State<Favorite> {
 
   @override
   Widget build(BuildContext context) {
-    bool favorite = Provider.of<OnFavorite>(context, listen: false).favorite;
+    // bool favorite = Provider.of<OnFavorite>(context, listen: false).favorite;
     var quranAPI = Provider.of<QuranAPI>(context);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
     final isSmall = isDisplayVerySmallDesktop(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).appBarTheme.color,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: Container(
         constraints: BoxConstraints(minWidth: 0),
-        color: theme.appBarTheme.color,
+        color: theme.appBarTheme.backgroundColor,
         child: Container(
           width: isSmall ? size.width - 300 : size.width,
           constraints: BoxConstraints(minWidth: 0),
@@ -60,62 +59,68 @@ class _FavoriteState extends State<Favorite> {
                     future: quranAPI.getSuratList(),
                     builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
-                        if (favorite == true)
-                          return GridView.builder(
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: isSmall ? 4 : 5,
-                                crossAxisSpacing: 20,
-                                mainAxisSpacing: 20,
-                                childAspectRatio: 1.6,
-                              ),
-                              itemCount: snapshot.data.length!,
-                              itemBuilder: (context, index) {
-                                return SuratTile(
-                                  colorO: kAccentColor,
-                                  isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
-                                  colorI: Color(0xffe0f5f0),
-                                  onFavorite: () {
-                                    setState(() {
-                                      Provider.of<OnFavorite>(context, listen: false).addFavorite(false, 4);
-                                      SpUtil.setFavorite(false);
-                                    });
-                                  },
-                                  radius: 20,
-                                  ayahList: snapshot.data.surahs[index].ayahs,
-                                  suratNo: snapshot.data.surahs[index].number,
-                                  icon: FontAwesomeIcons.heart,
-                                  revelationType:
-                                  snapshot.data.surahs[index].revelationType,
-                                  englishTrans: snapshot
-                                      .data.surahs[index].englishNameTranslation,
-                                  englishName:
-                                  snapshot.data.surahs[index].englishName,
-                                  name: snapshot.data.surahs[index].name,
-                                );
-                              });
+                        // if (favorite == true)
+                        return GridView.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: isSmall ? 4 : 5,
+                              crossAxisSpacing: 20,
+                              mainAxisSpacing: 20,
+                              childAspectRatio: 1.6,
+                            ),
+                            itemCount: snapshot.data.length!,
+                            itemBuilder: (context, index) {
+                              return SuratTile(
+                                colorO: kAccentColor,
+                                // isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
+                                colorI: Color(0xffe0f5f0),
+                                onFavorite: () {
+                                  setState(() {
+                                    Provider.of<OnFavorite>(context,
+                                            listen: false)
+                                        .addFavorite(false);
+                                    SpUtil.setFavorite(false);
+                                  });
+                                },
+                                radius: 20,
+                                ayahList: snapshot.data.surahs[index].ayahs,
+                                suratNo: snapshot.data.surahs[index].number,
+                                icon: FontAwesomeIcons.heart,
+                                revelationType:
+                                    snapshot.data.surahs[index].revelationType,
+                                englishTrans: snapshot
+                                    .data.surahs[index].englishNameTranslation,
+                                englishName:
+                                    snapshot.data.surahs[index].englishName,
+                                name: snapshot.data.surahs[index].name,
+                              );
+                            });
                       }
                       return Container(
-                        child: Center(child: CupertinoActivityIndicator(radius: 50)),
+                        child: Center(
+                            child: CupertinoActivityIndicator(radius: 50)),
                       );
                     }),
               ),
               FutureBuilder(
-                  future: null,
-                  builder: (context, snapshot) {
-                    return Container(
-                      child: Card(
-                        margin:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 15, vertical: 20),
+                future: null,
+                builder: (context, snapshot) {
+                  return Container(
+                    child: Card(
+                      margin:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 20,
                         ),
                       ),
-                    );
-                  })
+                    ),
+                  );
+                },
+              )
             ],
           ),
         ),
