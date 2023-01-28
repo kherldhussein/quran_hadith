@@ -1,11 +1,7 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
-import 'package:audioplayers/notifications.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -49,8 +45,8 @@ class QPageView extends StatefulWidget {
 }
 
 class _QPageViewState extends State<QPageView> {
-  PlayerState? _audioPlayerState;
-  PlayerState _playerState = PlayerState.STOPPED;
+  // PlayerState? _audioPlayerState;
+  // PlayerState _playerState = PlayerState.STOPPED;
   AutoScrollController controller = AutoScrollController();
   Surah? surah;
   bool isLoaded = false;
@@ -60,17 +56,20 @@ class _QPageViewState extends State<QPageView> {
   final quranApi = QuranAPI();
   Duration? _position;
   Duration? _duration;
-  late AudioPlayer _audioPlayer;
-  PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
+  // late AudioPlayer _audioPlayer;
+  // PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
 
-  bool get _isPlaying => _playerState == PlayerState.PLAYING;
+  // late AudioPlayer _audioPlayer;
+  // PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
 
-  bool get _isPlayingThroughEarpiece =>
-      _playingRouteState == PlayingRoute.EARPIECE;
+  // bool get _isPlaying => _playerState == PlayerState.PLAYING;
+
+  // bool get _isPlayingThroughEarpiece =>
+  //     _playingRouteState == PlayingRoute.EARPIECE;
 
   String get _positionText => _position?.toString().split('.').first ?? '';
 
-  bool get _isPaused => _playerState == PlayerState.PAUSED;
+  // bool get _isPaused => _playerState == PlayerState.PAUSED;
 
   String get _durationText => _duration?.toString().split('.').first ?? '';
   StreamSubscription? _durationSubscription;
@@ -78,7 +77,8 @@ class _QPageViewState extends State<QPageView> {
   StreamSubscription? _playerCompleteSubscription;
   StreamSubscription? _playerErrorSubscription;
   StreamSubscription? _playerStateSubscription;
-  StreamSubscription<PlayerControlCommand>? _playerControlCommandSubscription;
+
+  // StreamSubscription<PlayerControlCommand>? _playerControlCommandSubscription;
 
   @override
   void initState() {
@@ -108,8 +108,8 @@ class _QPageViewState extends State<QPageView> {
         ),
         actions: [
           IconButton(
-            icon: FaIcon(FontAwesomeIcons.home,
-                color: Theme.of(context).buttonColor),
+            icon: FaIcon(FontAwesomeIcons.house,
+                color: Theme.of(context).primaryColor),
             splashRadius: 10,
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             onPressed: Get.back,
@@ -287,7 +287,7 @@ class _QPageViewState extends State<QPageView> {
                               ? FontAwesomeIcons.heart
                               : FontAwesomeIcons.solidHeart,
                           color: snapshot.data == true
-                              ? Theme.of(context).buttonColor
+                              ? Theme.of(context).primaryColor
                               : Colors.greenAccent,
                         ),
                         onPressed: () {
@@ -297,15 +297,15 @@ class _QPageViewState extends State<QPageView> {
                     }),
                 IconButton(
                     icon: Icon(
-                      FontAwesomeIcons.shareAlt,
-                      color: Theme.of(context).buttonColor,
+                      FontAwesomeIcons.shareNodes,
+                      color: Theme.of(context).primaryColor,
                     ),
                     onPressed: () => share.showShareDialog(
                         context: context, text: widget.ayahList![index].text)),
                 IconButton(
                     icon: Icon(
                       FontAwesomeIcons.copy,
-                      color: Theme.of(context).buttonColor,
+                      color: Theme.of(context).primaryColor,
                     ),
                     onPressed: () {
                       Clipboard.setData(
@@ -320,47 +320,46 @@ class _QPageViewState extends State<QPageView> {
                 IconButton(
                   key: const Key('play_button'),
                   onPressed: () {
-                    _isPlaying ? null : _play(widget.ayahList![index].number!);
+                    // _isPlaying ? null : _play(widget.ayahList![index].number!);
                   },
-                  icon: const Icon(FontAwesomeIcons.playCircle),
+                  icon: const Icon(FontAwesomeIcons.circlePlay),
                 ),
                 Visibility(
-                  visible: _isPlaying,
+                  visible: true,
                   child: IconButton(
                     key: const Key('pause_button'),
-                    onPressed: _isPlaying ? _pause : null,
+                    onPressed: null,
                     icon: const Icon(FontAwesomeIcons.pause),
                   ),
                 ),
                 Visibility(
-                  visible: _isPlaying,
+                  visible: true,
                   child: IconButton(
                     key: const Key('stop_button'),
-                    onPressed: _isPlaying || _isPaused ? _stop : null,
-                    icon: const Icon(FontAwesomeIcons.stopCircle),
+                    onPressed: null,
+                    icon: const Icon(FontAwesomeIcons.circleStop),
                   ),
                 ),
                 Visibility(
-                  visible: _isPlaying,
+                  visible: true,
                   child: IconButton(
-                    onPressed: _earpieceOrSpeakersToggle,
-                    icon: _isPlayingThroughEarpiece
-                        ? const Icon(FontAwesomeIcons.volumeUp)
-                        : const Icon(FontAwesomeIcons.headset),
-                  ),
+                      onPressed: () {},
+                      icon: const Icon(FontAwesomeIcons.volumeHigh)
+                      // : const Icon(FontAwesomeIcons.headset),
+                      ),
                 ),
               ],
             ),
             Visibility(
-              visible: _isPlaying,
+              visible: true,
               child: Slider(
                 onChanged: (v) {
                   final duration = _duration;
                   if (duration == null) {
                     return;
                   }
-                  final Position = v * duration.inMilliseconds;
-                  _audioPlayer.seek(Duration(milliseconds: Position.round()));
+                  // final Position = v * duration.inMilliseconds;
+                  // _audioPlayer.seek(Duration(milliseconds: Position.round()));
                 },
                 value: (_position != null &&
                         _duration != null &&
@@ -392,131 +391,131 @@ class _QPageViewState extends State<QPageView> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    // _audioPlayer.dispose();
     _durationSubscription?.cancel();
     _positionSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
     _playerErrorSubscription?.cancel();
     _playerStateSubscription?.cancel();
-    _playerControlCommandSubscription?.cancel();
+    // _playerControlCommandSubscription?.cancel();
     super.dispose();
   }
 
   void _initAudioPlayer() {
-    _audioPlayer = AudioPlayer();
+    // _audioPlayer = AudioPlayer();
 
-    _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
-      setState(() => _duration = duration);
+    // _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
+    //   setState(() => _duration = duration);
+    //
+    //   if (Theme.of(context).platform == TargetPlatform.iOS) {
+    //     // optional: listen for notification updates in the background
+    //     _audioPlayer.notificationService.startHeadlessService();
+    //
+    //     // set at least title to see the notification bar on ios.
+    //     _audioPlayer.notificationService.setNotification(
+    //       title: 'Qur’ān Hadith',
+    //       artist: 'Hani Rifai',
+    //       albumTitle: 'Qur’ān',
+    //       imageUrl: 'URL',
+    //       forwardSkipInterval: const Duration(seconds: 30),
+    //       backwardSkipInterval: const Duration(seconds: 30),
+    //       duration: duration,
+    //       enableNextTrackButton: true,
+    //       enablePreviousTrackButton: true,
+    //     );
+    //   }
+    // });
 
-      if (Theme.of(context).platform == TargetPlatform.iOS) {
-        // optional: listen for notification updates in the background
-        _audioPlayer.notificationService.startHeadlessService();
+    // _positionSubscription =
+    //     _audioPlayer.onAudioPositionChanged.listen((p) => setState(() {
+    //           _position = p;
+    //         }));
 
-        // set at least title to see the notification bar on ios.
-        _audioPlayer.notificationService.setNotification(
-          title: 'Qur’ān Hadith',
-          artist: 'Hani Rifai',
-          albumTitle: 'Qur’ān',
-          imageUrl: 'URL',
-          forwardSkipInterval: const Duration(seconds: 30),
-          backwardSkipInterval: const Duration(seconds: 30),
-          duration: duration,
-          enableNextTrackButton: true,
-          enablePreviousTrackButton: true,
-        );
-      }
-    });
+    // _playerCompleteSubscription =
+    //     _audioPlayer.onPlayerCompletion.listen((event) {
+    //   _onComplete();
+    //   setState(() {
+    //     _position = _duration;
+    //   });
+    // });
 
-    _positionSubscription =
-        _audioPlayer.onAudioPositionChanged.listen((p) => setState(() {
-              _position = p;
-            }));
-
-    _playerCompleteSubscription =
-        _audioPlayer.onPlayerCompletion.listen((event) {
-      _onComplete();
-      setState(() {
-        _position = _duration;
-      });
-    });
-
-    _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
-      setState(() {
-        _playerState = PlayerState.STOPPED;
-        _duration = const Duration();
-        _position = const Duration();
-      });
-    });
-
-    _playerControlCommandSubscription =
-        _audioPlayer.notificationService.onPlayerCommand.listen((command) {});
-
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() {
-          _audioPlayerState = state;
-        });
-      }
-    });
-
-    _audioPlayer.onNotificationPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() => _audioPlayerState = state);
-      }
-    });
-
-    _playingRouteState = PlayingRoute.SPEAKERS;
+    // _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
+    //   setState(() {
+    //     _playerState = PlayerState.STOPPED;
+    //     _duration = const Duration();
+    //     _position = const Duration();
+    //   });
+    // });
+    //
+    // _playerControlCommandSubscription =
+    //     _audioPlayer.notificationService.onPlayerCommand.listen((command) {});
+    //
+    // _audioPlayer.onPlayerStateChanged.listen((state) {
+    //   if (mounted) {
+    //     setState(() {
+    //       _audioPlayerState = state;
+    //     });
+    //   }
+    // });
+    //
+    // _audioPlayer.onNotificationPlayerStateChanged.listen((state) {
+    //   if (mounted) {
+    //     setState(() => _audioPlayerState = state);
+    //   }
+    // });
+    //
+    // _playingRouteState = PlayingRoute.SPEAKERS;
   }
 
-  Future<int> _play(int ayaNo) async {
-    final playPosition = (_position != null &&
-            _duration != null &&
-            _position!.inMilliseconds > 0 &&
-            _position!.inMilliseconds < _duration!.inMilliseconds)
-        ? _position
-        : null;
-    final result = await _audioPlayer.play(
-        'https://cdn.alquran.cloud/media/audio/ayah/Hani Rifai/$ayaNo',
-        position: playPosition);
-    if (result == 1) {
-      setState(() => _playerState = PlayerState.PLAYING);
-    }
+// Future<int> _play(int ayaNo) async {
+//   final playPosition = (_position != null &&
+//           _duration != null &&
+//           _position!.inMilliseconds > 0 &&
+//           _position!.inMilliseconds < _duration!.inMilliseconds)
+//       ? _position
+//       : null;
+//   // final result = await _audioPlayer.play(
+//   //     'https://cdn.alquran.cloud/media/audio/ayah/Hani Rifai/$ayaNo',
+//   //     position: playPosition);
+//   // if (result == 1) {
+//   //   setState(() => _playerState = PlayerState.PLAYING);
+//   }
 // بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ يَٰٓأَيُّهَا ٱلنَّاسُ ٱتَّقُوا۟ رَبَّكُمُ ٱلَّذِى خَلَقَكُم مِّن نَّفْسٍۢ وَٰحِدَةٍۢ وَخَلَقَ مِنْهَا زَوْجَهَا وَبَثَّ مِنْهُمَا رِجَالًۭا كَثِيرًۭا وَنِسَآءًۭ ۚ وَٱتَّقُوا۟ ٱللَّهَ ٱلَّذِى تَسَآءَلُونَ بِهِۦ وَٱلْأَرْحَامَ ۚ إِنَّ ٱللَّهَ كَانَ عَلَيْكُمْ رَقِيبًۭا
-    _audioPlayer.setPlaybackRate();
+//     _audioPlayer.setPlaybackRate();
 
-    return result;
-  }
+// return result;
+// }
 
-  Future<int> _pause() async {
-    final result = await _audioPlayer.pause();
-    if (result == 1) {
-      setState(() => _playerState = PlayerState.PAUSED);
-    }
-    return result;
-  }
+// Future<int> _pause() async {
+//   final result = await _audioPlayer.pause();
+//   if (result == 1) {
+//     setState(() => _playerState = PlayerState.PAUSED);
+//   }
+//   return result;
+// }
 
-  Future<int> _earpieceOrSpeakersToggle() async {
-    final result = await _audioPlayer.earpieceOrSpeakersToggle();
-    if (result == 1) {
-      setState(() => _playingRouteState = _playingRouteState.toggle());
-    }
-    return result;
-  }
+// Future<int> _earpieceOrSpeakersToggle() async {
+//   final result = await _audioPlayer.earpieceOrSpeakersToggle();
+//   if (result == 1) {
+//     setState(() => _playingRouteState = _playingRouteState.toggle());
+//   }
+//   return result;
+// }
 
-  Future<int> _stop() async {
-    final result = await _audioPlayer.stop();
-    if (result == 1) {
-      setState(() {
-        _playerState = PlayerState.STOPPED;
-        _position = const Duration();
-      });
-    }
-    return result;
-  }
+// Future<int> _stop() async {
+//   final result = await _audioPlayer.stop();
+//   if (result == 1) {
+//     setState(() {
+//       _playerState = PlayerState.STOPPED;
+//       _position = const Duration();
+//     });
+//   }
+//   return result;
+// }
 
-  void _onComplete() {
-    setState(() => _playerState = PlayerState.STOPPED);
-  }
+// void _onComplete() {
+//   setState(() => _playerState = PlayerState.STOPPED);
+// }
 }
 
 favorite(index) async {
