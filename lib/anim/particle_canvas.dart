@@ -14,10 +14,11 @@ class ParticleCanvas extends StatefulWidget {
 
 class _ParticleCanvasState extends State<ParticleCanvas>
     with TickerProviderStateMixin {
-  Animation<double>? animation;
+  late Animation<double>? animation;
   List<Offset> dots = [];
   List<List> lines = [];
-  late AnimationController controller, mouseController;
+  late AnimationController controller;
+  late AnimationController mouseController;
   Duration mouseDuration = Duration(milliseconds: 600);
   var random = Random();
   List<bool> rndDirection = [];
@@ -61,9 +62,10 @@ class _ParticleCanvasState extends State<ParticleCanvas>
             }
             dots[i] = Offset(dx!, dy!);
           }
-          drawlines();
+          drawLines();
         });
       });
+    mouseController = AnimationController(vsync: this, duration: mouseDuration);
     controller.repeat();
     changeDirection();
     super.initState();
@@ -78,7 +80,7 @@ class _ParticleCanvasState extends State<ParticleCanvas>
     }
   }
 
-  drawlines() {
+  drawLines() {
     lines = [];
     var distanceToDrawLine = 0.0;
     for (var i = 0; i < dots.length; i++) {
@@ -95,7 +97,6 @@ class _ParticleCanvasState extends State<ParticleCanvas>
   aMinusBSquare(a, b) => pow((a - b), 2);
 
   onHover(dx, dy) {
-    mouseController = AnimationController(vsync: this, duration: mouseDuration);
     mouseController.reset();
     double? mdx, mdy;
     var stopDistance = 60.0;
