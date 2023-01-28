@@ -10,7 +10,7 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).appBarTheme.color,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: Center(
         child: Container(
           width: 400,
