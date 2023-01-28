@@ -60,46 +60,47 @@ class _FavoriteState extends State<Favorite> {
                     builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
                         // if (favorite == true)
-                        return GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: isSmall ? 4 : 5,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                              childAspectRatio: 1.6,
-                            ),
-                            itemCount: snapshot.data.length!,
-                            itemBuilder: (context, index) {
-                              return SuratTile(
-                                colorO: kAccentColor,
-                                // isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
-                                colorI: Color(0xffe0f5f0),
-                                onFavorite: () {
-                                  setState(() {
-                                    Provider.of<OnFavorite>(context,
-                                            listen: false)
-                                        .addFavorite(false);
-                                    SpUtil.setFavorite(false);
-                                  });
-                                },
-                                radius: 20,
-                                ayahList: snapshot.data.surahs[index].ayahs,
-                                suratNo: snapshot.data.surahs[index].number,
-                                icon: FontAwesomeIcons.heart,
-                                revelationType:
-                                    snapshot.data.surahs[index].revelationType,
-                                englishTrans: snapshot
-                                    .data.surahs[index].englishNameTranslation,
-                                englishName:
-                                    snapshot.data.surahs[index].englishName,
-                                name: snapshot.data.surahs[index].name,
-                              );
-                            });
+                        return Container(
+                          child: Center(
+                            child: CupertinoActivityIndicator(radius: 50),
+                          ),
+                        );
                       }
-                      return Container(
-                        child: Center(
-                            child: CupertinoActivityIndicator(radius: 50)),
-                      );
+                      return GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: isSmall ? 4 : 5,
+                            crossAxisSpacing: 20,
+                            mainAxisSpacing: 20,
+                            childAspectRatio: 1.6,
+                          ),
+                          itemCount: snapshot.data.surahs.length,
+                          itemBuilder: (context, index) {
+                            return SuratTile(
+                              colorO: kAccentColor,
+                              // isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
+                              colorI: Color(0xffe0f5f0),
+                              onFavorite: () {
+                                setState(() {
+                                  Provider.of<OnFavorite>(context,
+                                          listen: false)
+                                      .addFavorite(false);
+                                  SpUtil.setFavorite(false);
+                                });
+                              },
+                              radius: 20,
+                              ayahList: snapshot.data.surahs[index].ayahs,
+                              suratNo: snapshot.data.surahs[index].number,
+                              icon: FontAwesomeIcons.heart,
+                              revelationType:
+                                  snapshot.data.surahs[index].revelationType,
+                              englishTrans: snapshot
+                                  .data.surahs[index].englishNameTranslation,
+                              englishName:
+                                  snapshot.data.surahs[index].englishName,
+                              name: snapshot.data.surahs[index].name,
+                            );
+                          });
                     }),
               ),
               FutureBuilder(

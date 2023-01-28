@@ -28,7 +28,7 @@ class SuratTile extends StatefulWidget {
     this.ayahList,
     this.onFavorite,
     this.suratNo,
-    this.isFavorite,
+    this.isFavorite = false,
     this.englishName,
     this.englishTrans,
     this.name,
