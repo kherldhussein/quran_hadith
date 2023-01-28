@@ -1,14 +1,11 @@
 import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:popover/popover.dart';
 import 'package:quran_hadith/controller/search.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/models/search/ayah.dart';
-import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/screens/about.dart';
 import 'package:quran_hadith/screens/favorite.dart';
 import 'package:quran_hadith/screens/hPage.dart';
@@ -56,7 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSmall = isDisplayVerySmallDesktop(context);
     final isSmallX = isDisplaySmallDesktop(context);
     double height = MediaQuery.of(context).size.height;
-    final theme = Theme.of(context);
     final searchFocusNode = FocusNode();
     final _searchBox = Padding(
       padding: const EdgeInsets.fromLTRB(30, 5, 10, 5),
@@ -75,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           suffixIcon: IconButton(
             splashRadius: 1,
-            icon: const Icon(FontAwesomeIcons.search, color: Colors.black),
+            icon: const Icon(FontAwesomeIcons.magnifyingGlass, color: Colors.black),
             onPressed: () {
               // showSearch(context: context, delegate: SearchWidget());
             },
@@ -107,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           searchController.clear();
                         });
                       },
+                      onSubmitted: (String) {},
                     )
                   : _searchBox,
               width: isSmall ? 100 : 350),
@@ -116,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 RoundCustomButton(children: [
                   Center(child: Text('Listen To Beautiful Recitation')),
-                ], icon: FontAwesomeIcons.headphonesAlt),
+                ], icon: FontAwesomeIcons.headphonesSimple),
                 SizedBox(width: isSmall ? 7 : 10),
                 RoundCustomButton(
                   children: [
@@ -140,27 +137,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           isSmall
               ? Container()
-              : RoundCustomButton2(
+              : RoundCustomButton(
                   children: [
                     MItems(
                         text: 'Donate on Patreon',
                         pressed: () {
-                          launch(
-                              "https://www.patreon.com/join/kherld/checkout?ru=undefined");
+                          launchUrl(Uri.parse("https://www.patreon.com/join/kherld/checkout?ru=undefined"));
                           Get.back();
                         }),
                     MItems(
                         text: 'Bug Report',
                         pressed: () {
-                          launch(
-                              "https://github.com/kherld-hussein/quran_hadith/issues/");
+                          launchUrl(Uri.parse('https://github.com/kherld-hussein/quran_hadith/issues/'));
                           Get.back();
                         }),
                     MItems(
                         text: 'Feature Request',
                         pressed: () {
-                          launch(
-                              "https://github.com/kherld-hussein/quran_hadith/issues/");
+                          launchUrl(Uri.parse('https://github.com/kherld-hussein/quran_hadith/issues/'));
                           Get.back();
                         }),
                     MItems(
@@ -210,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.bookReader),
+                                icon: FaIcon(FontAwesomeIcons.bookOpenReader),
                                 label: Padding(
                                   padding: EdgeInsets.symmetric(
                                       vertical: isSmall ? 0 : 24),
@@ -226,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.cog),
+                                icon: FaIcon(FontAwesomeIcons.gear),
                                 label: Padding(
                                   padding: EdgeInsets.symmetric(
                                       vertical: isSmall ? 0 : 20),
@@ -243,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             labelType: NavigationRailLabelType.all,
                             trailing: IconButton(
                                 tooltip: 'Exit',
-                                icon: FaIcon(FontAwesomeIcons.signOutAlt),
+                                icon: FaIcon(FontAwesomeIcons.rightFromBracket),
                                 onPressed: ()
                                     //todo: get dialog
                                     {
