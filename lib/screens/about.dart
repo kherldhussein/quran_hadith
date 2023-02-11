@@ -72,9 +72,7 @@ class _AboutViewState extends State<AboutView>
             splashRadius: 10,
           )
         ],
-        backgroundColor: Get.theme.brightness == Brightness.light
-            ? Color(0xffdae1e7)
-            : Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).canvasColor,
         title: Text(
           "About Qur’ān Hadith",
           style: TextStyle(fontFamily: 'ReemKufi'),
@@ -84,7 +82,9 @@ class _AboutViewState extends State<AboutView>
         bottom: TabBar(
           isScrollable: true,
           tabs: tabs,
+          splashBorderRadius: BorderRadius.circular(50),
           controller: _tabController,
+          padding: EdgeInsets.all(10),
         ),
       ),
       body: TabBarView(
@@ -150,7 +150,7 @@ class _AboutViewState extends State<AboutView>
                 Card(
                   child: ListTile(
                     title: Text(
-                      'Kherld Hussein ',
+                      'Khalid Hussein',
                       style: TextStyle(
                           fontSize: isSmall ? 10 : 24,
                           fontFamily: 'Quattrocento'),
