@@ -1,4 +1,3 @@
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,33 +9,33 @@ import 'package:quran_hadith/screens/qPageView.dart';
 import 'package:quran_hadith/widgets/suratInfo.dart';
 
 class SuratTile extends StatefulWidget {
-  final int? suratNo;
-  final List<Ayah>? ayahList;
-  final String? englishName;
-  final String? englishTrans;
-  final String? name;
+  final VoidCallback? onFavorite;
   final String? revelationType;
+  final List<Ayah>? ayahList;
+  final String? englishTrans;
+  final String? englishName;
+  final bool? isFavorite;
   final IconData? icon;
+  final double? radius;
   final Color? colorI;
   final Color? colorO;
-  final VoidCallback? onFavorite;
-  final double? radius;
-  final bool? isFavorite;
+  final int? suratNo;
+  final String? name;
 
   const SuratTile({
     Key? key,
-    this.ayahList,
-    this.onFavorite,
-    this.suratNo,
-    this.isFavorite = false,
-    this.englishName,
-    this.englishTrans,
     this.name,
     this.icon,
-    this.revelationType,
     this.colorI,
     this.colorO,
     this.radius,
+    this.suratNo,
+    this.ayahList,
+    this.onFavorite,
+    this.englishName,
+    this.englishTrans,
+    this.revelationType,
+    this.isFavorite = false,
   }) : super(key: key);
 
   @override
@@ -44,13 +43,12 @@ class SuratTile extends StatefulWidget {
 }
 
 class _SuratTileState extends State<SuratTile> {
-  Surah? surah;
-
-  bool isLoaded = false;
-  bool isLoading = false;
-  var list;
-  var currentPlaying;
   final quranApi = QuranAPI();
+  bool isLoading = false;
+  bool isLoaded = false;
+  var currentPlaying;
+  Surah? surah;
+  var list;
 
   @override
   void initState() {
@@ -67,25 +65,28 @@ class _SuratTileState extends State<SuratTile> {
         child: ListTile(
           onTap: () {
             Get.to(QPageView(
-              ayahList: widget.ayahList,
               suratName: widget.name,
-              isFavorite: widget.isFavorite,
-              suratEnglishName: widget.englishName,
-              englishMeaning: widget.englishTrans,
               suratNo: widget.suratNo,
+              ayahList: widget.ayahList,
+              isFavorite: widget.isFavorite,
+              englishMeaning: widget.englishTrans,
+              suratEnglishName: widget.englishName,
             ));
           },
           onLongPress: () {
             showPopover(
-                context: context,
-                backgroundColor: Theme.of(context).cardColor,
-                bodyBuilder: (context) => SurahInformation(
-                  surahNumber: widget.suratNo,
-                  ayahs: widget.ayahList!.length,
-                  englishName: widget.englishName,
-                  arabicName: widget.name,
-                  revelationType: widget.revelationType,
-                ));
+              width: 230,
+              height: 230,
+              context: context,
+              backgroundColor: Theme.of(context).cardColor,
+              bodyBuilder: (context) => SurahInformation(
+                revelationType: widget.revelationType,
+                englishName: widget.englishName,
+                ayahs: widget.ayahList!.length,
+                surahNumber: widget.suratNo,
+                arabicName: widget.name,
+              ),
+            );
           },
           contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           title: Row(
@@ -104,7 +105,7 @@ class _SuratTileState extends State<SuratTile> {
               IconButton(
                 icon: Icon(widget.icon,
                     color:
-                    widget.isFavorite! ? Colors.green : Colors.lightGreen),
+                        widget.isFavorite! ? Colors.green : Colors.lightGreen),
                 onPressed: widget.onFavorite,
               )
             ],
@@ -116,7 +117,7 @@ class _SuratTileState extends State<SuratTile> {
               AutoSizeText(
                 widget.englishName!,
                 style:
-                TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               AutoSizeText(
                 widget.englishTrans!,
