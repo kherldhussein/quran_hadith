@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class ParticleCanvas extends StatefulWidget {
-  const ParticleCanvas({Key? key, this.height, this.width}) : super(key: key);
+  const ParticleCanvas(this.height, this.width, {Key? key}) : super(key: key);
 
   final double? height;
   final double? width;
@@ -23,7 +23,7 @@ class _ParticleCanvasState extends State<ParticleCanvas>
   var random = Random();
   List<bool> rndDirection = [];
   List<double> rndPos = [];
-  double? speed = 1, temp = 0, dx, dy, mradius = 50;
+  double? speed = 1, temp = 0, dx, dy, radius = 50;
   int totalDots = 250;
 
   @override
@@ -106,9 +106,9 @@ class _ParticleCanvasState extends State<ParticleCanvas>
           sqrt(aMinusBSquare(dx, dots[i].dx) + aMinusBSquare(dy, dots[i].dy));
       mdx = (dx - dots[i].dx) / stopDistance;
       mdy = (dy - dots[i].dy) / stopDistance;
-      if (stopDistance < mradius!) {
-        var x = dots[i].dx - (mradius! - stopDistance) * mdx!;
-        var y = dots[i].dy - (mradius! - stopDistance) * mdy!;
+      if (stopDistance < radius!) {
+        var x = dots[i].dx - (radius! - stopDistance) * mdx!;
+        var y = dots[i].dy - (radius! - stopDistance) * mdy!;
         setState(() {
           dots[i] = Offset(x, y);
         });
