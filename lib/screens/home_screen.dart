@@ -71,7 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           suffixIcon: IconButton(
             splashRadius: 1,
-            icon: const Icon(FontAwesomeIcons.magnifyingGlass, color: Colors.black),
+            icon: const Icon(
+              FontAwesomeIcons.magnifyingGlass,
+              color: Colors.black,
+            ),
             onPressed: () {
               // showSearch(context: context, delegate: SearchWidget());
             },
@@ -142,19 +145,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     MItems(
                         text: 'Donate on Patreon',
                         pressed: () {
-                          launchUrl(Uri.parse("https://www.patreon.com/join/kherld/checkout?ru=undefined"));
+                          launchUrl(Uri.parse(
+                              "https://www.patreon.com/join/kherld/checkout?ru=undefined"));
                           Get.back();
                         }),
                     MItems(
                         text: 'Bug Report',
                         pressed: () {
-                          launchUrl(Uri.parse('https://github.com/kherld-hussein/quran_hadith/issues/'));
+                          launchUrl(Uri.parse(
+                              'https://github.com/kherld-hussein/quran_hadith/issues/'));
                           Get.back();
                         }),
                     MItems(
                         text: 'Feature Request',
                         pressed: () {
-                          launchUrl(Uri.parse('https://github.com/kherld-hussein/quran_hadith/issues/'));
+                          launchUrl(Uri.parse(
+                              'https://github.com/kherld-hussein/quran_hadith/issues/'));
                           Get.back();
                         }),
                     MItems(
@@ -165,18 +171,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               context: context, builder: (context) => About());
                         })
                   ],
+                  icon: FontAwesomeIcons.a,
                 ),
         ],
         leading: Padding(
           padding: const EdgeInsets.only(left: 15.0, top: 5.0),
           child: CircleAvatar(
             radius: 30,
-            backgroundColor: kAccentColor,
-            child: Hero(
-              tag: "Logo",
-              child: ImageIcon(
-                AssetImage('assets/images/logo.png'),
-              ),
+            backgroundColor: Get.theme.brightness == Brightness.light
+                ? kAccentColor
+                : kDarkSecondaryColor,
+            child: ImageIcon(
+              AssetImage('assets/images/Logo.png'),
             ),
           ),
         ),
@@ -236,13 +242,37 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             labelType: NavigationRailLabelType.all,
                             trailing: IconButton(
-                                tooltip: 'Exit',
-                                icon: FaIcon(FontAwesomeIcons.rightFromBracket),
-                                onPressed: ()
-                                    //todo: get dialog
-                                    {
-                                  SystemNavigator.pop(animated: true);
-                                }),
+                              tooltip: 'Exit',
+                              icon: FaIcon(FontAwesomeIcons.rightFromBracket),
+                              onPressed: () {
+                                SystemSound.play(SystemSoundType.alert);
+                                Get.dialog(
+                                  AlertDialog(
+                                    title:
+                                        Text('Are you sure you want to exit?'),
+                                    content: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        TextButton(
+                                          onPressed: () => SystemNavigator.pop(
+                                            animated: true,
+                                          ),
+                                          child: Text('Exit'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Get.back(),
+                                          child: Text('Cancel'),
+                                        )
+                                      ],
+                                    ),
+                                    icon: FaIcon(
+                                        FontAwesomeIcons.solidCircleQuestion),
+                                  ),
+                                  name: 'Exit Dialog',
+                                );
+                              },
+                            ),
                           );
                         }),
                   ),
