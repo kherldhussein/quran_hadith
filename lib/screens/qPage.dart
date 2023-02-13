@@ -1,5 +1,3 @@
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -91,8 +89,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                     builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
-                            child: ParticleCanvas(
-                                height: size.height, width: size.width - 150));
+                          child: ParticleCanvas(size.height, size.width - 150),
+                        );
                       } else {
                         return GridView.builder(
                           padding: EdgeInsets.symmetric(
@@ -234,26 +232,26 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     GestureDetector(
-                                      onTap: () async {
-                                        setState(() {
-                                          if (surahIndex != 0) {
-                                            surahIndex -= 1;
-                                          }
-                                        });
-                                        audioPlayer.stop();
-                                        if (index < 9) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}00${surahIndex + 1}.mp3');
-                                        } else if (index < 99) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}0${surahIndex + 1}.mp3');
-                                        } else {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}${surahIndex + 1}.mp3');
-                                        }
-
-                                        audioPlayer.play();
-                                      },
+                                      // onTap: () async {
+                                      //   setState(() {
+                                      //     if (surahIndex != 0) {
+                                      //       surahIndex -= 1;
+                                      //     }
+                                      //   });
+                                      //   audioPlayer.stop();
+                                      //   if (index < 9) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}00${surahIndex + 1}.mp3');
+                                      //   } else if (index < 99) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}0${surahIndex + 1}.mp3');
+                                      //   } else {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}${surahIndex + 1}.mp3');
+                                      //   }
+                                      //
+                                      //   audioPlayer.play();
+                                      // },
                                       child: Container(
                                         height:
                                             MediaQuery.of(context).size.width *
@@ -264,29 +262,29 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/images/logo.png'),
+                                                'assets/images/Logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () async {
-                                        await audioPlayer.stop();
-                                        if (surahIndex < 9) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}00${surahIndex + 1}.mp3');
-                                        } else if (surahIndex < 99) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}0${surahIndex + 1}.mp3');
-                                        } else {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}${surahIndex + 1}.mp3');
-                                        }
-                                        //log('${linkList[index]}${surahIndex + 1}.mp3');
-                                        audioPlayer.play();
-                                        audioPlayer.setVolume(1);
-                                      },
+                                      // onTap: () async {
+                                      //   await audioPlayer.stop();
+                                      //   if (surahIndex < 9) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}00${surahIndex + 1}.mp3');
+                                      //   } else if (surahIndex < 99) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}0${surahIndex + 1}.mp3');
+                                      //   } else {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}${surahIndex + 1}.mp3');
+                                      //   }
+                                      //   //log('${linkList[index]}${surahIndex + 1}.mp3');
+                                      //   audioPlayer.play();
+                                      //   audioPlayer.setVolume(1);
+                                      // },
                                       child: Container(
                                         height:
                                             MediaQuery.of(context).size.width *
@@ -297,7 +295,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/images/logo.png'),
+                                                'assets/images/Logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
@@ -317,30 +315,30 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/images/logo.png'),
+                                                'assets/images/Logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () async {
-                                        setState(() {
-                                          surahIndex += 1;
-                                        });
-                                        audioPlayer.stop();
-                                        if (index < 9) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}00${surahIndex + 1}.mp3');
-                                        } else if (index < 99) {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}0${surahIndex + 1}.mp3');
-                                        } else {
-                                          var duration = await audioPlayer.setUrl(
-                                              '${linkList[index]}${surahIndex + 1}.mp3');
-                                        }
-                                        audioPlayer.play();
-                                      },
+                                      // onTap: () async {
+                                      //   setState(() {
+                                      //     surahIndex += 1;
+                                      //   });
+                                      //   audioPlayer.stop();
+                                      //   if (index < 9) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}00${surahIndex + 1}.mp3');
+                                      //   } else if (index < 99) {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}0${surahIndex + 1}.mp3');
+                                      //   } else {
+                                      //     var duration = await audioPlayer.setUrl(
+                                      //         '${linkList[index]}${surahIndex + 1}.mp3');
+                                      //   }
+                                      //   audioPlayer.play();
+                                      // },
                                       child: Container(
                                         height:
                                             MediaQuery.of(context).size.width *
@@ -351,7 +349,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/images/logo.png'),
+                                                'assets/images/Logo.png'),
                                             fit: BoxFit.fill,
                                           ),
                                         ),
@@ -365,30 +363,30 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                         },
                       ),
                     ),
-                    Container(
-                      child: StreamBuilder<DurationState>(
-                          stream: durationState,
-                          builder: (context, snapshot) {
-                            final durationState = snapshot.data;
-                            final progress =
-                                durationState?.progress ?? Duration.zero;
-                            final buffered =
-                                durationState?.buffered ?? Duration.zero;
-                            final total = durationState?.total ?? Duration.zero;
-                            return ProgressBar(
-                              progress: progress,
-                              buffered: buffered,
-                              total: total,
-                              thumbColor: kAccentColor,
-                              progressBarColor: CupertinoColors.systemGreen,
-                              baseBarColor:
-                                  CupertinoColors.extraLightBackgroundGray,
-                              onSeek: (duration) {
-                                audioPlayer.seek(duration);
-                              },
-                            );
-                          }),
-                    ),
+                    // Container(
+                    //   child: StreamBuilder<DurationState>(
+                    //       stream: durationState,
+                    //       builder: (context, snapshot) {
+                    //         final durationState = snapshot.data;
+                    //         final progress =
+                    //             durationState?.progress ?? Duration.zero;
+                    //         final buffered =
+                    //             durationState?.buffered ?? Duration.zero;
+                    //         final total = durationState?.total ?? Duration.zero;
+                    //         return ProgressBar(
+                    //           progress: progress,
+                    //           buffered: buffered,
+                    //           total: total,
+                    //           thumbColor: kAccentColor,
+                    //           progressBarColor: CupertinoColors.systemGreen,
+                    //           baseBarColor:
+                    //               CupertinoColors.extraLightBackgroundGray,
+                    //           onSeek: (duration) {
+                    //             audioPlayer.seek(duration);
+                    //           },
+                    //         );
+                    //       }),
+                    // ),
                     SizedBox(height: 30),
                     Container(
                       // height: 100,
