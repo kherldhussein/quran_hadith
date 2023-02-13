@@ -78,7 +78,7 @@ class _SuratTileState extends State<SuratTile> {
               width: 230,
               height: 230,
               context: context,
-              backgroundColor: Theme.of(context).cardColor,
+              backgroundColor: Theme.of(context).canvasColor,
               bodyBuilder: (context) => SurahInformation(
                 revelationType: widget.revelationType,
                 englishName: widget.englishName,
