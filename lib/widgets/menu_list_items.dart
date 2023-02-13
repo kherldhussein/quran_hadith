@@ -6,18 +6,16 @@ class ListItems extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: ListView(padding: const EdgeInsets.all(8), children: children!),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView(padding: const EdgeInsets.all(8), children: children!),
     );
   }
 }
 
 class MItems extends StatelessWidget {
-  final String? text;
   final VoidCallback? pressed;
+  final String? text;
 
   const MItems({Key? key, this.text, this.pressed}) : super(key: key);
 
@@ -29,7 +27,7 @@ class MItems extends StatelessWidget {
           alignment: AlignmentDirectional.centerStart,
           constraints: BoxConstraints(minHeight: height / 12),
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(text!)),
+          child: Text(text!)),borderRadius: BorderRadius.circular(20),
       onTap: () => pressed!(),
     );
   }
