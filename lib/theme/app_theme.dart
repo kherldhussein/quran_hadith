@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:bubble_tab_indicator/bubble_tab_indicator.dart';
 import 'package:flutter/material.dart';
 
@@ -33,9 +31,9 @@ final circularIndicator = CircularProgressIndicator(
 );
 
 double height =
-    MediaQueryData.fromWindow(WidgetsBinding.instance!.window).size.height;
+    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.height;
 double width =
-    MediaQueryData.fromWindow(WidgetsBinding.instance!.window).size.width;
+    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
 
 ThemeData get darkTheme {
   final base = ThemeData.dark();
@@ -43,12 +41,12 @@ ThemeData get darkTheme {
     accentColor: kAccentColor,
     brightness: Brightness.dark,
     canvasColor: kDarkPrimaryColor,
-    primaryColor: kLight,
-    primaryColorLight: kDark,
+    primaryColor: kDarkPrimaryColor,
+    primaryColorLight: kAccentColor,
     primaryColorDark: kTextDarker,
     buttonColor: kDarkSecondaryColor,
     backgroundColor: kDarkSecondaryColor,
-    cardColor: kDark,
+    cardColor: kDarkPrimaryColor,
     dividerColor: kDividerLight,
     platform: TargetPlatform.linux,
     scaffoldBackgroundColor: kBackgroundDark,
@@ -74,14 +72,14 @@ ThemeData get darkTheme {
         unselectedIconTheme: IconThemeData(color: kLight),
         labelType: NavigationRailLabelType.all,
         selectedLabelTextStyle:
-        base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     textTheme: _buildTextTheme(base.textTheme, kTextLight, kTextLighter),
     primaryTextTheme:
-    _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
+        _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
     accentTextTheme:
-    _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
+        _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
     snackBarTheme: base.snackBarTheme.copyWith(
-      backgroundColor: kDark,
+      backgroundColor: kDarkPrimaryColor,
       contentTextStyle: base.textTheme.bodyText1!.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
@@ -129,7 +127,7 @@ ThemeData get theme {
         unselectedIconTheme: IconThemeData(color: kDarkColor),
         backgroundColor: kBackgroundLight,
         selectedLabelTextStyle:
-        base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
     cardTheme: base.cardTheme.copyWith(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -141,9 +139,9 @@ ThemeData get theme {
         brightness: Brightness.light, color: kBackgroundLight, elevation: 0.0),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryTextTheme:
-    _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
+        _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
     accentTextTheme:
-    _buildTextTheme(base.accentTextTheme, kTextDark, kTextDarker),
+        _buildTextTheme(base.accentTextTheme, kTextDark, kTextDarker),
     textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kLight,
@@ -159,27 +157,27 @@ ThemeData get theme {
 TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
   return base
       .copyWith(
-    headline5: base.headline5!.copyWith(
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.5,
-      fontSize: 20,
-    ),
-    headline6: base.headline6!.copyWith(
-      fontWeight: FontWeight.w500,
-      letterSpacing: 0.5,
-      fontSize: 20,
-    ),
-    bodyText1: base.bodyText1!.copyWith(
-      fontWeight: FontWeight.w500,
-      fontSize: 16.0,
-    ),
-    subtitle1: base.bodyText1!.copyWith(
-      fontWeight: FontWeight.w500,
-      fontSize: 16.0,
-    ),
-  )
+        headline5: base.headline5!.copyWith(
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          fontSize: 20,
+        ),
+        headline6: base.headline6!.copyWith(
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+          fontSize: 20,
+        ),
+        bodyText1: base.bodyText1!.copyWith(
+          fontWeight: FontWeight.w500,
+          fontSize: 16.0,
+        ),
+        subtitle1: base.bodyText1!.copyWith(
+          fontWeight: FontWeight.w500,
+          fontSize: 16.0,
+        ),
+      )
       .apply(
-      fontFamily: 'Amiri',
-      displayColor: displayColor,
-      bodyColor: bodyColor);
+          fontFamily: 'Amiri',
+          displayColor: displayColor,
+          bodyColor: bodyColor);
 }
