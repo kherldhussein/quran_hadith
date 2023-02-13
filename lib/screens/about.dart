@@ -37,8 +37,7 @@ class AboutView extends StatefulWidget {
   _AboutViewState createState() => _AboutViewState();
 }
 
-class _AboutViewState extends State<AboutView>
-    with SingleTickerProviderStateMixin {
+class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
   final List<Tab> tabs = <Tab>[
     Tab(text: "Qur’ān Hadith"),
     Tab(text: "Author"),
@@ -91,36 +90,34 @@ class _AboutViewState extends State<AboutView>
         controller: _tabController,
         children: [
           Container(
-            child: Scrollbar(
-              child: ListView(
-                padding: EdgeInsets.all(10),
-                children: [
-                  SizedBox(height: 20),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/Logo.png',
-                          color: Color(0xff06291d),
-                          scale: 7,
-                        ),
-                        HeaderText(size: isSmall ? 30 : 40),
-                      ],
-                    ),
+            child: ListView(
+              padding: EdgeInsets.all(10),
+              children: [
+                SizedBox(height: 20),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/Logo.png',
+                        color: Color(0xff06291d),
+                        scale: 7,
+                      ),
+                      HeaderText(size: isSmall ? 30 : 40),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                      'Version: 1.${DateTime.now().year}.${DateTime.now().month + 12}',
-                      style: theme.headline5),
-                  SizedBox(height: 20),
-                  Text(
-                    'Qur’ān Hadith is an Online Quran and Hadith application with fashion interface, smooth performance and more features '
-                    'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
-                    style: theme.headline6,
-                  )
-                ],
-              ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                    'Version: 1.${DateTime.now().year}.${DateTime.now().month + 12}',
+                    style: theme.headline5),
+                SizedBox(height: 20),
+                Text(
+                  'Qur’ān Hadith is an Online Quran and Hadith application with fashion interface, smooth performance and more features '
+                  'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
+                  style: theme.headline6,
+                )
+              ],
             ),
           ),
           Container(
@@ -181,31 +178,27 @@ class _AboutViewState extends State<AboutView>
           ),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-            child: Scrollbar(
-              thumbVisibility: true,
-              controller: ScrollController(),
-              child: ListView(
-                padding: EdgeInsets.all(10),
-                children: [
-                  Text(
-                    "Qur’ān Hadith is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
-                    "the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah, "
-                    "You should have received a copy of the GNU General Public License along with this program. \nIf not, see",
-                    style: theme.headline6,
+            child: ListView(
+              padding: EdgeInsets.all(10),
+              children: [
+                Text(
+                  "Qur’ān Hadith is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
+                  "the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah, "
+                  "You should have received a copy of the GNU General Public License along with this program. \nIf not, see",
+                  style: theme.headline6,
+                ),
+                InkWell(
+                  splashColor: Theme.of(context).scaffoldBackgroundColor,
+                  hoverColor: Theme.of(context).scaffoldBackgroundColor,
+                  highlightColor: Theme.of(context).scaffoldBackgroundColor,
+                  child: Text(
+                    "http://www.gnu.org/licenses/",
+                    style: theme.headline6!.copyWith(color: kLinkC),
                   ),
-                  InkWell(
-                    splashColor: Theme.of(context).scaffoldBackgroundColor,
-                    hoverColor: Theme.of(context).scaffoldBackgroundColor,
-                    highlightColor: Theme.of(context).scaffoldBackgroundColor,
-                    child: Text(
-                      "http://www.gnu.org/licenses/",
-                      style: theme.headline6!.copyWith(color: kLinkC),
-                    ),
-                    onTap: () =>
-                        launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
-                  )
-                ],
-              ),
+                  onTap: () =>
+                      launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
+                )
+              ],
             ),
           ),
         ],
