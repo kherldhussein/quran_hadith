@@ -26,12 +26,11 @@ class SurahInformation extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16),
       alignment: AlignmentDirectional.centerStart,
-      constraints: BoxConstraints(minHeight: height / 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          Text("About this surah", style: theme.textTheme.headline2),
+          Text("About this surah", style: theme.textTheme.headline2?.copyWith(fontSize: 20)),
           SizedBox(height: height * 0.02),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
