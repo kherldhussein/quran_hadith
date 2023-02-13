@@ -21,9 +21,10 @@ class _HPageState extends State<HPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       body: Container(
-        constraints: BoxConstraints(minWidth: 0,minHeight: 0),
+        constraints: BoxConstraints(minWidth: 0, minHeight: 0),
         color: Theme.of(context).appBarTheme.backgroundColor,
-        child: SingleChildScrollView(scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
             Container(
               constraints: BoxConstraints(minWidth: 0),
@@ -42,8 +43,7 @@ class _HPageState extends State<HPage> {
                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                     if (!snapshot.hasData) {
                       return Center(
-                          child: ParticleCanvas(
-                              height: size.height, width: size.width));
+                          child: ParticleCanvas(size.height, size.width));
                     }
                     return Container();
                   }),
@@ -62,7 +62,7 @@ class _HPageState extends State<HPage> {
                     ),
                     // hoverColor: Colors.green,
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
                       children: [Text('AL FATIHA'), Text('Ayah no. 3')],
                     ),
@@ -78,12 +78,12 @@ class _HPageState extends State<HPage> {
                       style: TextStyle(color: Color(0xff01AC68)),
                     ),
                     contentPadding:
-                    EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
                       children: [Text('AL FATIHA'), Text('Ayah no. 3')],
                     ),
                     trailing: IconButton(
-                      icon: FaIcon(FontAwesomeIcons.headphonesAlt),
+                      icon: FaIcon(FontAwesomeIcons.headphonesSimple),
                       onPressed: () {},
                     ),
                   ),
@@ -102,7 +102,7 @@ class _HPageState extends State<HPage> {
                         SizedBox(height: 10),
                         Text(
                           'It is Allah who erected the heavens without pillars that you[can] see; '
-                              'then He established Himself above the Throne ...',
+                          'then He established Himself above the Throne ...',
                           style: TextStyle(
                               color: Color(0xffdae1e7), letterSpacing: 2),
                         ),
