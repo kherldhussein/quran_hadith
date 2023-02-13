@@ -6,8 +6,8 @@ import 'package:quran_hadith/layout/adaptive.dart';
 import 'menu_list_items.dart';
 
 class RoundCustomButton extends StatelessWidget {
-  final IconData? icon;
   final List<Widget>? children;
+  final IconData? icon;
 
   const RoundCustomButton({Key? key, this.icon, this.children})
       : super(key: key);
@@ -26,10 +26,11 @@ class RoundCustomButton extends StatelessWidget {
         child: IconButton(
             onPressed: () {
               showPopover(
+                  width: 250,
+                  height: 265,
                   context: context,
-                  backgroundColor: Theme.of(context).cardColor,
-                  bodyBuilder: (BuildContext context) =>
-                      ListItems(children: children));
+                  backgroundColor: Theme.of(context).canvasColor,
+                  bodyBuilder: (context) => ListItems(children: children));
             },
             splashRadius: 1,
             icon: FaIcon(icon),
