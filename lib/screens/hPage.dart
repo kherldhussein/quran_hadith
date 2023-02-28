@@ -18,11 +18,12 @@ class _HPageState extends State<HPage> {
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     final isSmall = isDisplayVerySmallDesktop(context);
+    var theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      backgroundColor: theme.appBarTheme.backgroundColor,
       body: Container(
         constraints: BoxConstraints(minWidth: 0, minHeight: 0),
-        color: Theme.of(context).appBarTheme.backgroundColor,
+        color: theme.appBarTheme.backgroundColor,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -52,6 +53,7 @@ class _HPageState extends State<HPage> {
               padding: EdgeInsets.symmetric(vertical: 20),
               height: MediaQuery.of(context).size.height,
               margin: EdgeInsets.symmetric(horizontal: 20),
+              color: theme.appBarTheme.backgroundColor,
               width: 200,
               child: ListView(
                 children: [
@@ -64,7 +66,7 @@ class _HPageState extends State<HPage> {
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
-                      children: [Text('AL FATIHA'), Text('Ayah no. 3')],
+                      children: [Text('AL BUKHARI'), Text('Page no. 177')],
                     ),
                     trailing: IconButton(
                       icon: FaIcon(FontAwesomeIcons.book),
@@ -80,7 +82,7 @@ class _HPageState extends State<HPage> {
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     subtitle: Column(
-                      children: [Text('AL FATIHA'), Text('Ayah no. 3')],
+                      children: [Text('AL BUKHARI'), Text('Page no. 117')],
                     ),
                     trailing: IconButton(
                       icon: FaIcon(FontAwesomeIcons.headphonesSimple),
@@ -97,12 +99,13 @@ class _HPageState extends State<HPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('AYAH OF THE DAY',
+                        Text('Hadith OF THE DAY',
                             style: TextStyle(color: Color(0xffdae1e7))),
                         SizedBox(height: 10),
                         Text(
-                          'It is Allah who erected the heavens without pillars that you[can] see; '
-                          'then He established Himself above the Throne ...',
+                          "Messenger of Allāh ﷺ said: “You will see your Lord on the Day of "
+                          "Resurrection, just as you see the sun and the moon clearly without having any "
+                          "problems in seeing them.” ",
                           style: TextStyle(
                               color: Color(0xffdae1e7), letterSpacing: 2),
                         ),
