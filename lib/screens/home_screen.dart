@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           isSmall
               ? Container()
-              : RoundCustomButton(
+              : RoundCustomButton2(
                   children: [
                     MItems(
                         text: 'Donate on Patreon',
