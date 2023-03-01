@@ -17,7 +17,7 @@ class _SettingsState extends State<Settings> {
           height: 250,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            border: Border.all(color: Theme.of(context).backgroundColor),
+            border: Border.all(color: Theme.of(context).colorScheme.background),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -28,7 +28,7 @@ class _SettingsState extends State<Settings> {
                   title: Text(
                     'Preferences',
                     style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyText2?.color),
+                        color: Theme.of(context).textTheme.bodyMedium?.color),
                   ),
                   centerTitle: true,
                   backgroundColor: Colors.transparent,
@@ -48,7 +48,7 @@ class _SettingsState extends State<Settings> {
                           Theme.of(context).chipTheme.backgroundColor,
                       shape: RoundedRectangleBorder(
                         side: BorderSide(
-                            color: Theme.of(context).backgroundColor),
+                            color: Theme.of(context).colorScheme.background),
                         borderRadius: BorderRadius.only(
                             topRight: Radius.circular(20),
                             bottomRight: Radius.circular(20)),
@@ -66,7 +66,7 @@ class _SettingsState extends State<Settings> {
                       label: Text('Dark'),
                       shape: RoundedRectangleBorder(
                         side: BorderSide(
-                            color: Theme.of(context).backgroundColor),
+                            color: Theme.of(context).colorScheme.background),
                         borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(20),
                             bottomLeft: Radius.circular(20)),
