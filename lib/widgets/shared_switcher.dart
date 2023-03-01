@@ -11,7 +11,7 @@ class SharedAxisTransitionSwitcher extends StatelessWidget {
     return PageTransitionSwitcher(
       transitionBuilder: (child, animation, secondaryAnimation) {
         return SharedAxisTransition(
-          fillColor: Theme.of(context).appBarTheme.color,
+          fillColor: Theme.of(context).appBarTheme.backgroundColor,
           animation: animation,
           secondaryAnimation: secondaryAnimation,
           transitionType: SharedAxisTransitionType.scaled,
