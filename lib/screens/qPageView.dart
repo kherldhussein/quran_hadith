@@ -14,6 +14,7 @@ import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 
 class QPageView extends StatefulWidget {
   final List<Ayah>? ayahList;
@@ -21,6 +22,7 @@ class QPageView extends StatefulWidget {
   final String? suratEnglishName;
   final String? englishMeaning;
   final int? suratNo;
+  final int? itemCount;
   final VoidCallback? openContainer;
 
   // final Surah surah;
@@ -30,7 +32,7 @@ class QPageView extends StatefulWidget {
   const QPageView(
       {Key? key,
       this.ayahList,
-      // this.surah,
+      this.itemCount,
       this.suratName,
       this.aya,
       this.isFavorite,
@@ -56,6 +58,7 @@ class _QPageViewState extends State<QPageView> {
   final quranApi = QuranAPI();
   Duration? _position;
   Duration? _duration;
+
   // late AudioPlayer _audioPlayer;
   // PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
 
@@ -108,8 +111,7 @@ class _QPageViewState extends State<QPageView> {
         ),
         actions: [
           IconButton(
-            icon: FaIcon(FontAwesomeIcons.house,
-                color: Theme.of(context).primaryColor),
+            icon: FaIcon(FontAwesomeIcons.house),
             splashRadius: 10,
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             onPressed: Get.back,
@@ -155,10 +157,25 @@ class _QPageViewState extends State<QPageView> {
                                 builder: (BuildContext context,
                                     AsyncSnapshot snapshot) {
                                   if (!snapshot.hasData) {
-                                    return Container();
+                                    return Shimmer.fromColors(
+                                      baseColor: Colors.grey[400]!,
+                                      highlightColor: Colors.grey[100]!,
+                                      child: ListView.separated(
+                                        itemCount: 114,
+                                        itemBuilder: (context, index) {
+                                          return Card(
+                                            child: Container(height: 100),
+                                          );
+                                        },
+                                        separatorBuilder:
+                                            (BuildContext context, int index) {
+                                          return SizedBox(height: 10);
+                                        },
+                                      ),
+                                    );
                                   } else {
                                     return ListView.builder(
-                                      itemCount: snapshot.data.surahs.length,
+                                      itemCount: widget.itemCount,
                                       // controller: controller,
                                       itemBuilder: (context, index) {
                                         return SuratTile(
