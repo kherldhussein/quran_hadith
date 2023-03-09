@@ -1,5 +1,6 @@
 import 'package:bubble_tab_indicator/bubble_tab_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Application theme
 // 013f2f
@@ -38,19 +39,15 @@ double width =
 ThemeData get darkTheme {
   final base = ThemeData.dark();
   return base.copyWith(
-    accentColor: kAccentColor,
     brightness: Brightness.dark,
     canvasColor: kDarkPrimaryColor,
     primaryColor: kDarkPrimaryColor,
     primaryColorLight: kAccentColor,
     primaryColorDark: kTextDarker,
-    buttonColor: kDarkSecondaryColor,
-    backgroundColor: kDarkSecondaryColor,
-    cardColor: kDarkPrimaryColor,
+    cardColor: kBackgroundDark,
     dividerColor: kDividerLight,
     platform: TargetPlatform.linux,
     scaffoldBackgroundColor: kBackgroundDark,
-    toggleableActiveColor: kAccentColor,
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
     buttonTheme: base.buttonTheme.copyWith(buttonColor: kDarkSecondaryColor),
     cardTheme: base.cardTheme.copyWith(
@@ -72,22 +69,22 @@ ThemeData get darkTheme {
         unselectedIconTheme: IconThemeData(color: kLight),
         labelType: NavigationRailLabelType.all,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+            base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
     textTheme: _buildTextTheme(base.textTheme, kTextLight, kTextLighter),
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
-    accentTextTheme:
-        _buildTextTheme(base.accentTextTheme, kTextLight, kTextLighter),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kDarkPrimaryColor,
-      contentTextStyle: base.textTheme.bodyText1!.copyWith(
+      contentTextStyle: base.textTheme.bodyLarge!.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
         color: kTextLight,
       ),
     ),
     appBarTheme: base.appBarTheme.copyWith(
-        brightness: Brightness.dark, color: kDividerDark, elevation: 0.0),
+        color: kDividerDark,
+        elevation: 0.0,
+        systemOverlayStyle: SystemUiOverlayStyle.light),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     dialogTheme: base.dialogTheme.copyWith(
       contentTextStyle: TextStyle(color: kDarkColor),
@@ -99,19 +96,15 @@ ThemeData get darkTheme {
 ThemeData get theme {
   final base = ThemeData.light();
   return base.copyWith(
-    accentColor: kAccentColor,
     brightness: Brightness.light,
-    buttonColor: kAccentColor,
     buttonTheme: base.buttonTheme.copyWith(buttonColor: kAccentColor),
     canvasColor: kLightPrimaryColor,
     cardColor: kDividerLight,
     primaryColorLight: kLightPrimaryColor,
     platform: TargetPlatform.linux,
     primaryColorDark: kTextDarker,
-    backgroundColor: kLightSecondaryColor,
     scaffoldBackgroundColor: kBackgroundLight,
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
-    toggleableActiveColor: kOrange,
     tabBarTheme: TabBarTheme(
       labelColor: kDividerLight,
       unselectedLabelColor: kDarkColor,
@@ -127,7 +120,7 @@ ThemeData get theme {
         unselectedIconTheme: IconThemeData(color: kDarkColor),
         backgroundColor: kBackgroundLight,
         selectedLabelTextStyle:
-            base.textTheme.bodyText2!.copyWith(color: kAccentColor)),
+            base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
     cardTheme: base.cardTheme.copyWith(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -136,42 +129,43 @@ ThemeData get theme {
       contentTextStyle: TextStyle(color: kDarkColor),
     ),
     appBarTheme: base.appBarTheme.copyWith(
-        brightness: Brightness.light, color: kBackgroundLight, elevation: 0.0),
+        color: kBackgroundLight,
+        elevation: 0.0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
-    accentTextTheme:
-        _buildTextTheme(base.accentTextTheme, kTextDark, kTextDarker),
     textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     snackBarTheme: base.snackBarTheme.copyWith(
       backgroundColor: kLight,
-      contentTextStyle: base.textTheme.bodyText1!.copyWith(
+      contentTextStyle: base.textTheme.bodyLarge!.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
         color: kTextDark,
       ),
     ),
+    colorScheme: ColorScheme.fromSwatch().copyWith(secondary: kAccentColor),
   );
 }
 
 TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
   return base
       .copyWith(
-        headline5: base.headline5!.copyWith(
+        headlineSmall: base.headlineSmall!.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
           fontSize: 20,
         ),
-        headline6: base.headline6!.copyWith(
+        titleLarge: base.titleLarge!.copyWith(
           fontWeight: FontWeight.w500,
           letterSpacing: 0.5,
           fontSize: 20,
         ),
-        bodyText1: base.bodyText1!.copyWith(
+        bodyLarge: base.bodyLarge!.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 16.0,
         ),
-        subtitle1: base.bodyText1!.copyWith(
+        titleMedium: base.titleMedium!.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 16.0,
         ),
