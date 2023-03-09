@@ -72,14 +72,14 @@ class _SuratTileState extends State<SuratTile> {
           onPointerDown: _onPopoverDown,
           child: ListTile(
             onTap: () {
-              Get.to(QPageView(
-                suratName: widget.name,
-                suratNo: widget.suratNo,
-                ayahList: widget.ayahList,
-                isFavorite: widget.isFavorite,
-                englishMeaning: widget.englishTrans,
-                suratEnglishName: widget.englishName,
-              ));
+              Get.to(() => QPageView(
+                    suratName: widget.name,
+                    suratNo: widget.suratNo,
+                    ayahList: widget.ayahList,
+                    isFavorite: widget.isFavorite,
+                    englishMeaning: widget.englishTrans,
+                    suratEnglishName: widget.englishName,
+                  ));
             },
             contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             title: Row(
