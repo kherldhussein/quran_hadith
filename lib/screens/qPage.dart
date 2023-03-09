@@ -106,6 +106,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           itemBuilder: (context, index) {
                             return SuratTile(
                               colorO: kAccentColor,
+                              itemCount: snapshot.data.surahs.length,
                               // isFavorite: Provider.of<OnFavorite>(context,
                               //         listen: false)
                               //     .favorite,
