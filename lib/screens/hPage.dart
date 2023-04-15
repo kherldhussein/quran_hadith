@@ -56,38 +56,92 @@ class _HPageState extends State<HPage> {
               color: theme.appBarTheme.backgroundColor,
               width: 200,
               child: ListView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 30,
+                ),
                 children: [
-                  ListTile(
-                    title: Text(
-                      'LAST READ',
-                      style: TextStyle(color: Color(0xff01AC68)),
-                    ),
-                    // hoverColor: Colors.green,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    subtitle: Column(
-                      children: [Text('AL BUKHARI'), Text('Page no. 177')],
-                    ),
-                    trailing: IconButton(
-                      icon: FaIcon(FontAwesomeIcons.book),
-                      onPressed: () {},
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Salam,',
+                            style: TextStyle(fontWeight: FontWeight.w400),
+                          ),
+                          Text(
+                            "Ahmad",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      ClipOval(
+                        child: Material(
+                          color: kAccentColor.withOpacity(.05),
+                          child: IconButton(
+                            icon: FaIcon(FontAwesomeIcons.user),
+                            onPressed: () {},
+                          ),
+                        ),
+                      )
+                    ],
                   ),
-                  Divider(height: 65, endIndent: 35, indent: 35),
-                  ListTile(
-                    title: Text(
-                      'LAST LISTENED',
-                      style: TextStyle(color: Color(0xff01AC68)),
-                    ),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    subtitle: Column(
-                      children: [Text('AL BUKHARI'), Text('Page no. 117')],
-                    ),
-                    trailing: IconButton(
-                      icon: FaIcon(FontAwesomeIcons.headphonesSimple),
-                      onPressed: () {},
-                    ),
+                  Divider(height: 65),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'LAST READ',
+                            style: TextStyle(
+                                color: kAccentColor,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            "AL-Bukhari",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text('Page no. 177')
+                        ],
+                      ),
+                      IconButton(
+                        icon: FaIcon(FontAwesomeIcons.book),
+                        onPressed: () {},
+                      )
+                    ],
+                  ),
+                  Divider(height: 65),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'LAST LISTENED',
+                            style: TextStyle(
+                                color: kAccentColor,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            "AL-Bukhari",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text('Page no. 117')
+                        ],
+                      ),
+                      IconButton(
+                        icon: FaIcon(FontAwesomeIcons.headphonesSimple),
+                        onPressed: () {},
+                      )
+                    ],
                   ),
                   SizedBox(height: 30),
                   Container(
@@ -99,19 +153,29 @@ class _HPageState extends State<HPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hadith OF THE DAY',
-                            style: TextStyle(color: Color(0xffdae1e7))),
+                        Text(
+                          'Hadith OF THE DAY',
+                          style: TextStyle(
+                            color: Color(0xff017044),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         SizedBox(height: 10),
                         Text(
                           "Messenger of Allāh ﷺ said: “You will see your Lord on the Day of "
                           "Resurrection, just as you see the sun and the moon clearly without having any "
                           "problems in seeing them.” ",
                           style: TextStyle(
-                              color: Color(0xffdae1e7), letterSpacing: 2),
+                            color: Color(0xffdae1e7),
+                          ),
                         ),
                         Divider(height: 65, endIndent: 30, indent: 30),
-                        Text('Read now',
-                            style: TextStyle(color: Color(0xffdae1e7))),
+                        Text(
+                          'Read now',
+                          style: TextStyle(
+                            color: Color(0xffdae1e7),
+                          ),
+                        ),
                       ],
                     ),
                   )
