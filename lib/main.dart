@@ -21,13 +21,15 @@ void main() async {
         Provider(create: (context) => quranApi),
         ChangeNotifierProvider.value(value: OnFavorite()),
       ],
-      child: QuranHadith(),
+      child: const QuranHadith(),
     ),
   );
 }
 
 // Audio url: https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/1
 class QuranHadith extends StatefulWidget {
+  const QuranHadith({super.key});
+
   static List<String> supportedLocales = ['en', 'ar'];
 
   @override
@@ -60,7 +62,7 @@ class _QuranHadithState extends State<QuranHadith> {
       darkTheme: darkTheme,
       themeMode: ThemeState.to.themeMode,
       theme: theme,
-      home: HomeScreen(),
+      home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
