@@ -91,3 +91,22 @@ class Audio {
     return Audio(number: json[''], url: json['']);
   }
 }
+
+class Sura {
+  Sura({this.index, this.count, this.juz, this.name, this.verse});
+
+  final String? index;
+  final String? name;
+  final Map<String, String>? verse;
+  final int? count;
+  final List? juz;
+
+  factory Sura.fromData(Map<String, dynamic> data) => Sura(
+        index: data['index'],
+        name: data['name'],
+        count: data[1],
+        verse: Map.from(data['verse']).map(
+          (key, value) => MapEntry<String, String>(key, value),
+        ),
+      );
+}
