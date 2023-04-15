@@ -15,19 +15,19 @@ class HeaderText extends StatelessWidget {
             text: TextSpan(
               text: 'Qur’ān ',
               style: TextStyle(
-                  fontFamily: 'Amiri',
+                  fontFamily: 'Poppins',
                   fontSize: size,
                   color: Colors.black,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 3),
               children: <TextSpan>[
                 TextSpan(
                     text: 'Hadith',
                     style: TextStyle(
                         fontSize: size,
-                        color: Colors.black12,
-                        fontFamily: 'Quattrocento',
-                        fontWeight: FontWeight.w200,
+                        color: Colors.black26,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w300,
                         letterSpacing: 2)),
               ],
             ),
