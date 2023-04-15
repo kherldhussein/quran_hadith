@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,34 +52,7 @@ class _QPageViewState extends State<QPageView> {
   bool isLoaded = false;
   bool isLoading = false;
   var list;
-  var currentPlaying;
   final quranApi = QuranAPI();
-  Duration? _position;
-  Duration? _duration;
-
-  // late AudioPlayer _audioPlayer;
-  // PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
-
-  // late AudioPlayer _audioPlayer;
-  // PlayingRoute _playingRouteState = PlayingRoute.SPEAKERS;
-
-  // bool get _isPlaying => _playerState == PlayerState.PLAYING;
-
-  // bool get _isPlayingThroughEarpiece =>
-  //     _playingRouteState == PlayingRoute.EARPIECE;
-
-  String get _positionText => _position?.toString().split('.').first ?? '';
-
-  // bool get _isPaused => _playerState == PlayerState.PAUSED;
-
-  String get _durationText => _duration?.toString().split('.').first ?? '';
-  StreamSubscription? _durationSubscription;
-  StreamSubscription? _positionSubscription;
-  StreamSubscription? _playerCompleteSubscription;
-  StreamSubscription? _playerErrorSubscription;
-  StreamSubscription? _playerStateSubscription;
-
-  // StreamSubscription<PlayerControlCommand>? _playerControlCommandSubscription;
 
   @override
   void initState() {
@@ -369,27 +340,7 @@ class _QPageViewState extends State<QPageView> {
             ),
             Visibility(
               visible: true,
-              child: Slider(
-                onChanged: (v) {
-                  final duration = _duration;
-                  if (duration == null) {
-                    return;
-                  }
-                  // final Position = v * duration.inMilliseconds;
-                  // _audioPlayer.seek(Duration(milliseconds: Position.round()));
-                },
-                value: (_position != null &&
-                        _duration != null &&
-                        _position!.inMilliseconds > 0 &&
-                        _position!.inMilliseconds < _duration!.inMilliseconds)
-                    ? _position!.inMilliseconds / _duration!.inMilliseconds
-                    : 0.0,
-                label: _position != null
-                    ? '$_positionText / $_durationText'
-                    : _duration != null
-                        ? _durationText
-                        : '',
-              ),
+              child: Slider(onChanged: (v) {}, value: 0.0, label: ''),
             ),
           ],
         ),
@@ -404,18 +355,6 @@ class _QPageViewState extends State<QPageView> {
       input = input.replaceAll(english[i], arabic[i]);
     }
     return input;
-  }
-
-  @override
-  void dispose() {
-    // _audioPlayer.dispose();
-    _durationSubscription?.cancel();
-    _positionSubscription?.cancel();
-    _playerCompleteSubscription?.cancel();
-    _playerErrorSubscription?.cancel();
-    _playerStateSubscription?.cancel();
-    // _playerControlCommandSubscription?.cancel();
-    super.dispose();
   }
 
   void _initAudioPlayer() {
