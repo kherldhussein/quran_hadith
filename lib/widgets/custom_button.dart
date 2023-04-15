@@ -71,10 +71,7 @@ class RoundCustomButton2 extends StatelessWidget {
                   bodyBuilder: (context) => ListItems(children: children));
             },
             splashRadius: 1,
-            icon: Text(
-              'Support',
-              style: TextStyle(letterSpacing: 2),
-            ),
+            icon: Text('Support'),
             color: Colors.black),
       ),
     );
