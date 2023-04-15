@@ -171,7 +171,7 @@ TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
         ),
       )
       .apply(
-          fontFamily: 'Amiri',
+          fontFamily: 'Poppins',
           displayColor: displayColor,
           bodyColor: bodyColor);
 }
