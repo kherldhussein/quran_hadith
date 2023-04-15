@@ -58,7 +58,7 @@ class _SettingsState extends State<Settings> {
                     ),
                     ActionChip(
                       label: Text('System Theme'),
-                      tooltip: 'On supported device only`',
+                      tooltip: 'On supported device only',
                       onPressed: () =>
                           ThemeState.to.updateTheme(ThemeMode.system),
                     ),
