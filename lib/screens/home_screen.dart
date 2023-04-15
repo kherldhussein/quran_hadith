@@ -20,6 +20,7 @@ import 'package:quran_hadith/widgets/shared_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -67,24 +68,27 @@ class _HomeScreenState extends State<HomeScreen> {
           focusColor: Color(0xffeef2f5),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Color(0xffeef2f5)),
+            borderSide: BorderSide(color: Color(0xffeef2f5).withOpacity(.5)),
           ),
-          suffixIcon: IconButton(
-            splashRadius: 1,
-            icon: const Icon(
-              FontAwesomeIcons.magnifyingGlass,
-              color: Colors.black,
+          suffixIcon: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: IconButton(
+              splashRadius: 1,
+              icon: const Icon(
+                FontAwesomeIcons.magnifyingGlass,
+                color: Colors.black,
+              ),
+              onPressed: () {
+                // showSearch(context: context, delegate: SearchWidget());
+              },
             ),
-            onPressed: () {
-              // showSearch(context: context, delegate: SearchWidget());
-            },
           ),
-          hintStyle: const TextStyle(fontWeight: FontWeight.w700),
-          hintText: 'Search',
-          fillColor: Colors.grey[200]!.withOpacity(0.2),
+          hintStyle: const TextStyle(fontWeight: FontWeight.w300),
+          hintText: '    Search',
+          fillColor: Colors.grey[200]!.withOpacity(.2),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Color(0xffeef2f5)),
+            borderSide: BorderSide(color: Color(0xffeef2f5).withOpacity(.5)),
           ),
         ),
       ),
