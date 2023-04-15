@@ -24,10 +24,12 @@ class MItems extends StatelessWidget {
     double height = MediaQuery.of(context).size.height;
     return InkWell(
       child: Container(
-          alignment: AlignmentDirectional.centerStart,
-          constraints: BoxConstraints(minHeight: height / 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(text!)),borderRadius: BorderRadius.circular(20),
+        alignment: AlignmentDirectional.centerStart,
+        constraints: BoxConstraints(minHeight: height / 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(text!),
+      ),
+      borderRadius: BorderRadius.circular(20),
       onTap: () => pressed!(),
     );
   }
