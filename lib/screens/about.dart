@@ -72,10 +72,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
           )
         ],
         backgroundColor: Theme.of(context).canvasColor,
-        title: Text(
-          "About Qur’ān Hadith",
-          style: TextStyle(fontFamily: 'ReemKufi'),
-        ),
+        title: Text("About Qur’ān Hadith"),
         centerTitle: true,
         automaticallyImplyLeading: false,
         bottom: TabBar(
@@ -148,9 +145,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   child: ListTile(
                     title: Text(
                       'Khalid Hussein',
-                      style: TextStyle(
-                          fontSize: isSmall ? 10 : 24,
-                          fontFamily: 'Quattrocento'),
+                      style: TextStyle(fontSize: isSmall ? 10 : 24),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                         horizontal: isSmall ? 10 : 20,
@@ -165,7 +160,6 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                         style: theme.titleLarge!.copyWith(
                             fontSize: isSmall ? 10 : 20,
                             decoration: TextDecoration.underline,
-                            fontFamily: 'Quattrocento',
                             color: kLinkC),
                       ),
                       onTap: () =>
