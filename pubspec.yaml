@@ -63,11 +63,4 @@ flutter:
         - asset: assets/fonts/Poppins-Regular.ttf
         - asset: assets/fonts/Poppins-Italic.ttf
         - asset: assets/fonts/Poppins-Thin.ttf
-    - family: Quattrocento
-      fonts:
-        - asset: assets/fonts/Quattrocento-Regular.ttf
-        - asset: assets/fonts/Quattrocento-Bold.ttf
-    - family: Ageo
-      fonts:
-        - asset: assets/fonts/Ageo-Regular.ttf
-        - asset: assets/fonts/Ageo-Bold.ttf
+
