@@ -22,20 +22,22 @@ class RoundCustomButton extends StatelessWidget {
         constraints: BoxConstraints(minWidth: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Color(0xffeef2f5)),
-          borderRadius: BorderRadius.circular(isSmall ? 30 : 50),
+          borderRadius: BorderRadius.circular(isSmall ? 30 : 20),
         ),
         child: IconButton(
-            onPressed: () {
-              showPopover(
-                  width: 250,
-                  height: 265,
-                  context: context,
-                  backgroundColor: Theme.of(context).canvasColor,
-                  bodyBuilder: (context) => ListItems(children: children));
-            },
-            splashRadius: 1,
-            icon: FaIcon(icon),
-            color: Colors.black),
+          onPressed: () {
+            showPopover(
+                width: 250,
+                height: 265,
+                context: context,
+                backgroundColor: Theme.of(context).canvasColor,
+                bodyBuilder: (context) => ListItems(children: children));
+          },
+          splashRadius: 1,
+          iconSize: 20,
+          icon: FaIcon(icon),
+          color: Colors.black,
+        ),
       ),
     );
   }

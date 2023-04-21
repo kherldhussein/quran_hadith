@@ -21,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -56,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     double height = MediaQuery.of(context).size.height;
     final searchFocusNode = FocusNode();
     final _searchBox = Padding(
-      padding: const EdgeInsets.fromLTRB(30, 5, 10, 5),
+      padding: const EdgeInsets.fromLTRB(5, 7, 20, 7),
       child: TextField(
         maxLines: 1,
         focusNode: searchFocusNode,
@@ -70,18 +71,15 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(40),
             borderSide: BorderSide(color: Color(0xffeef2f5).withOpacity(.5)),
           ),
-          suffixIcon: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              splashRadius: 1,
-              icon: const Icon(
-                FontAwesomeIcons.magnifyingGlass,
-                color: Colors.black,
-              ),
-              onPressed: () {
-                // showSearch(context: context, delegate: SearchWidget());
-              },
+          suffixIcon: IconButton(
+            splashRadius: 1,
+            icon: const FaIcon(
+              FontAwesomeIcons.magnifyingGlass,
+              color: Colors.black,
             ),
+            onPressed: () {
+              // showSearch(context: context, delegate: SearchWidget());
+            },
           ),
           hintStyle: const TextStyle(fontWeight: FontWeight.w300),
           hintText: '    Search',
@@ -118,10 +116,12 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                RoundCustomButton(children: [
-                  Center(child: Text('Listen To Beautiful Recitation')),
-                ], icon: FontAwesomeIcons.headphonesSimple),
-                SizedBox(width: isSmall ? 7 : 10),
+                RoundCustomButton(
+                  children: [
+                    Center(child: Text('Listen To Beautiful Recitation'))
+                  ],
+                  icon: FontAwesomeIcons.headphonesSimple,
+                ),
                 RoundCustomButton(
                   children: [
                     Container(
@@ -142,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          SizedBox(width: isSmall ? 100 : 145),
           isSmall
               ? Container()
               : RoundCustomButton2(
