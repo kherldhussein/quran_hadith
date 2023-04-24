@@ -54,7 +54,7 @@ ThemeData get darkTheme {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: base.tabBarTheme.copyWith(
       labelColor: kDividerLight,
       unselectedLabelColor: kTextDark,
       indicator: BubbleTabIndicator(
@@ -63,10 +63,10 @@ ThemeData get darkTheme {
         tabBarIndicatorSize: TabBarIndicatorSize.tab,
       ),
     ),
-    navigationRailTheme: NavigationRailThemeData(
+    navigationRailTheme: base.navigationRailTheme.copyWith(
         backgroundColor: kDividerDark,
-        selectedIconTheme: IconThemeData(color: kAccentColor),
-        unselectedIconTheme: IconThemeData(color: kLight),
+        selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
+        unselectedIconTheme: base.iconTheme.copyWith(color: kLight),
         labelType: NavigationRailLabelType.all,
         selectedLabelTextStyle:
             base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
@@ -82,14 +82,17 @@ ThemeData get darkTheme {
       ),
     ),
     appBarTheme: base.appBarTheme.copyWith(
-        color: kDividerDark,
-        elevation: 0.0,
-        systemOverlayStyle: SystemUiOverlayStyle.light),
+      color: kDividerDark,
+      elevation: .0,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+    ),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     dialogTheme: base.dialogTheme.copyWith(
       contentTextStyle: TextStyle(color: kDarkColor),
       backgroundColor: kDarkPrimaryColor,
     ),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
+        .copyWith(secondary: kAccentColor),
   );
 }
 
@@ -105,7 +108,7 @@ ThemeData get theme {
     primaryColorDark: kTextDarker,
     scaffoldBackgroundColor: kBackgroundLight,
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: base.tabBarTheme.copyWith(
       labelColor: kDividerLight,
       unselectedLabelColor: kDarkColor,
       indicator: BubbleTabIndicator(
@@ -114,10 +117,10 @@ ThemeData get theme {
         tabBarIndicatorSize: TabBarIndicatorSize.tab,
       ),
     ),
-    navigationRailTheme: NavigationRailThemeData(
-        selectedIconTheme: IconThemeData(color: kAccentColor),
+    navigationRailTheme: base.navigationRailTheme.copyWith(
+        selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
         labelType: NavigationRailLabelType.all,
-        unselectedIconTheme: IconThemeData(color: kDarkColor),
+        unselectedIconTheme: base.iconTheme.copyWith(color: kDarkColor),
         backgroundColor: kBackgroundLight,
         selectedLabelTextStyle:
             base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
@@ -129,9 +132,10 @@ ThemeData get theme {
       contentTextStyle: TextStyle(color: kDarkColor),
     ),
     appBarTheme: base.appBarTheme.copyWith(
-        color: kBackgroundLight,
-        elevation: 0.0,
-        systemOverlayStyle: SystemUiOverlayStyle.dark),
+      color: kBackgroundLight,
+      elevation: .0,
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+    ),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
@@ -144,7 +148,8 @@ ThemeData get theme {
         color: kTextDark,
       ),
     ),
-    colorScheme: ColorScheme.fromSwatch().copyWith(secondary: kAccentColor),
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
+        .copyWith(secondary: kAccentColor),
   );
 }
 
@@ -153,12 +158,12 @@ TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
       .copyWith(
         headlineSmall: base.headlineSmall!.copyWith(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+          letterSpacing: .5,
           fontSize: 20,
         ),
         titleLarge: base.titleLarge!.copyWith(
           fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
+          letterSpacing: .5,
           fontSize: 20,
         ),
         bodyLarge: base.bodyLarge!.copyWith(
@@ -171,7 +176,8 @@ TextTheme _buildTextTheme(TextTheme base, Color displayColor, Color bodyColor) {
         ),
       )
       .apply(
-          fontFamily: 'Poppins',
-          displayColor: displayColor,
-          bodyColor: bodyColor);
+        fontFamily: 'Poppins',
+        displayColor: displayColor,
+        bodyColor: bodyColor,
+      );
 }
