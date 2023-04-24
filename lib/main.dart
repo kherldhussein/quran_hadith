@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:dio_http_cache/dio_http_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,7 @@ import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/screens/home_screen.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
 
 import 'theme/app_theme.dart';
 
@@ -46,6 +49,23 @@ class _QuranHadithState extends State<QuranHadith> {
     return supportedLocales.first;
   }
 
+  Dio dio = Dio();
+
+  @override
+  void initState() {
+    dio.interceptors.add(
+      DioCacheManager(
+        CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
+      ).interceptor,
+    );
+    _initSp();
+    super.initState();
+  }
+
+  Future _initSp() async {
+    await appSP.init();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -57,7 +77,7 @@ class _QuranHadithState extends State<QuranHadith> {
       ],
       localeResolutionCallback: localeCallback,
       supportedLocales:
-      QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
+          QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
       title: 'Qur’ān Hadith',
       darkTheme: darkTheme,
       themeMode: ThemeState.to.themeMode,
