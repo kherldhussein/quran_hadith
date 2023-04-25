@@ -6,6 +6,8 @@ import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 
+import '../utils/sp_util.dart';
+
 class HPage extends StatefulWidget {
   HPage({Key? key}) : super(key: key);
 
@@ -14,6 +16,7 @@ class HPage extends StatefulWidget {
 }
 
 class _HPageState extends State<HPage> {
+  String? user = SpUtil.getUser();
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -73,7 +76,7 @@ class _HPageState extends State<HPage> {
                             style: TextStyle(fontWeight: FontWeight.w400),
                           ),
                           Text(
-                            "Ahmad",
+                            user!,
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
