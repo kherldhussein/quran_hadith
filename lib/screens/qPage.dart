@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -10,6 +11,9 @@ import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:rxdart/src/rx.dart' as rx;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../controller/favorite.dart';
 
 class QPage extends StatefulWidget {
   const QPage({super.key});
@@ -26,6 +30,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   bool isLoading = false;
   var list;
   final audioPlayer = AudioPlayer();
+  String? user;
 
   // List<String> surahList = SuratList().surahName;
   List<String> linkList = [];
@@ -34,6 +39,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   // Map<String, String> map = AudioList().map;
   late Stream<DurationState> durationState;
+  late TextEditingController name;
 
   @override
   void initState() {
@@ -43,7 +49,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
     //     linkList.add(val);
     //   },
     // );
-
+    initUser();
+    name = TextEditingController();
     durationState =
         rx.Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
       audioPlayer.positionStream,
@@ -55,6 +62,13 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       ),
     );
     super.initState();
+  }
+
+  initUser() async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    setState(() {
+      user = sp.getString('user')!;
+    });
   }
 
   @override
@@ -114,11 +128,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               //     .favorite,
                               onFavorite: () {
                                 setState(() {
-                                  // Provider.of<OnFavorite>(context,
-                                  //         listen: false)
-                                  //     .addFavorite(true,
-                                  //         snapshot.data.surahs[index].number);
+                                  Provider.of<OnFavorite>(context,
+                                          listen: false)
+                                      .addFavorite(true);
                                   SpUtil.setFavorite(true);
+                                  SpUtil.setFavorites(
+                                      snapshot.data.surahs[index].number);
                                 });
                               },
                               colorI: Color(0xffe0f5f0),
@@ -147,10 +162,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                 margin: EdgeInsets.symmetric(horizontal: isSmall ? 10 : 20),
                 width: isSmall ? 180 : 200,
                 child: ListView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 30,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 15, vertical: 30),
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,7 +176,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               style: TextStyle(fontWeight: FontWeight.w400),
                             ),
                             Text(
-                              "Ahmad",
+                              user ?? 'Ahmad',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
@@ -174,7 +186,82 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             color: kAccentColor.withOpacity(.05),
                             child: IconButton(
                               icon: FaIcon(FontAwesomeIcons.user),
-                              onPressed: () {},
+                              onPressed: () {
+                                Get.dialog(
+                                  AlertDialog(
+                                    backgroundColor: Colors.transparent,
+                                    elevation: 0, title: Text('Edit profile'),
+                                    content: Container(
+                                      height: size.height / 3,
+                                      width: size.width / 3,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Color(0xFFFAFAFC).withOpacity(.1),
+                                        border: Border.all(
+                                            color: Colors.transparent),
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(15),
+                                        ),
+                                      ),
+                                      child: Card(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            children: [
+                                              TextField(
+                                                controller: name,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Enter your Name',
+                                                  helperText:
+                                                      'Only first or last name',
+                                                  hintText: 'Ahmad',
+                                                  prefix: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            8.0),
+                                                    child: FaIcon(
+                                                        FontAwesomeIcons.user),
+                                                  ),
+                                                  prefixIcon: FaIcon(
+                                                      FontAwesomeIcons
+                                                          .asterisk),
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                              SizedBox(height: 20),
+                                              CupertinoButton(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 50),
+                                                color: kAccentColor,
+                                                onPressed: () async {
+                                                  setState(() {
+                                                    if (name.text.isNotEmpty) {
+                                                      if (name.text.length <
+                                                          12) {
+                                                        SpUtil.setUser(name.text
+                                                                .trim())
+                                                            .then((value) =>
+                                                                Get.back());
+                                                      }
+                                                    }
+                                                  });
+                                                },
+                                                child: Text('Save'),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // icon: Tooltip(
+                                    //   message: 'This is saved inside the app',
+                                    //   child: FaIcon(FontAwesomeIcons.asterisk),
+                                    // ),
+                                  ),
+                                  name: 'profile dialog',
+                                );
+                              },
                             ),
                           ),
                         )
@@ -263,6 +350,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               AlertDialog(
                                 backgroundColor: Colors.transparent,
                                 elevation: 0,
+                                title: Text('AYAH OF THE DAY'),
                                 content: Container(
                                   height: size.height / 2,
                                   width: size.width / 3,
@@ -296,6 +384,7 @@ Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judg
                                   ),
                                 ),
                               ),
+                              name: 'Ayah of Day dialog',
                             ),
                             child: Text('Read now',
                                 style: TextStyle(color: Color(0xffdae1e7))),
@@ -315,6 +404,12 @@ Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judg
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    name.dispose();
+    super.dispose();
+  }
 }
 
 class DurationState {
