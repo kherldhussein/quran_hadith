@@ -1,3 +1,4 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_http_cache/dio_http_cache.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
-import 'package:quran_hadith/screens/home_screen.dart';
+import 'package:quran_hadith/screens/splash_screen.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
 
@@ -27,6 +28,15 @@ void main() async {
       child: const QuranHadith(),
     ),
   );
+  doWhenWindowReady(() {
+    final win = appWindow;
+    const initialSize = Size(1051.0, 646.0);
+    win.minSize = initialSize;
+    win.size = initialSize;
+    win.alignment = Alignment.center;
+    win.title = "Qur’ān Hadith";
+    win.show();
+  });
 }
 
 // Audio url: https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/1
@@ -82,7 +92,7 @@ class _QuranHadithState extends State<QuranHadith> {
       darkTheme: darkTheme,
       themeMode: ThemeState.to.themeMode,
       theme: theme,
-      home: const HomeScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
