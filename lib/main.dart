@@ -63,17 +63,18 @@ class _QuranHadithState extends State<QuranHadith> {
 
   @override
   void initState() {
-    dio.interceptors.add(
-      DioCacheManager(
-        CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
-      ).interceptor,
-    );
+   
     _initSp();
     super.initState();
   }
 
   Future _initSp() async {
     await appSP.init();
+    dio.interceptors.add(
+      DioCacheManager(
+        CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
+      ).interceptor,
+    );
   }
 
   @override
