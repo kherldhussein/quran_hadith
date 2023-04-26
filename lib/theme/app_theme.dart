@@ -39,54 +39,69 @@ double width =
 ThemeData get darkTheme {
   final base = ThemeData.dark();
   return base.copyWith(
+    useMaterial3: true,
+    cardColor: kDividerDark,
     brightness: Brightness.dark,
-    canvasColor: kDarkPrimaryColor,
-    primaryColor: kDarkPrimaryColor,
-    primaryColorLight: kAccentColor,
     primaryColorDark: kTextDarker,
-    cardColor: kBackgroundDark,
-    dividerColor: kDividerLight,
     platform: TargetPlatform.linux,
+    canvasColor: kDarkPrimaryColor,
+    primaryColorLight: kAccentColor,
+    primaryColor: kDarkPrimaryColor,
     scaffoldBackgroundColor: kBackgroundDark,
+    dialogBackgroundColor: Colors.transparent,
+    dividerColor: kDividerLight.withOpacity(.5),
+    iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
+    dividerTheme:
+        base.dividerTheme.copyWith(color: kLightPrimaryColor.withOpacity(.5)),
     buttonTheme: base.buttonTheme.copyWith(buttonColor: kDarkSecondaryColor),
-    cardTheme: base.cardTheme.copyWith(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    tabBarTheme: base.tabBarTheme.copyWith(
-      labelColor: kDividerLight,
-      unselectedLabelColor: kTextDark,
-      indicator: BubbleTabIndicator(
-        indicatorHeight: 25.0,
-        indicatorColor: kIconDark,
-        tabBarIndicatorSize: TabBarIndicatorSize.tab,
-      ),
-    ),
-    navigationRailTheme: base.navigationRailTheme.copyWith(
-        backgroundColor: kDividerDark,
-        selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
-        unselectedIconTheme: base.iconTheme.copyWith(color: kLight),
-        labelType: NavigationRailLabelType.all,
-        selectedLabelTextStyle:
-            base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
     textTheme: _buildTextTheme(base.textTheme, kTextLight, kTextLighter),
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
-    snackBarTheme: base.snackBarTheme.copyWith(
-      backgroundColor: kDarkPrimaryColor,
-      contentTextStyle: base.textTheme.bodyLarge!.copyWith(
-        fontWeight: FontWeight.w500,
-        fontSize: 15,
-        color: kTextLight,
+    tooltipTheme: base.tooltipTheme.copyWith(
+      textStyle: TextStyle(color: kLightPrimaryColor),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        color: kIconDark,
       ),
     ),
+    cardTheme: base.cardTheme.copyWith(
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: kDividerDark,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    tabBarTheme: base.tabBarTheme.copyWith(
+      indicator: BubbleTabIndicator(
+        tabBarIndicatorSize: TabBarIndicatorSize.tab,
+        indicatorColor: kIconDark,
+        indicatorHeight: 25.0,
+      ),
+      unselectedLabelColor: kTextDark,
+      labelColor: kDividerLight,
+    ),
+    navigationRailTheme: base.navigationRailTheme.copyWith(
+      selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
+      unselectedIconTheme: base.iconTheme.copyWith(color: kLight),
+      labelType: NavigationRailLabelType.all,
+      indicatorColor: Colors.transparent,
+      backgroundColor: kDividerDark,
+      selectedLabelTextStyle:
+          base.textTheme.bodyMedium!.copyWith(color: kAccentColor),
+    ),
+    snackBarTheme: base.snackBarTheme.copyWith(
+      contentTextStyle: base.textTheme.bodyLarge!.copyWith(
+        fontWeight: FontWeight.w500,
+        color: kTextLight,
+        fontSize: 15,
+      ),
+      backgroundColor: kDarkPrimaryColor,
+    ),
     appBarTheme: base.appBarTheme.copyWith(
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
       color: kDividerDark,
       elevation: .0,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
     ),
-    iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     dialogTheme: base.dialogTheme.copyWith(
       contentTextStyle: TextStyle(color: kDarkColor),
       backgroundColor: kDarkPrimaryColor,
@@ -99,54 +114,68 @@ ThemeData get darkTheme {
 ThemeData get theme {
   final base = ThemeData.light();
   return base.copyWith(
+    cardColor: kLight,
+    useMaterial3: true,
     brightness: Brightness.light,
-    buttonTheme: base.buttonTheme.copyWith(buttonColor: kAccentColor),
-    canvasColor: kLightPrimaryColor,
-    cardColor: kDividerLight,
-    primaryColorLight: kLightPrimaryColor,
-    platform: TargetPlatform.linux,
     primaryColorDark: kTextDarker,
+    platform: TargetPlatform.linux,
+    canvasColor: kLightPrimaryColor,
+    primaryColorLight: kLightPrimaryColor,
     scaffoldBackgroundColor: kBackgroundLight,
+    dividerColor: kLightPrimaryColor.withOpacity(.5),
+    iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
+    buttonTheme: base.buttonTheme.copyWith(buttonColor: kAccentColor),
+    dividerTheme: base.dividerTheme.copyWith(color: kIconDark.withOpacity(.5)),
+    primaryTextTheme:
+        _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
+    textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
+    tooltipTheme: base.tooltipTheme.copyWith(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        color: kIconDark,
+      ),
+      textStyle: TextStyle(color: kDark),
+    ),
     tabBarTheme: base.tabBarTheme.copyWith(
-      labelColor: kDividerLight,
-      unselectedLabelColor: kDarkColor,
       indicator: BubbleTabIndicator(
         indicatorHeight: 25.0,
         indicatorColor: kIconDark,
         tabBarIndicatorSize: TabBarIndicatorSize.tab,
       ),
+      unselectedLabelColor: kDarkColor,
+      labelColor: kDividerLight,
     ),
     navigationRailTheme: base.navigationRailTheme.copyWith(
-        selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
-        labelType: NavigationRailLabelType.all,
-        unselectedIconTheme: base.iconTheme.copyWith(color: kDarkColor),
-        backgroundColor: kBackgroundLight,
-        selectedLabelTextStyle:
-            base.textTheme.bodyMedium!.copyWith(color: kAccentColor)),
+      selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
+      unselectedIconTheme: base.iconTheme.copyWith(color: kDarkColor),
+      labelType: NavigationRailLabelType.all,
+      indicatorColor: Colors.transparent,
+      backgroundColor: kBackgroundLight,
+      selectedLabelTextStyle:
+          base.textTheme.bodyMedium!.copyWith(color: kAccentColor),
+    ),
     cardTheme: base.cardTheme.copyWith(
       clipBehavior: Clip.antiAlias,
+      color: kLight,
+      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     dialogTheme: base.dialogTheme.copyWith(
       contentTextStyle: TextStyle(color: kDarkColor),
     ),
     appBarTheme: base.appBarTheme.copyWith(
+      systemOverlayStyle: SystemUiOverlayStyle.light,
       color: kBackgroundLight,
       elevation: .0,
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
     ),
-    iconTheme: base.iconTheme.copyWith(color: kAccentColor),
-    primaryTextTheme:
-        _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
-    textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     snackBarTheme: base.snackBarTheme.copyWith(
-      backgroundColor: kLight,
       contentTextStyle: base.textTheme.bodyLarge!.copyWith(
         fontWeight: FontWeight.w500,
-        fontSize: 15,
         color: kTextDark,
+        fontSize: 15,
       ),
+      backgroundColor: kLight,
     ),
     colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
         .copyWith(secondary: kAccentColor),
