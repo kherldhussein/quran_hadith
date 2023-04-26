@@ -137,30 +137,23 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   ),
                 ),
                 SizedBox(height: 5),
-                Card(
-                  child: ListTile(
-                    title: Text(
-                      'Khalid Hussein',
-                      style: TextStyle(fontSize: isSmall ? 10 : 24),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: isSmall ? 10 : 20,
-                        vertical: isSmall ? 10 : 20),
-                    trailing: InkWell(
-                      radius: 0,
-                      splashColor: Theme.of(context).cardColor,
-                      hoverColor: Theme.of(context).cardColor,
-                      highlightColor: Theme.of(context).cardColor,
-                      child: Text(
-                        'kherld11@gmail.com',
-                        style: theme.titleLarge!.copyWith(
-                            fontSize: isSmall ? 10 : 20,
-                            decoration: TextDecoration.underline,
-                            color: kLinkC),
+                ListTile(
+                  title: Text(
+                    'Khalid Hussein',
+                    style: TextStyle(fontSize: isSmall ? 10 : 24),
+                  ),
+                  contentPadding: EdgeInsets.only(top: 20),
+                  trailing: GestureDetector(
+                    child: Text(
+                      'kherld11@gmail.com',
+                      style: theme.titleLarge!.copyWith(
+                        decoration: TextDecoration.underline,
+                        fontSize: isSmall ? 10 : 20,
+                        color: kLinkC,
                       ),
-                      onTap: () =>
-                          launchUrl(Uri.parse('mailto:kherld11@gmail.com')),
                     ),
+                    onTap: () =>
+                        launchUrl(Uri.parse('mailto:kherld11@gmail.com')),
                   ),
                 ),
               ],
