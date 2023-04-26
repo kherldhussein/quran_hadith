@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:quran_hadith/controller/search.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/models/search/ayah.dart';
-import 'package:quran_hadith/screens/about.dart';
+import 'package:quran_hadith/screens/about.dart' as about;
 import 'package:quran_hadith/screens/favorite.dart';
 import 'package:quran_hadith/screens/hPage.dart';
 import 'package:quran_hadith/screens/qPage.dart';
@@ -172,8 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         text: 'About',
                         pressed: () {
                           Get.back();
-                          showDialog(
-                              context: context, builder: (context) => About());
+                          about.showAboutDialog();
                         })
                   ],
                   icon: FontAwesomeIcons.a,
