@@ -106,7 +106,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                     style: theme.headlineSmall),
                 SizedBox(height: 20),
                 Text(
-                  'Qur’ān Hadith is an Online Quran and Hadith application with fashion interface, smooth performance and more features '
+                  'Qur’ān Hadith is an Online/Offline Quran and Hadith application with fashion interface, smooth performance and more features '
                   'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
                   style: theme.titleLarge,
                 )
