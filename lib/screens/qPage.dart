@@ -190,7 +190,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                 Get.dialog(
                                   AlertDialog(
                                     backgroundColor: Colors.transparent,
-                                    elevation: 0, title: Text('Edit profile'),
+                                    elevation: 0,
+                                    title: Text('Edit profile'),
                                     content: Container(
                                       height: size.height / 3,
                                       width: size.width / 3,
@@ -254,10 +255,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                         ),
                                       ),
                                     ),
-                                    // icon: Tooltip(
-                                    //   message: 'This is saved inside the app',
-                                    //   child: FaIcon(FontAwesomeIcons.asterisk),
-                                    // ),
                                   ),
                                   name: 'profile dialog',
                                 );
@@ -282,7 +279,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
-                              "AL-Fatiah",
+                              "Al-Fatiah",
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Text('Ayah no. 3')
@@ -291,6 +288,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                         IconButton(
                           icon: FaIcon(FontAwesomeIcons.book),
                           onPressed: () {},
+                          color: Theme.of(context).canvasColor,
                         )
                       ],
                     ),
@@ -309,7 +307,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
-                              "AL-Ma'idah",
+                              "Al-Ma'idah",
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Text('Ayah no. 3')
@@ -318,6 +316,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                         IconButton(
                           icon: FaIcon(FontAwesomeIcons.headphonesSimple),
                           onPressed: () {},
+                          color: Theme.of(context).canvasColor,
                         )
                       ],
                     ),
@@ -344,7 +343,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             'may judge between the people by that which God has shown you ...',
                             style: TextStyle(color: Color(0xffdae1e7)),
                           ),
-                          Divider(height: 20, color: Color(0xffdae1e7)),
+                          Divider(height: 20, color: kLightPrimaryColor),
                           InkWell(
                             onTap: () => Get.dialog(
                               AlertDialog(
