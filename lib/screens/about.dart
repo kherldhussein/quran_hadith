@@ -6,28 +6,23 @@ import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/headerTitle.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+void showAboutDialog() {
+  Get.dialog(
+    About(),
+    name: 'About QH',
+    barrierDismissible: false,
+    transitionCurve: Curves.easeInOutCirc,
+  );
+}
+
+/// todo: Implement native Linux tab - Scroll from the bottom
 class About extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Material(
-        color: Colors.transparent,
-        child: Center(
-          child: Card(
-            color: Get.theme.brightness == Brightness.light
-                ? Color(0xffdae1e7)
-                : Theme.of(context).cardColor,
-            elevation: 20,
-            child: Container(
-              height: 500,
-              width: 500,
-              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-              child: AboutView(),
-            ),
-          ),
-        ),
-      ),
+    return AlertDialog(
+      elevation: 0,
+      backgroundColor: Theme.of(context).canvasColor,
+      content: Container(height: 500, width: 500, child: AboutView()),
     );
   }
 }
@@ -62,6 +57,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     final isSmall = isDisplayVerySmallDesktop(context);
     final theme = Theme.of(context).textTheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         actions: [
           IconButton(
@@ -76,11 +72,11 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
         centerTitle: true,
         automaticallyImplyLeading: false,
         bottom: TabBar(
-          isScrollable: true,
           tabs: tabs,
-          splashBorderRadius: BorderRadius.circular(50),
+          isScrollable: true,
           controller: _tabController,
-          padding: EdgeInsets.all(10),
+          indicatorSize: TabBarIndicatorSize.tab,
+          splashBorderRadius: BorderRadius.circular(20),
         ),
       ),
       body: TabBarView(
