@@ -63,7 +63,6 @@ class _QuranHadithState extends State<QuranHadith> {
 
   @override
   void initState() {
-   
     _initSp();
     super.initState();
   }
