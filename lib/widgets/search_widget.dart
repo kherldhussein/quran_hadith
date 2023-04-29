@@ -5,7 +5,7 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
-class SearchWidget extends SearchDelegate<SurahsList> {
+class SearchWidget extends SearchDelegate<SurahList> {
   final Future<QuranAPI> quran;
 
   SearchWidget(this.quran);
