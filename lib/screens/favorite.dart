@@ -7,7 +7,6 @@ import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
-import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
 class Favorite extends StatefulWidget {
@@ -23,8 +22,7 @@ class _FavoriteState extends State<Favorite> {
 
   @override
   Widget build(BuildContext context) {
-    // bool favorite = Provider.of<OnFavorite>(context, listen: false).favorite;
-    var quranAPI = Provider.of<QuranAPI>(context);
+    var favorite = Provider.of<OnFavorite>(context, listen: false);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
     final isSmall = isDisplayVerySmallDesktop(context);
@@ -56,10 +54,9 @@ class _FavoriteState extends State<Favorite> {
                   ),
                 ),
                 child: FutureBuilder(
-                    future: quranAPI.getSuratList(),
+                    future: favorite.getFavorites(),
                     builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
-                        // if (favorite == true)
                         return Container(
                           child: Center(
                             child: CupertinoActivityIndicator(radius: 50),
@@ -78,14 +75,14 @@ class _FavoriteState extends State<Favorite> {
                           itemBuilder: (context, index) {
                             return SuratTile(
                               colorO: kAccentColor,
-                              // isFavorite: Provider.of<OnFavorite>(context, listen: false).favorite,
+                              isFavorite: favorite.isFavorite,
                               colorI: Color(0xffe0f5f0),
                               onFavorite: () {
                                 setState(() {
-                                  Provider.of<OnFavorite>(context,
-                                          listen: false)
-                                      .addFavorite(false);
-                                  SpUtil.setFavorite(false);
+                                  favorite.removeFavorite(
+                                    snapshot.data.surahs[index].name,
+                                  );
+                                  favorite.addIsFavorite(false);
                                 });
                               },
                               radius: 20,
