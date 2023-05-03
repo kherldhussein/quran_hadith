@@ -129,7 +129,7 @@ class _QPageViewState extends State<QPageView> {
                                     AsyncSnapshot snapshot) {
                                   if (!snapshot.hasData) {
                                     return Shimmer.fromColors(
-                                      baseColor: Colors.grey[400]!,
+                                      baseColor: Colors.grey.withOpacity(.5),
                                       highlightColor: Colors.grey[100]!,
                                       child: ListView.separated(
                                         itemCount: 114,

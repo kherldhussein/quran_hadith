@@ -1,6 +1,4 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:dio/dio.dart';
-import 'package:dio_http_cache/dio_http_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -59,8 +57,6 @@ class _QuranHadithState extends State<QuranHadith> {
     return supportedLocales.first;
   }
 
-  Dio dio = Dio();
-
   @override
   void initState() {
     _initSp();
@@ -69,11 +65,11 @@ class _QuranHadithState extends State<QuranHadith> {
 
   Future _initSp() async {
     await appSP.init();
-    dio.interceptors.add(
-      DioCacheManager(
-        CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
-      ).interceptor,
-    );
+    // dio.interceptors.add(
+    //   DioCacheManager(
+    //     CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
+    //   ).interceptor,
+    // );
   }
 
   @override

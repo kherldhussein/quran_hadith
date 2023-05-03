@@ -30,7 +30,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   bool isLoading = false;
   var list;
   final audioPlayer = AudioPlayer();
-  String? user;
+  String? user = 'Ahmed';
 
   // List<String> surahList = SuratList().surahName;
   List<String> linkList = [];
@@ -75,6 +75,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
     var quranAPI = Provider.of<QuranAPI>(context);
+    final fav = Provider.of<OnFavorite>(context, listen: false);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
     final isSmall = isDisplayVerySmallDesktop(context);
@@ -123,17 +124,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             return SuratTile(
                               colorO: kAccentColor,
                               itemCount: snapshot.data.surahs.length,
-                              // isFavorite: Provider.of<OnFavorite>(context,
-                              //         listen: false)
-                              //     .favorite,
+                              isFavorite: fav.isFavorite,
                               onFavorite: () {
                                 setState(() {
-                                  Provider.of<OnFavorite>(context,
-                                          listen: false)
-                                      .addFavorite(true);
-                                  SpUtil.setFavorite(true);
-                                  SpUtil.setFavorites(
-                                      snapshot.data.surahs[index].number);
+                                  fav.addFavorite(
+                                      snapshot.data.surahs[index].name);
+                                  fav.addIsFavorite(true);
                                 });
                               },
                               colorI: Color(0xffe0f5f0),
@@ -176,7 +172,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               style: TextStyle(fontWeight: FontWeight.w400),
                             ),
                             Text(
-                              user ?? 'Ahmad',
+                              user!,
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
@@ -215,7 +211,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                                   labelText: 'Enter your Name',
                                                   helperText:
                                                       'Only first or last name',
-                                                  hintText: 'Ahmad',
+                                                  hintText: user!,
                                                   prefix: Padding(
                                                     padding:
                                                         const EdgeInsets.all(

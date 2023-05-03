@@ -11,6 +11,8 @@ import 'package:quran_hadith/models/surahModel.dart';
 import 'package:quran_hadith/screens/qPageView.dart';
 import 'package:quran_hadith/widgets/suratInfo.dart';
 
+import '../theme/app_theme.dart';
+
 class SuratTile extends StatefulWidget {
   final VoidCallback? onFavorite;
   final String? revelationType;
@@ -98,7 +100,7 @@ class _SuratTileState extends State<SuratTile> {
                 IconButton(
                   icon: Icon(widget.icon,
                       color: widget.isFavorite!
-                          ? Colors.green
+                          ? kAccentColor
                           : Colors.lightGreen),
                   onPressed: widget.onFavorite,
                 )

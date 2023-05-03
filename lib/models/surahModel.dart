@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class SurahsList extends ChangeNotifier {
+class SurahList extends ChangeNotifier {
   final List<Surah>? surahs;
 
-  SurahsList({this.surahs});
+  SurahList({this.surahs});
 
-  factory SurahsList.fromJSON(Map<String, dynamic> json) {
+  factory SurahList.fromJSON(Map<String, dynamic> json) {
     Iterable surahlist = json['data']['surahs'];
     List<Surah> surahsList = surahlist.map((i) => Surah.fromJSON(i)).toList();
 
-    return SurahsList(surahs: surahsList);
+    return SurahList(surahs: surahsList);
   }
 
   Surah get currentSurah =>
