@@ -56,7 +56,7 @@ class _FavoriteState extends State<Favorite> {
                 child: FutureBuilder(
                     future: favorite.getFavorites(),
                     builder: (context, AsyncSnapshot snapshot) {
-                      if (!snapshot.hasData) {
+                      if (snapshot.hasData) {
                         return Container(
                           child: Center(
                             child: CupertinoActivityIndicator(radius: 50),

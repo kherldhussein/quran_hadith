@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeState extends ChangeNotifier {
+class ThemeState extends GetxController {
   static ThemeState get to => Get.find();
 
   late SharedPreferences prefs;
@@ -14,7 +14,7 @@ class ThemeState extends ChangeNotifier {
   Future<void> updateTheme(ThemeMode themeMode) async {
     Get.changeThemeMode(themeMode);
     _themeMode = themeMode;
-    notifyListeners();
+    update();
     prefs = await SharedPreferences.getInstance();
     String themeTextString = themeMode.toString().split('.')[1];
     setStatusBarBrightness(themeTextString);
