@@ -16,7 +16,6 @@ class QuranAPI {
     String url = "http://api.alquran.cloud/v1/quran/quran-uthmani";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
-      print(response.body);
       return SurahList.fromJSON(json.decode(response.body));
     } else {
       throw Exception("Failed to Get Data");
