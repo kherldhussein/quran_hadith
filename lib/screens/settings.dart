@@ -38,6 +38,11 @@ class _SettingsState extends State<Settings> {
                   padding: EdgeInsets.fromLTRB(6, 8, 6, 8),
                   child: Text('Customize Your Experience'),
                 ),
+                Switch(value: ThemeState().isDarkMode, onChanged: (v) {
+                  setState(() {
+                    ThemeState().updateTheme(ThemeData.light());
+                  });
+                }),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -52,14 +57,14 @@ class _SettingsState extends State<Settings> {
                             bottomRight: Radius.circular(20)),
                       ),
                       onPressed: () =>
-                          ThemeState.to.updateTheme(ThemeMode.light),
+                          ThemeState().updateTheme(ThemeData.light()),
                     ),
-                    ActionChip(
-                      label: Text('System Theme'),
-                      tooltip: 'On supported device only',
-                      onPressed: () =>
-                          ThemeState.to.updateTheme(ThemeMode.system),
-                    ),
+                    // ActionChip(
+                    //   label: Text('System Theme'),
+                    //   tooltip: 'On supported device only',
+                    //   onPressed: () =>
+                    //       ThemeState().updateTheme(ThemeData.dark()),
+                    // ),
                     ActionChip(
                       label: Text('Dark'),
                       shape: RoundedRectangleBorder(
@@ -69,7 +74,7 @@ class _SettingsState extends State<Settings> {
                             bottomLeft: Radius.circular(20)),
                       ),
                       onPressed: () =>
-                          ThemeState.to.updateTheme(ThemeMode.dark),
+                          ThemeState().updateTheme(ThemeData.dark()),
                     ),
                   ],
                 )

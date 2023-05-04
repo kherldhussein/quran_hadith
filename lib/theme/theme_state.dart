@@ -1,66 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:flutter/material.dart';
 
 class ThemeState extends GetxController {
-  static ThemeState get to => Get.find();
+  ThemeData themedata = ThemeData.light();
+  bool isDarkMode = false;
 
-  late SharedPreferences prefs;
-  ThemeMode? _themeMode;
+  final box = GetStorage();
 
-  ThemeMode? get themeMode => _themeMode;
+  @override
+  void onInit() {
+    super.onInit();
+    isDarkMode = box.read('isDarkMode') ?? false;
+  }
 
-  Future<void> updateTheme(ThemeMode themeMode) async {
-    Get.changeThemeMode(themeMode);
-    _themeMode = themeMode;
+  void updateTheme(ThemeData themedata) {
+    this.themedata = themedata;
     update();
-    prefs = await SharedPreferences.getInstance();
-    String themeTextString = themeMode.toString().split('.')[1];
-    setStatusBarBrightness(themeTextString);
-    await prefs.setString('theme', themeTextString);
+    box.write('isDarkMode', isDarkMode);
   }
 
-  getThemeModeFromPreferences() async {
-    ThemeMode themeMode;
-    prefs = await SharedPreferences.getInstance();
-    String themeTextString = prefs.getString('theme') ?? 'system';
-    setStatusBarBrightness(themeTextString);
-    if (themeTextString == "dark") {
-      themeMode = ThemeMode.dark;
-    } else if (themeTextString == "light") {
-      themeMode = ThemeMode.light;
-    } else {
-      themeMode = ThemeMode.light;
-    }
-    updateTheme(themeMode);
-  }
-
-  setStatusBarBrightness(themeTextString) {
-    if (themeTextString == "dark") {
-      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.black,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ));
-    } else if (themeTextString == "light") {
-      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Color(0xFFFFFFFF),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ));
-    } else {
-      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.black,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ));
-    }
+  void toggleDarkMode() {
+    isDarkMode = !isDarkMode;
+    updateTheme(isDarkMode ? ThemeData.dark() : ThemeData.light());
+    box.write('isDarkMode', isDarkMode);
   }
 }

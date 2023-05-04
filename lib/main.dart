@@ -16,7 +16,6 @@ final quranApi = QuranAPI();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Get.lazyPut<ThemeState>(() => ThemeState());
-  ThemeState.to.getThemeModeFromPreferences();
   runApp(
     MultiProvider(
       providers: [
@@ -86,7 +85,7 @@ class _QuranHadithState extends State<QuranHadith> {
           QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
       title: 'Qur’ān Hadith',
       darkTheme: darkTheme,
-      themeMode: ThemeState.to.themeMode!,
+      themeMode: ThemeState().isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: theme,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
