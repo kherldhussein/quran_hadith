@@ -6,7 +6,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
-import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
@@ -78,7 +77,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
     final fav = Provider.of<OnFavorite>(context, listen: false);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
-    final isSmall = isDisplayVerySmallDesktop(context);
+    final isSmall = context.isLargeTablet;
     return Scaffold(
       backgroundColor: theme.appBarTheme.backgroundColor,
       body: Container(
@@ -114,7 +113,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               horizontal: 30.0, vertical: 40.0),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isSmall ? 3 : 4,
+                            crossAxisCount: isSmall ? 4 : 3,
                             crossAxisSpacing: 20,
                             mainAxisSpacing: 20,
                             childAspectRatio: 1.6,
