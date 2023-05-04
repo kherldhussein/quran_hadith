@@ -9,7 +9,7 @@ class ThemeState extends ChangeNotifier {
   late SharedPreferences prefs;
   ThemeMode? _themeMode;
 
-  ThemeMode get themeMode => _themeMode!;
+  ThemeMode? get themeMode => _themeMode;
 
   Future<void> updateTheme(ThemeMode themeMode) async {
     Get.changeThemeMode(themeMode);
