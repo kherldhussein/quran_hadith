@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 
 class Settings extends StatefulWidget {
@@ -10,6 +12,7 @@ class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final ThemeState themes = Provider.of<ThemeState>(context);
     return Scaffold(
       backgroundColor: theme.appBarTheme.backgroundColor,
       body: Center(
@@ -38,46 +41,19 @@ class _SettingsState extends State<Settings> {
                   padding: EdgeInsets.fromLTRB(6, 8, 6, 8),
                   child: Text('Customize Your Experience'),
                 ),
-                Switch(value: ThemeState().isDarkMode, onChanged: (v) {
-                  setState(() {
-                    ThemeState().updateTheme(ThemeData.light());
-                  });
-                }),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ActionChip(
-                      label: Text('Light'),
-                      backgroundColor: theme.chipTheme.backgroundColor,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: theme.colorScheme.background),
-                        borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20)),
-                      ),
-                      onPressed: () =>
-                          ThemeState().updateTheme(ThemeData.light()),
-                    ),
-                    // ActionChip(
-                    //   label: Text('System Theme'),
-                    //   tooltip: 'On supported device only',
-                    //   onPressed: () =>
-                    //       ThemeState().updateTheme(ThemeData.dark()),
-                    // ),
-                    ActionChip(
-                      label: Text('Dark'),
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: theme.colorScheme.background),
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            bottomLeft: Radius.circular(20)),
-                      ),
-                      onPressed: () =>
-                          ThemeState().updateTheme(ThemeData.dark()),
-                    ),
-                  ],
-                )
+                Padding(
+                  padding: EdgeInsets.fromLTRB(6, 8, 6, 8),
+                  child: Text('Switch to join the dark side'),
+                ),
+                Switch(
+                    value: themes.isDarkMode,
+                    activeColor: kAccentColor,
+                    inactiveTrackColor: kAccentColor.withOpacity(.5),
+                    onChanged: (bool val) {
+                      setState(() {
+                        themes.updateTheme();
+                      });
+                    }),
               ],
             ),
           ),

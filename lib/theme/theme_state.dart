@@ -1,28 +1,20 @@
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 
-class ThemeState extends GetxController {
-  ThemeData themedata = ThemeData.light();
-  bool isDarkMode = false;
+class ThemeState extends ChangeNotifier {
+  bool _isDarkMode = false;
 
-  final box = GetStorage();
+  bool get isDarkMode => _isDarkMode;
 
-  @override
-  void onInit() {
-    super.onInit();
-    isDarkMode = box.read('isDarkMode') ?? false;
+  void updateTheme() async {
+    _isDarkMode = !_isDarkMode;
+    await SpUtil.setThemed(_isDarkMode);
+    notifyListeners();
   }
 
-  void updateTheme(ThemeData themedata) {
-    this.themedata = themedata;
-    update();
-    box.write('isDarkMode', isDarkMode);
-  }
-
-  void toggleDarkMode() {
-    isDarkMode = !isDarkMode;
-    updateTheme(isDarkMode ? ThemeData.dark() : ThemeData.light());
-    box.write('isDarkMode', isDarkMode);
+  Future<void> loadTheme(bool dark) async {
+    _isDarkMode = SpUtil.getThemed()!;
+    _isDarkMode = dark;
+    notifyListeners();
   }
 }

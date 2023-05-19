@@ -29,7 +29,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   bool isLoading = false;
   var list;
   final audioPlayer = AudioPlayer();
-  String? user = 'Ahmed';
+  String? user = 'Ahmad';
 
   // List<String> surahList = SuratList().surahName;
   List<String> linkList = [];
@@ -231,17 +231,16 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                                                     horizontal: 50),
                                                 color: kAccentColor,
                                                 onPressed: () async {
-                                                  setState(() {
-                                                    if (name.text.isNotEmpty) {
-                                                      if (name.text.length <
-                                                          12) {
+                                                  if (name.text.isNotEmpty) {
+                                                    if (name.text.length < 12) {
+                                                      setState(() {
                                                         SpUtil.setUser(name.text
                                                                 .trim())
                                                             .then((value) =>
                                                                 Get.back());
-                                                      }
+                                                      });
                                                     }
-                                                  });
+                                                  }
                                                 },
                                                 child: Text('Save'),
                                               )

@@ -46,7 +46,8 @@ dependencies:
   animate_do:
   bitsdojo_window:
   desktop_window:
-  json_annotation: 
+  json_annotation:
+  hive:
 dev_dependencies:
   flutter_test:
     sdk: flutter

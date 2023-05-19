@@ -8,19 +8,21 @@ import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/screens/splash_screen.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 
 import 'theme/app_theme.dart';
 
 final quranApi = QuranAPI();
+final themed = ThemeState();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Get.lazyPut<ThemeState>(() => ThemeState());
   runApp(
     MultiProvider(
       providers: [
         Provider(create: (context) => quranApi),
         ChangeNotifierProvider.value(value: OnFavorite()),
+        ChangeNotifierProvider.value(value: themed),
       ],
       child: const QuranHadith(),
     ),
@@ -64,6 +66,11 @@ class _QuranHadithState extends State<QuranHadith> {
 
   Future _initSp() async {
     await appSP.init();
+    bool? dark = SpUtil.getThemed();
+    if (dark != null) {
+      Provider.of<ThemeState>(context, listen: false).loadTheme(dark);
+    }
+
     // dio.interceptors.add(
     //   DioCacheManager(
     //     CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
@@ -73,6 +80,7 @@ class _QuranHadithState extends State<QuranHadith> {
 
   @override
   Widget build(BuildContext context) {
+    final themes = Provider.of<ThemeState>(context);
     return GetMaterialApp(
       localizationsDelegates: [
         // AppLocale.delegate,
@@ -85,7 +93,7 @@ class _QuranHadithState extends State<QuranHadith> {
           QuranHadith.supportedLocales.map((l) => Locale(l, '')).toList(),
       title: 'Qur’ān Hadith',
       darkTheme: darkTheme,
-      themeMode: ThemeState().isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themes.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: theme,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,

@@ -75,10 +75,12 @@ class _QPageViewState extends State<QPageView> {
         title: Text(
           widget.suratName!,
           style: TextStyle(
-              color: Colors.black54,
-              fontSize: 30,
-              letterSpacing: 3,
-              fontWeight: FontWeight.w200),
+            fontWeight: FontWeight.w200,
+            color: Colors.black54,
+            fontFamily: 'Amiri',
+            letterSpacing: 3,
+            fontSize: 30,
+          ),
         ),
         actions: [
           IconButton(

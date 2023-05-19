@@ -83,7 +83,7 @@ class _SuratTileState extends State<SuratTile> {
                     suratEnglishName: widget.englishName,
                   ));
             },
-            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -101,7 +101,7 @@ class _SuratTileState extends State<SuratTile> {
                   icon: Icon(widget.icon,
                       color: widget.isFavorite!
                           ? kAccentColor
-                          : Colors.lightGreen),
+                          : kAccentColor.withOpacity(.5)),
                   onPressed: widget.onFavorite,
                 )
               ],
