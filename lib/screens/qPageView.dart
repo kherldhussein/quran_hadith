@@ -299,7 +299,7 @@ class _QPageViewState extends State<QPageView> {
                     ),
                     onPressed: () {
                       Clipboard.setData(
-                        ClipboardData(text: widget.ayahList![index].text),
+                        ClipboardData(text: widget.ayahList![index].text!),
                       );
                     }),
               ],
