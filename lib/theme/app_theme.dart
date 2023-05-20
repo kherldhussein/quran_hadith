@@ -81,7 +81,7 @@ ThemeData get darkTheme {
       labelColor: kDividerLight,
     ),
     navigationRailTheme: base.navigationRailTheme.copyWith(
-      selectedIconTheme: base.iconTheme.copyWith(color: kAccentColor),
+      selectedIconTheme: base.iconTheme.copyWith(color: kDarkSecondaryColor),
       unselectedIconTheme: base.iconTheme.copyWith(color: kLight),
       labelType: NavigationRailLabelType.all,
       indicatorColor: Colors.transparent,

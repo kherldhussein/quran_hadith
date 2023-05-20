@@ -24,7 +24,6 @@ class SuratTile extends StatefulWidget {
   final int? itemCount;
   final double? radius;
   final Color? colorI;
-  final Color? colorO;
   final int? suratNo;
   final String? name;
 
@@ -33,7 +32,6 @@ class SuratTile extends StatefulWidget {
     this.name,
     this.icon,
     this.colorI,
-    this.colorO,
     this.radius,
     this.suratNo,
     this.ayahList,
@@ -93,15 +91,24 @@ class _SuratTileState extends State<SuratTile> {
                         ? replaceArabicNumber(widget.suratNo.toString())
                         : replaceArabicNumber(widget.suratNo.toString()),
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: widget.colorO, fontFamily: 'Amiri'),
+                    style: TextStyle(color: Get.theme.brightness == Brightness.light
+                        ? kAccentColor
+                        : kDarkSecondaryColor, fontFamily: 'Amiri'),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   backgroundColor: widget.colorI,
                 ),
                 IconButton(
-                  icon: Icon(widget.icon,
-                      color: widget.isFavorite!
-                          ? kAccentColor
-                          : kAccentColor.withOpacity(.5)),
+                  icon: Icon(
+                    widget.icon,
+                    color: widget.isFavorite!
+                        ? kAccentColor
+                        : Theme.of(context).canvasColor,
+                  ),
+                  splashRadius: 1,
+                  splashColor: kAccentColor.withOpacity(.5),
                   onPressed: widget.onFavorite,
                 )
               ],
@@ -110,13 +117,14 @@ class _SuratTileState extends State<SuratTile> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 10),
                 AutoSizeText(
                   widget.englishName!,
                   style: TextStyle(
                       color: Colors.black, fontWeight: FontWeight.bold),
                 ),
                 AutoSizeText(
-                  widget.englishTrans!,
+                  widget.englishTrans!.toUpperCase(),
                   style: TextStyle(
                       color: Color(0xffdae1e7), fontWeight: FontWeight.w300),
                 ),

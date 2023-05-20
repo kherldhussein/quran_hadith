@@ -121,7 +121,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           itemCount: snapshot.data.surahs.length,
                           itemBuilder: (context, index) {
                             return SuratTile(
-                              colorO: kAccentColor,
                               itemCount: snapshot.data.surahs.length,
                               isFavorite: fav.isFavorite,
                               onFavorite: () {
@@ -180,7 +179,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           child: Material(
                             color: kAccentColor.withOpacity(.05),
                             child: IconButton(
-                              icon: FaIcon(FontAwesomeIcons.user),
+                              icon: FaIcon(FontAwesomeIcons.user,color: Get.theme.brightness == Brightness.light
+                                  ? kAccentColor
+                                  : kDarkSecondaryColor,),
                               onPressed: () {
                                 Get.dialog(
                                   AlertDialog(
@@ -269,7 +270,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             Text(
                               'LAST READ',
                               style: TextStyle(
-                                  color: kAccentColor,
+                                  color: Get.theme.brightness == Brightness.light
+                                      ? kAccentColor
+                                      : kDarkSecondaryColor,
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -297,7 +300,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             Text(
                               'LAST LISTENED',
                               style: TextStyle(
-                                  color: kAccentColor,
+                                  color: Get.theme.brightness == Brightness.light
+                                      ? kAccentColor
+                                      : kDarkSecondaryColor,
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -319,7 +324,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                       padding:
                           EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                       decoration: BoxDecoration(
-                          color: kAccentColor,
+                          color: Get.theme.brightness == Brightness.light
+                              ? kAccentColor
+                              : kDarkSecondaryColor,
                           borderRadius: BorderRadius.circular(10)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

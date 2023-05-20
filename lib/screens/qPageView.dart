@@ -152,7 +152,6 @@ class _QPageViewState extends State<QPageView> {
                                       // controller: controller,
                                       itemBuilder: (context, index) {
                                         return SuratTile(
-                                          colorO: Color(0xffe0f5f0),
                                           radius: 8,
                                           colorI: Color(0xff01AC68),
                                           ayahList:

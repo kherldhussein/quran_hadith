@@ -16,7 +16,7 @@ class SearchWidget extends SearchDelegate<SurahList> {
       IconButton(
         splashRadius: 10,
         tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-        icon: const FaIcon(FontAwesomeIcons.times),
+        icon: const FaIcon(FontAwesomeIcons.xmark),
         onPressed: () {
           query = '';
           showSuggestions(context);
@@ -51,7 +51,6 @@ class SearchWidget extends SearchDelegate<SurahList> {
               itemCount: snapshot.data.surahs.length,
               itemBuilder: (context, index) {
                 return SuratTile(
-                  colorO: Color(0xff01AC68),
                   isFavorite: true,
                   colorI: Color(0xffe0f5f0),
                   radius: 20,

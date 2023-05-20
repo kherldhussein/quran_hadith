@@ -66,10 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: InputDecoration(
           contentPadding: EdgeInsets.only(right: 15),
           filled: true,
-          focusColor: Color(0xffeef2f5),
+          focusColor: Theme.of(context).canvasColor,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Color(0xffeef2f5).withOpacity(.5)),
+            borderSide: BorderSide(color: Theme.of(context).canvasColor),
           ),
           suffixIcon: IconButton(
             splashRadius: 1,
@@ -83,10 +83,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           hintStyle: const TextStyle(fontWeight: FontWeight.w300),
           hintText: '    Search',
-          fillColor: Colors.grey[200]!.withOpacity(.2),
+          fillColor: Theme.of(context).appBarTheme.backgroundColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Color(0xffeef2f5).withOpacity(.5)),
+            borderSide: BorderSide(color: Theme.of(context).canvasColor),
           ),
         ),
       ),
@@ -99,9 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: isSmall
                   ? AnimSearchBar(
                       width: isSmall ? 200 : 400,
-                      color: Get.theme.brightness == Brightness.light
-                          ? Color(0xffeef2f5)
-                          : kDarkPrimaryColor,
+                      color: Theme.of(context).canvasColor,
                       textController: searchController,
                       onSuffixTap: () {
                         setState(() {
@@ -185,9 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Get.theme.brightness == Brightness.light
                 ? kAccentColor
                 : kDarkSecondaryColor,
-            child: ImageIcon(
-              AssetImage('assets/images/Logo.png'),
-            ),
+            child: ImageIcon(AssetImage('assets/images/Logo.png')),
           ),
         ),
       ),

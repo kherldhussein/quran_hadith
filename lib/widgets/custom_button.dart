@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:popover/popover.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 
@@ -21,7 +22,7 @@ class RoundCustomButton extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(minWidth: 0),
         decoration: BoxDecoration(
-          border: Border.all(color: Color(0xffeef2f5)),
+          border: Border.all(color: Theme.of(context).canvasColor),
           borderRadius: BorderRadius.circular(isSmall ? 30 : 20),
         ),
         child: IconButton(
@@ -60,7 +61,9 @@ class RoundCustomButton2 extends StatelessWidget {
         width: 80,
         decoration: BoxDecoration(
           // border: Border.all(color: Color(0xffeef2f5)),
-          color: kAccentColor,
+          color: Get.theme.brightness == Brightness.light
+              ? kAccentColor
+              : kDarkSecondaryColor,
           borderRadius: BorderRadius.circular(isSmall ? 30 : 50),
         ),
         child: IconButton(
