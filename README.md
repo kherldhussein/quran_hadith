@@ -1,6 +1,6 @@
 # Qur’ān & Hadith
 
-Qur’ān Hadith is an Online Islamic application with a fashion interface, smooth performance, and more features to sharpens your focus on what you are reading or listening to.
+Qur’ān Hadith is an Online Quran and Hadith application with a fashion interface, smooth performance, and more features to sharpen your focus on what you are reading or listening to.
 
 
 ### Supported Platforms
