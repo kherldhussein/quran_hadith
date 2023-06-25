@@ -46,13 +46,16 @@ dependencies:
   animate_do:
   bitsdojo_window:
   desktop_window:
-  json_annotation:
   hive:
+  hive_flutter:
+  menu_bar: ^0.5.2
+  just_audio_mpv: ^0.1.6
+  flutter_local_notifications:
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner:
-  json_serializable:
+  hive_generator:
 flutter:
   uses-material-design: true
   assets:
