@@ -12,8 +12,10 @@ class RandomVerseManager {
 
   Future<void> _initializeNotifications() async {
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-    final initLinux =
-        LinuxInitializationSettings(defaultActionName: 'Notification');
+    final initLinux = LinuxInitializationSettings(
+      defaultActionName: 'Notification',
+      defaultIcon: AssetsLinuxIcon('assets/images/Logo.png'),
+    );
     final initSettings = InitializationSettings(linux: initLinux);
     await flutterLocalNotificationsPlugin.initialize(initSettings);
   }
@@ -24,10 +26,11 @@ class RandomVerseManager {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final verses = data['data']['surahs'][1]['ayahs'];
-      final random = Random();
-      final randomVerse = verses[random.nextInt(verses.length)];
-      print(">>>>>>>>>>>>>>>>>>>>>>>.${randomVerse['text']}");
+      final val = Random().nextInt(114);
+      final verses = data['data']['surahs'][val]['ayahs'];
+      final random = Random().nextInt(verses.length);
+      final randomVerse = verses[random];
+      // todo: Modify to return whole Ayah details
       return randomVerse['text'];
     } else {
       throw Exception("Failed to retrieve data from the API.");
