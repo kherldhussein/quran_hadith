@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:popover/popover.dart';
 import 'package:quran_hadith/anim/animated.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
-import 'package:quran_hadith/models/surahModel.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/screens/qPageView.dart';
 import 'package:quran_hadith/widgets/suratInfo.dart';
 
