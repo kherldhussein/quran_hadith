@@ -6,13 +6,15 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/models/surahModel.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
+
+import '../controller/audio_controller.dart';
 
 class QPageView extends StatefulWidget {
   final List<Ayah>? ayahList;
@@ -44,10 +46,9 @@ class QPageView extends StatefulWidget {
   _QPageViewState createState() => _QPageViewState();
 }
 
-class _QPageViewState extends State<QPageView> {
-  // PlayerState? _audioPlayerState;
-  // PlayerState _playerState = PlayerState.STOPPED;
+class _QPageViewState extends State<QPageView> with AutomaticKeepAliveClientMixin {
   AutoScrollController controller = AutoScrollController();
+  late final AudioController _audioController;
   Surah? surah;
   bool isLoaded = false;
   bool isLoading = false;
@@ -56,18 +57,20 @@ class _QPageViewState extends State<QPageView> {
 
   @override
   void initState() {
-    _initAudioPlayer();
     super.initState();
+    _audioController = AudioController(widget.aya?.number.toString());
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isSmall = isDisplaySmallDesktop(context);
+    final isLarge = context.isLargeTablet;
     var quranAPI = Provider.of<QuranAPI>(context);
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.appBarTheme.backgroundColor,
+      backgroundColor: theme.appBarTheme.backgroundColor!.withOpacity(.5),
       appBar: AppBar(
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -123,8 +126,13 @@ class _QPageViewState extends State<QPageView> {
                             height: isSmall
                                 ? 10
                                 : MediaQuery.of(context).size.height,
-                            margin: EdgeInsets.fromLTRB(20, 1, 15, 10),
-                            width: 350,
+                            margin: EdgeInsets.fromLTRB(
+                              isLarge ? 20 : 10,
+                              1,
+                              isLarge ? 15 : 10,
+                              10,
+                            ),
+                            width: isLarge ? 350 : 250,
                             child: FutureBuilder(
                                 future: quranAPI.getSuratList(),
                                 builder: (BuildContext context,
@@ -149,11 +157,9 @@ class _QPageViewState extends State<QPageView> {
                                   } else {
                                     return ListView.builder(
                                       itemCount: widget.itemCount,
-                                      // controller: controller,
                                       itemBuilder: (context, index) {
                                         return SuratTile(
                                           radius: 8,
-                                          colorI: Color(0xff01AC68),
                                           ayahList:
                                               snapshot.data.surahs[index].ayahs,
                                           suratNo: snapshot
@@ -182,10 +188,8 @@ class _QPageViewState extends State<QPageView> {
                           ),
                     Container(
                       constraints: BoxConstraints(minHeight: 0, minWidth: 0),
-                      // padding: EdgeInsets.symmetric(vertical: 0),
                       height: MediaQuery.of(context).size.height,
-                      // margin: EdgeInsets.symmetric(horizontal: 0),
-                      width: 850,
+                      width: isLarge ? 850 : 700,
                       child: ListView.custom(
                         childrenDelegate: SliverChildBuilderDelegate(
                           (context, index) {
@@ -209,28 +213,12 @@ class _QPageViewState extends State<QPageView> {
     );
   }
 
-  // setFavorite(int? index) async {
-  //   SharedPreferences sp = await SharedPreferences.getInstance();
-  //   if (sp.getStringList('FAVORITE')!.contains('$index')) {
-  //     // add to favorite
-  //     String newValue = '$index';
-  //     List<String> oldFavorite = sp.getStringList('FAVORITE')!;
-  //     oldFavorite.add(newValue);
-  //     List<String> favorite = oldFavorite;
-  //     sp.setStringList('FAVORITE', favorite);
-  //     setState(() {});
-  //   } else {
-  //     // remove from favorite
-  //     String newValue = '$index';
-  //     List<String> oldFavorite = sp.getStringList('FAVORITE')!;
-  //     oldFavorite.remove(newValue);
-  //     List<String> favorite = oldFavorite;
-  //     sp.setStringList('FAVORITE', favorite);
-  //     setState(() {});
-  //   }
-  // }
+  @override
+  bool get wantKeepAlive => true;
 
   Widget qTile(int index, context) {
+    // final isLarge = context.isLargeTablet;
+    var quranAPI = Provider.of<QuranAPI>(context);
     Locale locale = Localizations.localeOf(context);
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -252,8 +240,8 @@ class _QPageViewState extends State<QPageView> {
         subtitle: Column(
           children: [
             AutoSizeText(
-              widget.ayahList![index].text!.replaceFirst(
-                  'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيم',
+              widget.ayahList![index].text!.replaceAll(
+                  'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِِِ',
                   '\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ'),
               textAlign: TextAlign.right,
               style: TextStyle(
@@ -276,8 +264,8 @@ class _QPageViewState extends State<QPageView> {
                               ? FontAwesomeIcons.heart
                               : FontAwesomeIcons.solidHeart,
                           color: snapshot.data == true
-                              ? Theme.of(context).primaryColor
-                              : Colors.greenAccent,
+                              ? kAccentColor
+                              : Theme.of(context).canvasColor,
                         ),
                         onPressed: () {
                           // setFavorite(widget.ayahList![index].number)
@@ -285,17 +273,11 @@ class _QPageViewState extends State<QPageView> {
                       );
                     }),
                 IconButton(
-                    icon: Icon(
-                      FontAwesomeIcons.shareNodes,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    icon: Icon(FontAwesomeIcons.shareNodes),
                     onPressed: () => share.showShareDialog(
                         context: context, text: widget.ayahList![index].text)),
                 IconButton(
-                    icon: Icon(
-                      FontAwesomeIcons.copy,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    icon: Icon(FontAwesomeIcons.copy),
                     onPressed: () {
                       Clipboard.setData(
                         ClipboardData(text: widget.ayahList![index].text!),
@@ -303,48 +285,74 @@ class _QPageViewState extends State<QPageView> {
                     }),
               ],
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  key: const Key('play_button'),
-                  onPressed: () {
-                    // _isPlaying ? null : _play(widget.ayahList![index].number!);
-                  },
-                  icon: const Icon(FontAwesomeIcons.circlePlay),
-                ),
-                Visibility(
-                  visible: true,
-                  child: IconButton(
-                    key: const Key('pause_button'),
-                    onPressed: null,
-                    icon: const Icon(FontAwesomeIcons.pause),
-                  ),
-                ),
-                Visibility(
-                  visible: true,
-                  child: IconButton(
-                    key: const Key('stop_button'),
-                    onPressed: null,
-                    icon: const Icon(FontAwesomeIcons.circleStop),
-                  ),
-                ),
-                Visibility(
-                  visible: true,
-                  child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(FontAwesomeIcons.volumeHigh)
-                      // : const Icon(FontAwesomeIcons.headset),
+            FutureBuilder(
+                future: quranAPI.getSuratAudio(),
+                builder: (context, snapshot) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ValueListenableBuilder<ButtonState>(
+                        valueListenable: _audioController.buttonNotifier,
+                        builder: (_, value, __) {
+                          switch (value) {
+                            case ButtonState.loading:
+                              return Container(
+                                margin: const EdgeInsets.all(8.0),
+                                width: 32.0,
+                                height: 32.0,
+                                child: const CircularProgressIndicator(),
+                              );
+                            case ButtonState.paused:
+                              return IconButton(
+                                icon: const Icon(Icons.play_arrow),
+                                iconSize: 32.0,
+                                onPressed: _audioController.play,
+                              );
+                            case ButtonState.playing:
+                              return IconButton(
+                                icon: const Icon(Icons.pause),
+                                iconSize: 32.0,
+                                onPressed: _audioController.pause,
+                              );
+                          }
+                        },
                       ),
-                ),
-              ],
-            ),
-            Visibility(
-              visible: true,
-              child: Slider(onChanged: (v) {}, value: 0.0, label: ''),
-            ),
+                      IconButton(
+                        key: const Key('play_button'),
+                        onPressed: () {},
+                        icon: const Icon(FontAwesomeIcons.circlePlay),
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: IconButton(
+                          key: const Key('pause_button'),
+                          onPressed: null,
+                          icon: const Icon(FontAwesomeIcons.pause),
+                        ),
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: IconButton(
+                          key: const Key('stop_button'),
+                          onPressed: null,
+                          icon: const Icon(FontAwesomeIcons.circleStop),
+                        ),
+                      ),
+                      Visibility(
+                        visible: true,
+                        child: IconButton(
+                            onPressed: () {},
+                            icon: const Icon(FontAwesomeIcons.volumeHigh)
+                            // : const Icon(FontAwesomeIcons.headset),
+                            ),
+                      ),
+                    ],
+                  );
+                }),
+            Offstage(child: Slider(onChanged: (v) {}, value: 0.0, label: '')),
           ],
         ),
+        trailing: Image.asset('assets/images/design_1.png'),
       ),
     );
   }
@@ -357,127 +365,11 @@ class _QPageViewState extends State<QPageView> {
     }
     return input;
   }
-
-  void _initAudioPlayer() {
-    // _audioPlayer = AudioPlayer();
-
-    // _durationSubscription = _audioPlayer.onDurationChanged.listen((duration) {
-    //   setState(() => _duration = duration);
-    //
-    //   if (Theme.of(context).platform == TargetPlatform.iOS) {
-    //     // optional: listen for notification updates in the background
-    //     _audioPlayer.notificationService.startHeadlessService();
-    //
-    //     // set at least title to see the notification bar on ios.
-    //     _audioPlayer.notificationService.setNotification(
-    //       title: 'Qur’ān Hadith',
-    //       artist: 'Hani Rifai',
-    //       albumTitle: 'Qur’ān',
-    //       imageUrl: 'URL',
-    //       forwardSkipInterval: const Duration(seconds: 30),
-    //       backwardSkipInterval: const Duration(seconds: 30),
-    //       duration: duration,
-    //       enableNextTrackButton: true,
-    //       enablePreviousTrackButton: true,
-    //     );
-    //   }
-    // });
-
-    // _positionSubscription =
-    //     _audioPlayer.onAudioPositionChanged.listen((p) => setState(() {
-    //           _position = p;
-    //         }));
-
-    // _playerCompleteSubscription =
-    //     _audioPlayer.onPlayerCompletion.listen((event) {
-    //   _onComplete();
-    //   setState(() {
-    //     _position = _duration;
-    //   });
-    // });
-
-    // _playerErrorSubscription = _audioPlayer.onPlayerError.listen((msg) {
-    //   setState(() {
-    //     _playerState = PlayerState.STOPPED;
-    //     _duration = const Duration();
-    //     _position = const Duration();
-    //   });
-    // });
-    //
-    // _playerControlCommandSubscription =
-    //     _audioPlayer.notificationService.onPlayerCommand.listen((command) {});
-    //
-    // _audioPlayer.onPlayerStateChanged.listen((state) {
-    //   if (mounted) {
-    //     setState(() {
-    //       _audioPlayerState = state;
-    //     });
-    //   }
-    // });
-    //
-    // _audioPlayer.onNotificationPlayerStateChanged.listen((state) {
-    //   if (mounted) {
-    //     setState(() => _audioPlayerState = state);
-    //   }
-    // });
-    //
-    // _playingRouteState = PlayingRoute.SPEAKERS;
-  }
-
-// Future<int> _play(int ayaNo) async {
-//   final playPosition = (_position != null &&
-//           _duration != null &&
-//           _position!.inMilliseconds > 0 &&
-//           _position!.inMilliseconds < _duration!.inMilliseconds)
-//       ? _position
-//       : null;
-//   // final result = await _audioPlayer.play(
-//   //     'https://cdn.alquran.cloud/media/audio/ayah/Hani Rifai/$ayaNo',
-//   //     position: playPosition);
-//   // if (result == 1) {
-//   //   setState(() => _playerState = PlayerState.PLAYING);
-//   }
-// بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ يَٰٓأَيُّهَا ٱلنَّاسُ ٱتَّقُوا۟ رَبَّكُمُ ٱلَّذِى خَلَقَكُم مِّن نَّفْسٍۢ وَٰحِدَةٍۢ وَخَلَقَ مِنْهَا زَوْجَهَا وَبَثَّ مِنْهُمَا رِجَالًۭا كَثِيرًۭا وَنِسَآءًۭ ۚ وَٱتَّقُوا۟ ٱللَّهَ ٱلَّذِى تَسَآءَلُونَ بِهِۦ وَٱلْأَرْحَامَ ۚ إِنَّ ٱللَّهَ كَانَ عَلَيْكُمْ رَقِيبًۭا
-//     _audioPlayer.setPlaybackRate();
-
-// return result;
-// }
-
-// Future<int> _pause() async {
-//   final result = await _audioPlayer.pause();
-//   if (result == 1) {
-//     setState(() => _playerState = PlayerState.PAUSED);
-//   }
-//   return result;
-// }
-
-// Future<int> _earpieceOrSpeakersToggle() async {
-//   final result = await _audioPlayer.earpieceOrSpeakersToggle();
-//   if (result == 1) {
-//     setState(() => _playingRouteState = _playingRouteState.toggle());
-//   }
-//   return result;
-// }
-
-// Future<int> _stop() async {
-//   final result = await _audioPlayer.stop();
-//   if (result == 1) {
-//     setState(() {
-//       _playerState = PlayerState.STOPPED;
-//       _position = const Duration();
-//     });
-//   }
-//   return result;
-// }
-
-// void _onComplete() {
-//   setState(() => _playerState = PlayerState.STOPPED);
-// }
 }
 
 favorite(index) async {
   SharedPreferences sp = await SharedPreferences.getInstance();
-  if (sp.getStringList('FAVORITE')!.contains('$index')) {
+  if (sp.getStringList('favorite')!.contains('$index')) {
     return true;
   } else {
     return false;

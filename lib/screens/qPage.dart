@@ -13,6 +13,8 @@ import 'package:rxdart/src/rx.dart' as rx;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controller/favorite.dart';
+import '../controller/random_ayah.dart';
+import '../models/surah_model.dart';
 
 class QPage extends StatefulWidget {
   const QPage({super.key});
@@ -30,6 +32,10 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   var list;
   final audioPlayer = AudioPlayer();
   String? user = 'Ahmad';
+  late RandomVerseManager? _verseManager;
+  bool isSorted = false;
+  SurahList quranData = SurahList(surahs: []);
+  late String _verseText = '';
 
   // List<String> surahList = SuratList().surahName;
   List<String> linkList = [];
@@ -42,12 +48,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   @override
   void initState() {
-    // map.forEach(
-    //   (key, val) {
-    //     reciterList.add(key);
-    //     linkList.add(val);
-    //   },
-    // );
+    _verseManager = RandomVerseManager();
+    _fetchRandomVerse();
     initUser();
     name = TextEditingController();
     durationState =
@@ -61,6 +63,18 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       ),
     );
     super.initState();
+  }
+
+  List<AudioPlayer> audioPlayers = [];
+
+  _fetchRandomVerse() async {
+    final verse = await _verseManager?.getRandomVerse();
+
+    setState(() {
+      _verseText = verse;
+    });
+
+    _verseManager?.displayDesktopNotification(verse);
   }
 
   initUser() async {
@@ -77,9 +91,10 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
     final fav = Provider.of<OnFavorite>(context, listen: false);
     var size = MediaQuery.of(context).size;
     var theme = Theme.of(context);
-    final isSmall = context.isLargeTablet;
+    final isLarge = context.isLargeTablet;
     return Scaffold(
       backgroundColor: theme.appBarTheme.backgroundColor,
+      // appBar: AppBar(title: Text('Appppp'),),
       body: Container(
         constraints: BoxConstraints(minWidth: 0),
         color: theme.appBarTheme.backgroundColor,
@@ -99,9 +114,9 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                     topRight: Radius.circular(30),
                   ),
                 ),
-                width: isSmall ? size.width - 300 : size.width - 320,
+                width: isLarge ? size.width - 300 : size.width - 320,
                 child: FutureBuilder(
-                    future: quranAPI.getSuratList(),
+                    future: quranAPI.getSuratAudio(),
                     builder: (context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {
                         return Center(
@@ -113,7 +128,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               horizontal: 30.0, vertical: 40.0),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isSmall ? 4 : 3,
+                            crossAxisCount: isLarge ? 4 : 3,
                             crossAxisSpacing: 20,
                             mainAxisSpacing: 20,
                             childAspectRatio: 1.6,
@@ -153,8 +168,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                 padding: EdgeInsets.symmetric(vertical: 20),
                 height: size.height,
                 color: theme.appBarTheme.backgroundColor,
-                margin: EdgeInsets.symmetric(horizontal: isSmall ? 10 : 20),
-                width: isSmall ? 180 : 200,
+                margin: EdgeInsets.symmetric(horizontal: isLarge ? 10 : 20),
+                width: isLarge ? 180 : 200,
                 child: ListView(
                   padding: EdgeInsets.symmetric(horizontal: 15, vertical: 30),
                   children: [
@@ -179,9 +194,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           child: Material(
                             color: kAccentColor.withOpacity(.05),
                             child: IconButton(
-                              icon: FaIcon(FontAwesomeIcons.user,color: Get.theme.brightness == Brightness.light
-                                  ? kAccentColor
-                                  : kDarkSecondaryColor,),
+                              icon: FaIcon(
+                                FontAwesomeIcons.user,
+                                color: Get.theme.brightness == Brightness.light
+                                    ? kAccentColor
+                                    : kDarkSecondaryColor,
+                              ),
                               onPressed: () {
                                 Get.dialog(
                                   AlertDialog(
@@ -270,9 +288,10 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             Text(
                               'LAST READ',
                               style: TextStyle(
-                                  color: Get.theme.brightness == Brightness.light
-                                      ? kAccentColor
-                                      : kDarkSecondaryColor,
+                                  color:
+                                      Get.theme.brightness == Brightness.light
+                                          ? kAccentColor
+                                          : kDarkSecondaryColor,
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -300,9 +319,10 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                             Text(
                               'LAST LISTENED',
                               style: TextStyle(
-                                  color: Get.theme.brightness == Brightness.light
-                                      ? kAccentColor
-                                      : kDarkSecondaryColor,
+                                  color:
+                                      Get.theme.brightness == Brightness.light
+                                          ? kAccentColor
+                                          : kDarkSecondaryColor,
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -340,52 +360,56 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                           ),
                           SizedBox(height: 10),
                           Text(
-                            'Indeed, We have revealed to you, [O Muhammad], the Book in truth so you '
-                            'may judge between the people by that which God has shown you ...',
-                            style: TextStyle(color: Color(0xffdae1e7)),
+                            _verseText,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                                color: Color(0xffdae1e7), fontFamily: 'Amiri'),
                           ),
                           Divider(height: 20, color: kLightPrimaryColor),
                           InkWell(
-                            onTap: () => Get.dialog(
-                              AlertDialog(
-                                backgroundColor: Colors.transparent,
-                                elevation: 0,
-                                title: Text('AYAH OF THE DAY'),
-                                content: Container(
-                                  height: size.height / 2,
-                                  width: size.width / 3,
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFFAFAFC).withOpacity(.1),
-                                    border:
-                                        Border.all(color: Colors.transparent),
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(15),
-                                    ),
-                                  ),
-                                  child: Card(
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.all(10),
-                                      title: Text(
-                                        '''
-Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judge between the people by that which Allah has shown you. And do not be for the deceitful an advocate.''',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w300,
-                                          fontSize: 20,
-                                        ),
+                            onTap: () {
+                              _fetchRandomVerse();
+                              Get.dialog(
+                                AlertDialog(
+                                  backgroundColor: Colors.transparent,
+                                  elevation: 0,
+                                  title: Text('AYAH OF THE DAY'),
+                                  content: Container(
+                                    height: size.height / 2,
+                                    width: size.width / 3,
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFFFAFAFC).withOpacity(.1),
+                                      border:
+                                          Border.all(color: Colors.transparent),
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(15),
                                       ),
-                                      subtitle: Text(
-                                        'Sūrah 4: an-Nisā’ [105]',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w100,
-                                          fontSize: 16,
+                                    ),
+                                    child: Card(
+                                      child: ListTile(
+                                        contentPadding: EdgeInsets.all(10),
+                                        title: Text(
+                                          _verseText,
+                                          textAlign: TextAlign.right,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 25,
+                                              fontFamily: 'Amiri'),
+                                        ),
+                                        subtitle: Text(
+                                          '',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w100,
+                                            fontSize: 16,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              name: 'Ayah of Day dialog',
-                            ),
+                                name: 'Ayah of Day dialog',
+                              );
+                            },
                             child: Text('Read now',
                                 style: TextStyle(color: Color(0xffdae1e7))),
                           ),
@@ -409,6 +433,25 @@ Indeed, We have revealed to you, [O Muhammad], the Book in truth so you may judg
   void dispose() {
     name.dispose();
     super.dispose();
+  }
+
+  void toggleAudioPlayback(int index, String audio) async {
+    AudioPlayer player = audioPlayers[index];
+
+    try {
+      await player.setUrl(audio);
+      await player.play();
+    } on PlayerException catch (e) {
+      print("Error code: ${e.code}");
+    } on PlayerInterruptedException catch (e) {
+      // This call was interrupted since another audio source was loaded or the
+      // player was stopped or disposed before this audio source could complete
+      // loading.
+      print("Connection aborted: ${e.message}");
+    } catch (e) {
+      // Fallback for all other errors
+      print('An error occurred: $e');
+    }
   }
 }
 

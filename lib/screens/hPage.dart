@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
 import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
@@ -17,10 +18,12 @@ class HPage extends StatefulWidget {
 
 class _HPageState extends State<HPage> {
   String? user = SpUtil.getUser();
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     final isSmall = isDisplayVerySmallDesktop(context);
+    var hadithAPI = Provider.of<HadithAPI>(context);
     var theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.appBarTheme.backgroundColor,
@@ -43,13 +46,41 @@ class _HPageState extends State<HPage> {
                 ),
               ),
               child: FutureBuilder(
-                  future: HadithAPI().getHadithList(),
+                  future: hadithAPI.getHadithList(),
                   builder: (BuildContext context, AsyncSnapshot snapshot) {
                     if (!snapshot.hasData) {
                       return Center(
                           child: ParticleCanvas(size.height, size.width));
+                    } else {
+                      final hadiths = snapshot.data!;
+                      print('*****************========>>>>>>>>>${hadiths}');
+                      return GridView.builder(
+                        itemCount: hadiths.books.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemBuilder: (context, index) {
+                          final hadith = hadiths.books[index];
+                          print('*****************========>>>>>>>>>${hadith.bookId}');
+                          return Card(
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 15,
+                              ),
+                              title: Text('Hadith ${hadith.bookId}'),
+                              subtitle: Column(
+                                children: [
+                                  Text(hadith.bookName),
+                                  Text(hadith.writerName),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
                     }
-                    return Container();
                   }),
             ),
             Container(
