@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 
+// part 'surah_model.g.dart';
+
+@HiveType(typeId: 0)
 class SurahList extends ChangeNotifier {
+  @HiveField(0)
   final List<Surah>? surahs;
 
   SurahList({this.surahs});
+
+  SurahList copyWith({List<Surah>? surahs}) {
+    return SurahList(surahs: surahs ?? this.surahs);
+  }
 
   factory SurahList.fromJSON(Map<String, dynamic> json) {
     Iterable surahlist = json['data']['surahs'];
@@ -11,49 +20,58 @@ class SurahList extends ChangeNotifier {
 
     return SurahList(surahs: surahsList);
   }
-
-  Surah get currentSurah =>
-      surahs!.firstWhere((surah) => surah.number == _selectedSurahNo);
-
-  Set<int?> starredSurat = {};
-
-  bool isSuratStarred(int number) => surahs!
-      .any((surah) => surah.number == number && starredSurat.contains(number));
-
-  bool get isCurrentSurahStarred => starredSurat.contains(currentSurah.number);
-
-  int _selectedSurahNo = -1;
-
-  int get selectedSurahNumber => _selectedSurahNo;
-
-  set selectedSurahNo(int value) {
-    _selectedSurahNo = value;
-    notifyListeners();
-  }
-
-  starSurah(int? number) {
-    starredSurat.add(number);
-    notifyListeners();
-  }
 }
 
+@HiveType(typeId: 1)
 class Surah {
-  Surah(
-      {this.name,
-      this.ayahs,
-      this.number,
-      this.englishName,
-      this.revelationType,
-      this.readVerseCount = 0,
-      this.englishNameTranslation});
+  Surah({
+    this.name,
+    this.ayahs,
+    this.audio,
+    this.number,
+    this.englishName,
+    this.revelationType,
+    this.readVerseCount = 0,
+    this.englishNameTranslation,
+  });
 
+  @HiveField(0)
   final int? number;
+  @HiveField(1)
   final String? name;
-  int readVerseCount;
+  final String? audio;
+  @HiveField(2)
+  int? readVerseCount;
+  @HiveField(3)
   final List<Ayah>? ayahs;
+  @HiveField(4)
   final String? englishName;
+  @HiveField(5)
   final String? revelationType;
+  @HiveField(6)
   final String? englishNameTranslation;
+
+  Surah copyWith({
+    int? number,
+    String? name,
+    int? readVerseCount,
+    List<Ayah>? ayahs,
+    String? audio,
+    String? englishName,
+    String? revelationType,
+    String? englishNameTranslation,
+  }) {
+    return Surah(
+      ayahs: ayahs ?? this.ayahs,
+      name: name ?? this.name,
+      audio: audio ?? this.audio,
+      number: number ?? this.number,
+      englishName: englishName ?? this.englishName,
+      revelationType: revelationType ?? this.revelationType,
+      englishNameTranslation:
+          englishNameTranslation ?? this.englishNameTranslation,
+    );
+  }
 
   factory Surah.fromJSON(Map<String, dynamic> json) {
     Iterable ayahs = json['ayahs'];
@@ -62,6 +80,7 @@ class Surah {
     return Surah(
       ayahs: ayahsList,
       name: json['name'],
+      audio: json['audio'],
       number: json['number'],
       englishName: json['englishName'],
       revelationType: json['revelationType'],
@@ -70,11 +89,16 @@ class Surah {
   }
 }
 
+@HiveType(typeId: 2)
 class Ayah {
   Ayah({this.text, this.number});
 
   final String? text;
   final int? number;
+
+  Ayah copyWith({int? number, String? text}) {
+    return Ayah(number: number ?? number, text: text ?? text);
+  }
 
   factory Ayah.fromJSON(Map<String, dynamic> json) {
     return Ayah(text: json['text'], number: json['numberInSurah']);
