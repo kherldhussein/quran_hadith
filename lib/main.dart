@@ -10,9 +10,11 @@ import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 
+import 'controller/hadithAPI.dart';
 import 'theme/app_theme.dart';
 
 final quranApi = QuranAPI();
+final hadithApi = HadithAPI();
 final themed = ThemeState();
 
 void main() async {
@@ -21,6 +23,7 @@ void main() async {
     MultiProvider(
       providers: [
         Provider(create: (context) => quranApi),
+        Provider(create: (context) => hadithApi),
         ChangeNotifierProvider.value(value: OnFavorite()),
         ChangeNotifierProvider.value(value: themed),
       ],
@@ -38,6 +41,7 @@ void main() async {
   });
 }
 
+// http://api.alquran.cloud/v1/quran/ar.alafasy
 // Audio url: https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/1
 class QuranHadith extends StatefulWidget {
   const QuranHadith({super.key});
@@ -70,12 +74,6 @@ class _QuranHadithState extends State<QuranHadith> {
     if (dark != null) {
       Provider.of<ThemeState>(context, listen: false).loadTheme(dark);
     }
-
-    // dio.interceptors.add(
-    //   DioCacheManager(
-    //     CacheConfig(baseUrl: "http://api.alquran.cloud/v1/quran/quran-uthmani"),
-    //   ).interceptor,
-    // );
   }
 
   @override
