@@ -31,11 +31,6 @@ final circularIndicator = CircularProgressIndicator(
   valueColor: AlwaysStoppedAnimation<Color>(kDarkSecondaryColor),
 );
 
-double height =
-    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.height;
-double width =
-    MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.width;
-
 ThemeData get darkTheme {
   final base = ThemeData.dark();
   return base.copyWith(
