@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
-import 'package:quran_hadith/models/surahModel.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 
 class SearchWidget extends SearchDelegate<SurahList> {
