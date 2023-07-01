@@ -22,7 +22,7 @@ class SocialShare extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String message =
-        'Assalam\'alaikum Read and Listen to $text From \nQur’ān Hadith Get it from the Snap Store https://snapcraft.io/quran-hadith';
+        'Assalam\'alaikum! Read and Listen to $text From \nQur’ān Hadith. Get it from the Snap Store https://snapcraft.io/quran-hadith';
     return AlertDialog(
       actions: [
         IconButton(
@@ -38,13 +38,14 @@ class SocialShare extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                  'Qur’ān Hadith is an Online Islamic application with fashion interface, smooth performance and more features to sharpens your focus on what you are reading or listening'),
+                'Qur’ān Hadith is an Online Quran and Hadith application with a fashion interface, smooth performance, and more features to sharpen your focus on what you are reading or listening to.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               SizedBox(height: 30),
-              Semantics(
-                  child: Text(
-                '━═══◎Share◎═══━',
-                style: TextStyle(color: Theme.of(context).primaryColorDark),
-              )),
+              Text(
+                '━═══◎ Share ◎═══━',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -56,10 +57,7 @@ class SocialShare extends StatelessWidget {
                     ),
                     child: IconButton(
                       tooltip: 'Mail',
-                      icon: Icon(
-                        Icons.mail,
-                        color: Colors.white,
-                      ),
+                      icon: Icon(Icons.mail, color: Colors.white),
                       onPressed: () => launchURL(
                           'mailto:?subject=Qur’ān Hadith App&body=$message'),
                     ),
@@ -71,10 +69,8 @@ class SocialShare extends StatelessWidget {
                     ),
                     child: IconButton(
                       tooltip: 'Facebook',
-                      icon: Icon(
-                        FontAwesomeIcons.facebookF,
-                        color: Colors.white,
-                      ),
+                      icon:
+                          Icon(FontAwesomeIcons.facebookF, color: Colors.white),
                       onPressed: () => launchURL(
                           'https://www.facebook.com/sharer/sharer.php?t=Assalam\'alaikum&quote=Read and Listen to $text&ref=fbshare&u=https://snapcraft.io/quran-hadith'),
                     ),
@@ -86,10 +82,8 @@ class SocialShare extends StatelessWidget {
                     ),
                     child: IconButton(
                       tooltip: 'WhatsApp',
-                      icon: Icon(
-                        FontAwesomeIcons.whatsapp,
-                        color: Colors.white,
-                      ),
+                      icon:
+                          Icon(FontAwesomeIcons.whatsapp, color: Colors.white),
                       onPressed: () =>
                           launchURL('https://wa.me/?text=$message'),
                     ),
