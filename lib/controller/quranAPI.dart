@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:quran_hadith/models/juzModel.dart';
-import 'package:quran_hadith/models/surahModel.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -57,11 +57,12 @@ class QuranAPI {
     }
   }
 
-  Future<SurahList> getSuratAudio({required String suratNo}) async {
-    String url = "http://api.alquran.cloud/v1/surah/$suratNo/en.ahmedali";
-    final response = await dio.get(url);
+// url  http://api.alquran.cloud/v1/surah/$suratNo/en.ahmedali
+  Future<SurahList> getSuratAudio() async {
+    final response = await http
+        .get(Uri.parse("http://api.alquran.cloud/v1/quran/ar.alafasy"));
     if (response.statusCode == 200) {
-      return SurahList.fromJSON(json.decode(response.data));
+      return SurahList.fromJSON(json.decode(response.body));
     } else {
       throw Exception("Failed to Get Data");
     }
