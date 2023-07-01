@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:quran_hadith/controller/search.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/models/search/ayah.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/screens/about.dart' as about;
 import 'package:quran_hadith/screens/favorite.dart';
 import 'package:quran_hadith/screens/hPage.dart';
@@ -19,6 +19,8 @@ import 'package:quran_hadith/widgets/qh_nav.dart';
 import 'package:quran_hadith/widgets/shared_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../controller/quranAPI.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,32 +30,71 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  int repeated = 0;
-  List<Aya> ayahs = [];
   List<Widget> screens = [QPage(), HPage(), Favorite(), Settings()];
-  bool load = false;
-
-  // final _api = Get.find<QuranAPI>();
-
-  void initData() async {
-    Search search = Search();
-    await search.loadSurah();
-  }
+  late ValueNotifier<bool> _isExtended = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
+
     _isExtended = ValueNotifier<bool>(true);
+    // _playerState = player.state;
+    // player.getDuration().then(
+    //       (value) => setState(() {
+    //         _duration = value;
+    //       }),
+    //     );
+    // player.getCurrentPosition().then(
+    //       (value) => setState(() {
+    //         _position = value;
+    //       }),
+    //     );
+    // _initStreams();
   }
 
+  @override
+  void setState(VoidCallback fn) {
+    // Subscriptions only can be closed asynchronously,
+    // therefore events can occur after widget has been disposed.
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  late SurahList _searchResults = [] as SurahList;
   final searchController = TextEditingController();
-  late ValueNotifier<bool> _isExtended;
+  List<AudioPlayer> audioPlayers = [];
+
+  bool _isSearching = false;
+
+  void _performSearch() async {
+    setState(() {
+      _isSearching = true;
+    });
+
+    final keyword = searchController.text;
+
+    try {
+      final searchResults = await QuranAPI().getSearch(keyWord: keyword);
+
+      setState(() {
+        _searchResults = searchResults;
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+
+    setState(() {
+      _isSearching = false;
+    });
+  }
 
   //eef2f5
   @override
   Widget build(BuildContext context) {
     final isSmall = isDisplayVerySmallDesktop(context);
     final isSmallX = isDisplaySmallDesktop(context);
+    // var quranAPI = Provider.of<QuranAPI>(context);
     double height = MediaQuery.of(context).size.height;
     final searchFocusNode = FocusNode();
     final _searchBox = Padding(
@@ -78,7 +119,10 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.black,
             ),
             onPressed: () {
-              // showSearch(context: context, delegate: SearchWidget());
+              // QuranSearchDelegate(_performSearch);
+              showSearch(
+                  context: context,
+                  delegate: QuranSearchDelegate(_performSearch));
             },
           ),
           hintStyle: const TextStyle(fontWeight: FontWeight.w300),
@@ -106,7 +150,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           searchController.clear();
                         });
                       },
-                      onSubmitted: (String) {},
+                      onSubmitted: (String) {
+                        QuranSearchDelegate(_performSearch);
+                      },
                     )
                   : _searchBox,
               width: isSmall ? 100 : 350),
@@ -116,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 RoundCustomButton(
                   children: [
-                    Center(child: Text('Listen To Beautiful Recitation'))
+                    Center(child: Text('Listen To Beautiful Recitation')),
                   ],
                   icon: FontAwesomeIcons.headphonesSimple,
                 ),
@@ -288,5 +334,82 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+  @override
+  void dispose() {
+    super.dispose();
+  }
+}
+
+class QuranSearchDelegate extends SearchDelegate {
+  final Function performSearch;
+
+  QuranSearchDelegate(this.performSearch);
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () => query = '',
+      ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () => close(context, ''),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return ListTile(
+      title: Text('result.keyword'),
+      subtitle: Text('Surah: ${'result.surah'}'),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestionList = getSuggestions(query);
+    return ListView.builder(
+      itemCount: suggestionList.length,
+      itemBuilder: (context, index) {
+        final suggestion = suggestionList[index];
+
+        return ListTile(
+          title: Text(suggestion),
+          onTap: () {
+            query = suggestion;
+            showResults(context);
+          },
+        );
+      },
+    );
+  }
+
+  List<String> getSuggestions(String query) {
+    // Implement your logic to fetch and filter suggestions based on the query
+    // For example, you can search through a list of suggestions or make an API request
+
+    // Dummy implementation - returning hardcoded suggestions
+    final dummySuggestions = [
+      'Surah Al-Fatiha',
+      'Surah Al-Baqarah',
+      'Surah Al-Imran',
+      'Surah An-Nisa',
+      'Surah Al-Maidah',
+      'Surah Al-Anam',
+      'Surah Al-Araf',
+      'Surah Al-Anfal',
+    ];
+
+    return dummySuggestions
+        .where((suggestion) =>
+            suggestion.toLowerCase().startsWith(query.toLowerCase()))
+        .toList();
   }
 }
