@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/theme/app_theme.dart';
-import 'package:quran_hadith/widgets/headerTitle.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../layout/adaptive.dart';
+import '../theme/app_theme.dart';
+import '../widgets/headerTitle.dart';
 
 void showAboutDialog() {
   Get.dialog(
@@ -102,14 +103,15 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                 ),
                 SizedBox(height: 10),
                 Text(
-                    'Version: 1.${DateTime.now().year}.${DateTime.now().month + 12}',
-                    style: theme.headlineSmall),
+                  'Version: 1.${DateTime.now().year}.${DateTime.now().month + 12}',
+                  style: theme.titleLarge,
+                ),
                 SizedBox(height: 20),
                 Text(
-                  'Qur’ān Hadith is an Online/Offline Quran and Hadith application with fashion interface, smooth performance and more features '
-                  'to sharpens your focus on what you are reading or listening.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
-                  style: theme.titleLarge,
-                )
+                  'Qur’ān Hadith is an Online/Offline Quran and Hadith application with a fashion interface, smooth performance, and more features '
+                  'to sharpen your focus on what you are reading or listening to.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
+                  style: theme.titleMedium,
+                ),
               ],
             ),
           ),
@@ -119,9 +121,10 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
               children: [
                 Padding(
                   padding: EdgeInsets.only(
-                      top: isSmall ? 10 : 20.0,
-                      left: isSmall ? 10 : 20,
-                      right: isSmall ? 10 : 20),
+                    top: isSmall ? 10 : 20.0,
+                    left: isSmall ? 10 : 20,
+                    right: isSmall ? 10 : 20,
+                  ),
                   child: Container(
                     child: SingleChildScrollView(
                       scrollDirection:
@@ -146,7 +149,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   trailing: GestureDetector(
                     child: Text(
                       'kherld11@gmail.com',
-                      style: theme.titleLarge!.copyWith(
+                      style: theme.titleMedium!.copyWith(
                         decoration: TextDecoration.underline,
                         fontSize: isSmall ? 10 : 20,
                         color: kLinkC,
@@ -180,7 +183,7 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   ),
                   onTap: () =>
                       launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
-                )
+                ),
               ],
             ),
           ),
