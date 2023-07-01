@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:quran_hadith/models/surahModel.dart';
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 
 class OnFavorite extends ChangeNotifier {
