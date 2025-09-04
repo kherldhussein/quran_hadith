@@ -17,7 +17,9 @@ class AppLocale {
     return Localizations.of<AppLocale>(context, AppLocale);
   }
 
-  static const LocalizationsDelegate<AppLocale> delegate = _AppLocaleDelegate();
+  static const LocalizationsDelegate<AppLocale> delegate = _AppLocaleDelegate(
+    null,
+  );
 
   static Future<AppLocale> load(Locale locale) async {
     final appTranslations = AppLocale(locale);
@@ -33,11 +35,11 @@ class AppLocale {
 class _AppLocaleDelegate extends LocalizationsDelegate<AppLocale> {
   final Locale? newLocale;
 
-  const _AppLocaleDelegate({this.newLocale});
+  const _AppLocaleDelegate(this.newLocale);
 
   @override
   bool isSupported(Locale locale) =>
-      QuranHadith.supportedLocales.contains(locale.languageCode);
+      QuranHadithApp.supportedLocales.contains(locale.languageCode);
 
   @override
   Future<AppLocale> load(Locale locale) => AppLocale.load(newLocale ?? locale);
