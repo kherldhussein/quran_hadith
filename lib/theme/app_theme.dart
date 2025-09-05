@@ -34,7 +34,6 @@ final circularIndicator = CircularProgressIndicator(
 ThemeData get darkTheme {
   final base = ThemeData.dark();
   return base.copyWith(
-    useMaterial3: true,
     cardColor: kDividerDark,
     brightness: Brightness.dark,
     primaryColorDark: kTextDarker,
@@ -43,7 +42,6 @@ ThemeData get darkTheme {
     primaryColorLight: kAccentColor,
     primaryColor: kDarkPrimaryColor,
     scaffoldBackgroundColor: kBackgroundDark,
-    dialogBackgroundColor: Colors.transparent,
     dividerColor: kDividerLight.withOpacity(.5),
     iconTheme: base.iconTheme.copyWith(color: kAccentColor),
     primaryIconTheme: base.iconTheme.copyWith(color: kIconDark),
@@ -94,7 +92,7 @@ ThemeData get darkTheme {
     ),
     appBarTheme: base.appBarTheme.copyWith(
       systemOverlayStyle: SystemUiOverlayStyle.dark,
-      color: kDividerDark,
+      backgroundColor: kDividerDark,
       elevation: .0,
     ),
     dialogTheme: base.dialogTheme.copyWith(
@@ -110,7 +108,6 @@ ThemeData get theme {
   final base = ThemeData.light();
   return base.copyWith(
     cardColor: kLight,
-    useMaterial3: true,
     brightness: Brightness.light,
     primaryColorDark: kTextDarker,
     platform: TargetPlatform.linux,
@@ -161,7 +158,7 @@ ThemeData get theme {
     ),
     appBarTheme: base.appBarTheme.copyWith(
       systemOverlayStyle: SystemUiOverlayStyle.light,
-      color: kBackgroundLight,
+      backgroundColor: kBackgroundLight,
       elevation: .0,
     ),
     snackBarTheme: base.snackBarTheme.copyWith(
