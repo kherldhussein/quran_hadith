@@ -13,7 +13,6 @@ class ThemeState extends ChangeNotifier {
   }
 
   Future<void> loadTheme(bool dark) async {
-    _isDarkMode = SpUtil.getThemed()!;
     _isDarkMode = dark;
     notifyListeners();
   }
