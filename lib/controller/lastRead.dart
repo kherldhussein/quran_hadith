@@ -1,17 +1,28 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
 
 class LastReadQ {
-  static String savedDataKey = "SAVEDDATAKEY";
-  static Future saveLastRead(
-      { required String ayahNo,  required String surahName}) async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    pref.setStringList(savedDataKey, [ayahNo, surahName]);
+  static const String savedDataKey = 'SAVEDDATAKEY';
+
+  /// Save last read as a two-item list: [ayahNo, surahName]
+  static Future<bool> saveLastRead(
+      {required String ayahNo, required String surahName}) async {
+    try {
+      return await appSP.setListString(savedDataKey, [ayahNo, surahName]);
+    } catch (e) {
+      // Log and return false on failure
+      print('Failed to save last read: $e');
+      return false;
+    }
   }
 
-  static Future getLastRead() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    String? ayahNo =  pref.getString('savedDataKey');
-    String? surahName =  pref.getString('savedDataKey');
-    pref.getStringList(savedDataKey);
+  /// Retrieve last read as a list [ayahNo, surahName]. Returns empty list if not set.
+  static Future<List<String>> getLastRead() async {
+    try {
+      final data = appSP.getListString(savedDataKey, defaultValue: const []);
+      return data;
+    } catch (e) {
+      print('Failed to load last read: $e');
+      return [];
+    }
   }
 }
