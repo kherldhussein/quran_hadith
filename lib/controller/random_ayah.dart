@@ -1,25 +1,16 @@
 import 'dart:math';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:desktop_notifications/desktop_notifications.dart';
 
 class RandomVerseManager {
-  late FlutterLocalNotificationsPlugin notifier;
+  // NotificationsClient? _notifications;
 
   RandomVerseManager() {
     _initializeNotifications();
   }
 
-  Future<void> _initializeNotifications() async {
-    notifier = FlutterLocalNotificationsPlugin();
-    final initLinux = LinuxInitializationSettings(
-      defaultActionName: 'Notification',
-      // onActionCallback: _onNotificationAction,
-      defaultIcon: AssetsLinuxIcon('assets/images/Logo.png'),
-    );
-    final initSettings = InitializationSettings(linux: initLinux);
-    await notifier.initialize(initSettings);
-  }
+  Future<void> _initializeNotifications() async {}
 
   Future getRandomVerse() async {
     const String url = "http://api.alquran.cloud/v1/quran/quran-uthmani";
@@ -41,24 +32,7 @@ class RandomVerseManager {
     }
   }
 
-  Future<void> displayDesktopNotification(String verse) async {
-    final channelSpecs = LinuxNotificationDetails(
-      category: LinuxNotificationCategory.presence,
-      urgency: LinuxNotificationUrgency.critical,
-      actions: [
-        LinuxNotificationAction(key: 'Notification', label: 'Notification')
-      ],
-    );
-
-    final platformChannelSpecifics = NotificationDetails(linux: channelSpecs);
-
-    await notifier.show(
-      0,
-      'Ayah of the Day',
-      verse,
-      platformChannelSpecifics,
-    );
-  }
+  Future<void> displayDesktopNotification(String verse) async {}
 
 // Future<void> _onNotificationAction(String? actionKey, String? payload) async {
 //   if (actionKey == 'action_key') {
