@@ -1,7 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
-class AudioController {
+/// AudioController now performs lazy initialization of the media Player.
+/// This prevents any media_kit API from being called before the platform
+/// backend is available (for example when libmpv is not installed on Linux).
+
+class AudioController extends ChangeNotifier {
   late final progressNotifier = ValueNotifier<ProgressBarState>(
     ProgressBarState(
       current: Duration.zero,
@@ -10,77 +17,256 @@ class AudioController {
     ),
   );
   final buttonNotifier = ValueNotifier<ButtonState>(ButtonState.paused);
-  final String? audioUrl;
 
+  Player? _player;
+  bool _isDisposed = false;
+  bool _playerInitAttempted = false;
+  bool _playerAvailable = false;
 
-  late AudioPlayer _audioPlayer;
-
-  AudioController(this.audioUrl) {
-    _init();
+  AudioController() {
+    // Do not create Player synchronously. Initialization may require native
+    // backend (libmpv on Linux). We'll attempt lazy init on first use.
   }
 
-  void _init() async {
-    _audioPlayer = AudioPlayer();
-    await _audioPlayer.setUrl(audioUrl!);
+  Future<void> _init() async {
+    if (_playerInitAttempted) return;
+    _playerInitAttempted = true;
 
-    _audioPlayer.playerStateStream.listen((playerState) {
-      final isPlaying = playerState.playing;
-      final processingState = playerState.processingState;
-      if (processingState == ProcessingState.loading ||
-          processingState == ProcessingState.buffering) {
-        buttonNotifier.value = ButtonState.loading;
-      } else if (!isPlaying) {
-        buttonNotifier.value = ButtonState.paused;
-      } else if (processingState != ProcessingState.completed) {
-        buttonNotifier.value = ButtonState.playing;
-      } else {
-        _audioPlayer.seek(Duration.zero);
-        _audioPlayer.pause();
+    try {
+      _player = Player();
+      _playerAvailable = true;
+
+      // Listen to playback state
+      _player!.stream.playing.listen((bool playing) {
+        if (_isDisposed) return;
+        if (playing) {
+          buttonNotifier.value = ButtonState.playing;
+        } else {
+          buttonNotifier.value = ButtonState.paused;
+        }
+      });
+
+      // Listen to buffering state
+      _player!.stream.buffering.listen((bool buffering) {
+        if (_isDisposed) return;
+        if (buffering) {
+          buttonNotifier.value = ButtonState.loading;
+        }
+      });
+
+      // Listen to position changes
+      _player!.stream.position.listen((Duration position) {
+        if (_isDisposed) return;
+        final oldState = progressNotifier.value;
+        progressNotifier.value = ProgressBarState(
+          current: position,
+          buffered: oldState.buffered,
+          total: oldState.total,
+        );
+      });
+
+      // Listen to buffer changes
+      _player!.stream.buffer.listen((Duration buffer) {
+        if (_isDisposed) return;
+        final oldState = progressNotifier.value;
+        progressNotifier.value = ProgressBarState(
+          current: oldState.current,
+          buffered: buffer,
+          total: oldState.total,
+        );
+      });
+
+      // Listen to duration changes
+      _player!.stream.duration.listen((Duration duration) {
+        if (_isDisposed) return;
+        final oldState = progressNotifier.value;
+        progressNotifier.value = ProgressBarState(
+          current: oldState.current,
+          buffered: oldState.buffered,
+          total: duration,
+        );
+      });
+
+      // Listen to completion
+      _player!.stream.completed.listen((bool completed) {
+        if (_isDisposed) return;
+        if (completed) {
+          _player!.seek(Duration.zero);
+          _player!.pause();
+          buttonNotifier.value = ButtonState.paused;
+        }
+      });
+    } catch (e) {
+      // Player couldn't be created (likely missing native backend). Keep
+      // the controller functional but marked as unavailable. Calls to play
+      // or setAudioSource will no-op or throw a descriptive error.
+      debugPrint('AudioController: Player init failed: $e');
+      _playerAvailable = false;
+    }
+  }
+
+  /// Helper to get or create audio cache directory
+  Future<Directory> _getAudioCacheDir() async {
+    final tempDir = await getTemporaryDirectory();
+    final cacheDir = Directory('${tempDir.path}/audio_cache');
+    if (!await cacheDir.exists()) {
+      await cacheDir.create(recursive: true);
+    }
+    return cacheDir;
+  }
+
+  /// Helper to get cached audio file name from URL
+  String _getCacheFileName(String url) {
+    final uri = Uri.parse(url);
+    final fileName = uri.pathSegments.last;
+    return fileName;
+  }
+
+  /// Download audio file and cache it locally
+  Future<File> _downloadAndCacheAudio(String url) async {
+    final cacheDir = await _getAudioCacheDir();
+    final fileName = _getCacheFileName(url);
+    final cachedFile = File('${cacheDir.path}/$fileName');
+
+    // If file exists and is valid, return it
+    if (await cachedFile.exists()) {
+      final fileSize = await cachedFile.length();
+      if (fileSize > 1000) {
+        debugPrint(
+            "AudioController: Using cached audio file: ${cachedFile.path}");
+        return cachedFile;
       }
-    });
+    }
 
-    _audioPlayer.positionStream.listen((position) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
-        current: position,
-        buffered: oldState.buffered,
-        total: oldState.total,
-      );
-    });
+    // Download the file
+    debugPrint("AudioController: Downloading audio from: $url");
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'User-Agent': 'QuranHadithApp/1.0',
+        'Accept': '*/*',
+      },
+    ).timeout(const Duration(seconds: 30));
 
-    _audioPlayer.bufferedPositionStream.listen((bufferedPosition) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
-        current: oldState.current,
-        buffered: bufferedPosition,
-        total: oldState.total,
-      );
-    });
-
-    _audioPlayer.durationStream.listen((totalDuration) {
-      final oldState = progressNotifier.value;
-      progressNotifier.value = ProgressBarState(
-        current: oldState.current,
-        buffered: oldState.buffered,
-        total: totalDuration ?? Duration.zero,
-      );
-    });
+    if (response.statusCode == 200) {
+      await cachedFile.writeAsBytes(response.bodyBytes);
+      debugPrint(
+          "AudioController: Audio downloaded and cached: ${cachedFile.path} (${response.bodyBytes.length} bytes)");
+      return cachedFile;
+    } else {
+      throw Exception("Failed to download audio: HTTP ${response.statusCode}");
+    }
   }
 
-  void play() {
-    _audioPlayer.play();
+  /// Set audio source and prepare for playback
+  Future<void> setAudioSource(String url) async {
+    if (_isDisposed) return;
+    if (url.isEmpty) {
+      debugPrint("AudioController: Attempted to set empty audio URL.");
+      return;
+    }
+    await _init();
+
+    if (!_playerAvailable || _player == null) {
+      debugPrint(
+          'AudioController: Player not available. Skipping setAudioSource.');
+      throw Exception(
+          'Audio backend is not available on this platform (libmpv missing?).');
+    }
+
+    try {
+      buttonNotifier.value = ButtonState.loading;
+      debugPrint("AudioController: Setting audio source: $url");
+
+      // Stop current playback if any
+      try {
+        await _player!.stop();
+      } catch (e) {
+        debugPrint("Error stopping player: $e");
+      }
+
+      // Download and cache the audio file
+      final audioFile = await _downloadAndCacheAudio(url);
+
+      // Play from local file using media_kit
+      await _player!.open(Media(audioFile.path));
+
+      debugPrint(
+          "AudioController: Audio source set from local file: ${audioFile.path}");
+      buttonNotifier.value = ButtonState.paused;
+    } catch (e, stackTrace) {
+      debugPrint("Error setting audio source: $e");
+      debugPrint("Stack trace: $stackTrace");
+
+      // Fallback: Try playing directly from URL
+      try {
+        debugPrint(
+            "AudioController: Fallback - trying to play from URL directly...");
+        await _player!.open(Media(url));
+        debugPrint("AudioController: Audio source set from URL");
+        buttonNotifier.value = ButtonState.paused;
+      } catch (e2) {
+        debugPrint("Error with URL source: $e2");
+        buttonNotifier.value = ButtonState.paused;
+        rethrow;
+      }
+    }
   }
 
-  void pause() {
-    _audioPlayer.pause();
+  void play() async {
+    if (_isDisposed) return;
+    if (!_playerAvailable || _player == null) {
+      debugPrint('AudioController: play() called but player unavailable.');
+      return;
+    }
+
+    try {
+      await _player!.play();
+    } catch (e) {
+      debugPrint("Error playing audio: $e");
+    }
   }
 
-  void seek(Duration position) {
-    _audioPlayer.seek(position);
+  void pause() async {
+    if (_isDisposed) return;
+    if (!_playerAvailable || _player == null) {
+      debugPrint('AudioController: pause() called but player unavailable.');
+      return;
+    }
+
+    try {
+      await _player!.pause();
+    } catch (e) {
+      debugPrint("Error pausing audio: $e");
+    }
   }
 
+  void seek(Duration position) async {
+    if (_isDisposed) return;
+    if (!_playerAvailable || _player == null) {
+      debugPrint('AudioController: seek() called but player unavailable.');
+      return;
+    }
+
+    try {
+      await _player!.seek(position);
+    } catch (e) {
+      debugPrint("Error seeking audio: $e");
+    }
+  }
+
+  @override
   void dispose() {
-    _audioPlayer.dispose();
+    _isDisposed = true;
+    try {
+      _player?.dispose();
+    } catch (e) {
+      debugPrint('Error disposing player: $e');
+    }
+    progressNotifier.dispose();
+    buttonNotifier.dispose();
+    super.dispose();
+    debugPrint('AudioController disposed');
   }
 }
 
