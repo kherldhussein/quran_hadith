@@ -1,0 +1,488 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:system_tray/system_tray.dart';
+import 'package:quran_hadith/database/database_service.dart';
+
+/// Native desktop features service
+class NativeDesktopService with WindowListener {
+  static final NativeDesktopService _instance =
+      NativeDesktopService._internal();
+  factory NativeDesktopService() => _instance;
+  NativeDesktopService._internal();
+
+  // Services
+  final SystemTray _systemTray =
+      SystemTray(); // Todo - requires ayatana-appindicator3 on Linux
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+  // final AppWindow _appWindow = AppWindow();
+
+  bool _isInitialized = false;
+  bool _systemTrayEnabled = false;
+  bool _notificationsEnabled = false;
+  bool _hotkeysEnabled = false;
+
+  // Callbacks
+  VoidCallback? _onPlayPauseCallback;
+  VoidCallback? _onNextCallback;
+  VoidCallback? _onPreviousCallback;
+  VoidCallback? _onSearchCallback;
+
+  /// Initialize native desktop features
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      // Load preferences
+      final prefs = database.getPreferences();
+
+      // Initialize window manager
+      await windowManager.ensureInitialized();
+      windowManager.addListener(this);
+
+      // Initialize notifications if enabled
+      if (prefs.enableNotifications) {
+        await _initializeNotifications();
+      }
+
+      // Initialize system tray if enabled
+      if (prefs.enableSystemTray) {
+        await _initializeSystemTray();
+      }
+
+      // Initialize hotkeys if enabled
+      if (prefs.enableGlobalShortcuts) {
+        await _initializeHotkeys();
+      }
+
+      _isInitialized = true;
+      debugPrint('NativeDesktopService initialized successfully');
+    } catch (e) {
+      debugPrint('Error initializing NativeDesktopService: $e');
+    }
+  }
+
+  // ============ NOTIFICATIONS ============
+
+  Future<void> _initializeNotifications() async {
+    try {
+      // Android settings
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      // macOS settings
+      final DarwinInitializationSettings macOSSettings =
+          DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+
+      // Linux settings
+      final LinuxInitializationSettings linuxSettings =
+          LinuxInitializationSettings(
+        defaultActionName: 'Open notification',
+      );
+
+      // Initialize
+      final InitializationSettings settings = InitializationSettings(
+        android: androidSettings,
+        macOS: macOSSettings,
+        linux: linuxSettings,
+      );
+
+      await _notifications.initialize(
+        settings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
+
+      _notificationsEnabled = true;
+      debugPrint('Notifications initialized');
+    } catch (e) {
+      debugPrint('Error initializing notifications: $e');
+    }
+  }
+
+  /// Show notification
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_notificationsEnabled) return;
+
+    try {
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+        'quran_app_channel',
+        'Quran App',
+        channelDescription: 'Quran reading and listening notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const DarwinNotificationDetails macOSDetails =
+          DarwinNotificationDetails();
+
+      const LinuxNotificationDetails linuxDetails = LinuxNotificationDetails();
+
+      const NotificationDetails details = NotificationDetails(
+        android: androidDetails,
+        macOS: macOSDetails,
+        linux: linuxDetails,
+      );
+
+      await _notifications.show(
+        DateTime.now().millisecond,
+        title,
+        body,
+        details,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('Error showing notification: $e');
+    }
+  }
+
+  /// Schedule daily reminder notification
+  Future<void> scheduleDailyReminder({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  }) async {
+    if (!_notificationsEnabled) return;
+
+    try {
+      // Implementation depends on your notification scheduling needs
+      debugPrint('Scheduled reminder for $hour:$minute');
+    } catch (e) {
+      debugPrint('Error scheduling reminder: $e');
+    }
+  }
+
+  void _onNotificationTapped(NotificationResponse response) {
+    debugPrint('Notification tapped: ${response.payload}');
+    // Handle notification tap
+  }
+
+  // ============ SYSTEM TRAY ============
+  // Todo - requires ayatana-appindicator3 on Linux
+
+  Future<void> _initializeSystemTray() async {
+    debugPrint('System tray Todo - requires ayatana-appindicator3');
+    if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) return;
+
+    try {
+      // Initialize system tray
+      await _systemTray.initSystemTray(
+        title: "Qur'an & Hadith",
+        iconPath: _getTrayIconPath(),
+      );
+
+      // Set menu
+      await _setupSystemTrayMenu();
+
+      _systemTrayEnabled = true;
+      debugPrint('System tray initialized');
+    } catch (e) {
+      debugPrint('Error initializing system tray: $e');
+    }
+  }
+
+  Future<void> _setupSystemTrayMenu() async {
+    final Menu menu = Menu();
+
+    await menu.buildFrom([
+      MenuItemLabel(
+        label: 'Show Window',
+        onClicked: (menuItem) => _showWindow(),
+      ),
+      MenuSeparator(),
+      MenuItemLabel(
+        label: 'Play/Pause',
+        onClicked: (menuItem) => _onPlayPauseCallback?.call(),
+      ),
+      MenuItemLabel(
+        label: 'Next',
+        onClicked: (menuItem) => _onNextCallback?.call(),
+      ),
+      MenuItemLabel(
+        label: 'Previous',
+        onClicked: (menuItem) => _onPreviousCallback?.call(),
+      ),
+      MenuSeparator(),
+      MenuItemLabel(
+        label: 'Exit',
+        onClicked: (menuItem) => _exitApp(),
+      ),
+    ]);
+
+    await _systemTray.setContextMenu(menu);
+  }
+
+  String _getTrayIconPath() {
+    if (Platform.isWindows) {
+      return 'assets/images/tray_icon.ico';
+    } else if (Platform.isMacOS) {
+      return 'assets/images/tray_icon.png';
+    } else {
+      return 'assets/images/tray_icon.png';
+    }
+  }
+
+  /// Update system tray
+  Future<void> updateSystemTray({
+    String? title,
+    String? tooltip,
+  }) async {
+    if (!_systemTrayEnabled) return;
+
+    try {
+      if (title != null) {
+        await _systemTray.setTitle(title);
+      }
+      if (tooltip != null) {
+        await _systemTray.setToolTip(tooltip);
+      }
+    } catch (e) {
+      debugPrint('Error updating system tray: $e');
+    }
+  }
+
+  // ============ HOTKEYS ============
+
+  Future<void> _initializeHotkeys() async {
+    try {
+      debugPrint('Hotkeys initialized');
+      await hotKeyManager.unregisterAll();
+
+      // Play/Pause: Space
+      await hotKeyManager.register(
+        HotKey(
+          key: PhysicalKeyboardKey.space,
+          scope: HotKeyScope.inapp,
+        ),
+        keyDownHandler: (hotKey) => _onPlayPauseCallback?.call(),
+      );
+
+      // Search: Ctrl+F
+      await hotKeyManager.register(
+        HotKey(
+          key: PhysicalKeyboardKey.keyF,
+          modifiers: [HotKeyModifier.control],
+          scope: HotKeyScope.inapp,
+        ),
+        keyDownHandler: (hotKey) => _onSearchCallback?.call(),
+      );
+
+      // Next: Right Arrow / Ctrl+Right
+      await hotKeyManager.register(
+        HotKey(
+          key: PhysicalKeyboardKey.arrowRight,
+          modifiers: [HotKeyModifier.control],
+          scope: HotKeyScope.inapp,
+        ),
+        keyDownHandler: (hotKey) => _onNextCallback?.call(),
+      );
+
+      // Previous: Left Arrow / Ctrl+Left
+      await hotKeyManager.register(
+        HotKey(
+          key: PhysicalKeyboardKey.arrowLeft,
+          modifiers: [HotKeyModifier.control],
+          scope: HotKeyScope.inapp,
+        ),
+        keyDownHandler: (hotKey) => _onPreviousCallback?.call(),
+      );
+
+      _hotkeysEnabled = true;
+      debugPrint('Hotkeys initialized');
+    } catch (e) {
+      debugPrint('Error initializing hotkeys: $e');
+    }
+  }
+
+  /// Register hotkey callbacks
+  void registerCallbacks({
+    VoidCallback? onPlayPause,
+    VoidCallback? onNext,
+    VoidCallback? onPrevious,
+    VoidCallback? onSearch,
+  }) {
+    _onPlayPauseCallback = onPlayPause;
+    _onNextCallback = onNext;
+    _onPreviousCallback = onPrevious;
+    _onSearchCallback = onSearch;
+  }
+
+  // ============ WINDOW MANAGEMENT ============
+
+  Future<void> _showWindow() async {
+    await windowManager.show();
+    await windowManager.focus();
+  }
+
+  Future<void> _hideWindow() async {
+    await windowManager.hide();
+  }
+
+  Future<void> minimizeToTray() async {
+    if (_systemTrayEnabled) {
+      await _hideWindow();
+    } else {
+      await windowManager.minimize();
+    }
+  }
+
+  // Window listener callbacks
+  @override
+  void onWindowClose() async {
+    final prefs = database.getPreferences();
+
+    if (prefs.enableSystemTray) {
+      // Minimize to tray instead of closing
+      await _hideWindow();
+    } else {
+      await _exitApp();
+    }
+  }
+
+  @override
+  void onWindowMinimize() {
+    debugPrint('Window minimized');
+  }
+
+  @override
+  void onWindowRestore() {
+    debugPrint('Window restored');
+  }
+
+  @override
+  void onWindowFocus() {
+    debugPrint('Window focused');
+  }
+
+  @override
+  void onWindowBlur() {
+    debugPrint('Window blurred');
+  }
+
+  Future<void> _exitApp() async {
+    await windowManager.destroy();
+  }
+
+  // ============ FEATURE TOGGLES ============
+
+  Future<void> enableSystemTray(bool enable) async {
+    if (enable && !_systemTrayEnabled) {
+      await _initializeSystemTray();
+    } else if (!enable && _systemTrayEnabled) {
+      await _systemTray.destroy();
+      _systemTrayEnabled = false;
+    }
+  }
+
+  Future<void> enableNotifications(bool enable) async {
+    if (enable && !_notificationsEnabled) {
+      await _initializeNotifications();
+    }
+    _notificationsEnabled = enable;
+  }
+
+  Future<void> enableHotkeys(bool enable) async {
+    if (enable && !_hotkeysEnabled) {
+      await _initializeHotkeys();
+    } else if (!enable && _hotkeysEnabled) {
+      await hotKeyManager.unregisterAll();
+      _hotkeysEnabled = false;
+    }
+  }
+
+  // ============ CLEANUP ============
+
+  Future<void> dispose() async {
+    try {
+      windowManager.removeListener(this);
+
+      if (_systemTrayEnabled) {
+        await _systemTray.destroy();
+      }
+
+      if (_hotkeysEnabled) {
+        await hotKeyManager.unregisterAll();
+      }
+
+      _isInitialized = false;
+      debugPrint('NativeDesktopService disposed');
+    } catch (e) {
+      debugPrint('Error disposing NativeDesktopService: $e');
+    }
+  }
+}
+
+/// App window helper
+class AppWindow {
+  /// Set always on top
+  Future<void> setAlwaysOnTop(bool alwaysOnTop) async {
+    await windowManager.setAlwaysOnTop(alwaysOnTop);
+  }
+
+  /// Set window size
+  Future<void> setSize(Size size) async {
+    await windowManager.setSize(size);
+  }
+
+  /// Set minimum size
+  Future<void> setMinimumSize(Size size) async {
+    await windowManager.setMinimumSize(size);
+  }
+
+  /// Set maximum size
+  Future<void> setMaximumSize(Size size) async {
+    await windowManager.setMaximumSize(size);
+  }
+
+  /// Set resizable
+  Future<void> setResizable(bool resizable) async {
+    await windowManager.setResizable(resizable);
+  }
+
+  /// Center window
+  Future<void> center() async {
+    await windowManager.center();
+  }
+
+  /// Set title
+  Future<void> setTitle(String title) async {
+    await windowManager.setTitle(title);
+  }
+
+  /// Maximize
+  Future<void> maximize() async {
+    await windowManager.maximize();
+  }
+
+  /// Unmaximize
+  Future<void> unmaximize() async {
+    await windowManager.unmaximize();
+  }
+
+  /// Toggle maximize
+  Future<void> toggleMaximize() async {
+    if (await windowManager.isMaximized()) {
+      await unmaximize();
+    } else {
+      await maximize();
+    }
+  }
+}
+
+/// Global instance
+final nativeDesktop = NativeDesktopService();
