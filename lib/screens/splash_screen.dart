@@ -1,4 +1,6 @@
+import 'dart:io' show Platform;
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -12,14 +14,17 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop =
+        !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
     return Stack(
       children: [
         const HomeScreen(),
-        WindowTitleBarBox(
-          child: Row(
-            children: [Expanded(child: MoveWindow()), const WindowButtons()],
+        if (isDesktop)
+          WindowTitleBarBox(
+            child: Row(
+              children: [Expanded(child: MoveWindow()), const WindowButtons()],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -35,7 +40,7 @@ class WindowButtons extends StatelessWidget {
       children: [
         MinimizeWindowButton(
           colors: WindowButtonColors(
-            iconMouseDown: Get.theme.colorScheme.background,
+            iconMouseDown: Get.theme.colorScheme.surface,
             iconNormal: theme.withOpacity(.5),
             mouseOver: theme.withOpacity(.5),
             mouseDown: theme.withOpacity(.5),
@@ -44,7 +49,7 @@ class WindowButtons extends StatelessWidget {
         ),
         MaximizeWindowButton(
           colors: WindowButtonColors(
-            iconMouseDown: Get.theme.colorScheme.background,
+            iconMouseDown: Get.theme.colorScheme.surface,
             iconNormal: theme.withOpacity(.5),
             mouseOver: theme.withOpacity(.5),
             mouseDown: theme.withOpacity(.5),
