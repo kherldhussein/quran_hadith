@@ -23,7 +23,7 @@ class About extends StatelessWidget {
     return AlertDialog(
       elevation: 0,
       backgroundColor: Theme.of(context).canvasColor,
-      content: Container(height: 500, width: 500, child: AboutView()),
+      content: Container(height: 560, width: 560, child: AboutView()),
     );
   }
 }
@@ -102,15 +102,72 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   ),
                 ),
                 SizedBox(height: 10),
-                Text(
-                  'Version: 1.${DateTime.now().year}.${DateTime.now().month + 12}',
-                  style: theme.titleLarge,
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Qur’ān Hadith', style: theme.headlineSmall),
+                        SizedBox(height: 8),
+                        Text(
+                          'Version: 1.0.0 (build 1)',
+                          style: theme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 SizedBox(height: 20),
-                Text(
-                  'Qur’ān Hadith is an Online/Offline Quran and Hadith application with a fashion interface, smooth performance, and more features '
-                  'to sharpen your focus on what you are reading or listening to.\n\nPlease see the changelog file for recent improvements and the issue tracker for short-term plans.',
-                  style: theme.titleMedium,
+                Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'About',
+                          style: theme.titleLarge,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Qur’ān Hadith helps you read, listen and search the Qur’ān and browse Hadith collections with a clean, desktop-friendly experience. Supports offline favorites, resume reading/listening, and adaptive theming.',
+                          style: theme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _LinkButton(
+                      icon: FontAwesomeIcons.github,
+                      label: 'Source Code',
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://github.com/kherld-hussein/quran_hadith')),
+                    ),
+                    _LinkButton(
+                      icon: FontAwesomeIcons.bug,
+                      label: 'Report a Bug',
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://github.com/kherld-hussein/quran_hadith/issues/')),
+                    ),
+                    _LinkButton(
+                      icon: FontAwesomeIcons.lightbulb,
+                      label: 'Request Feature',
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://github.com/kherld-hussein/quran_hadith/issues/')),
+                    ),
+                    _LinkButton(
+                      icon: FontAwesomeIcons.heart,
+                      label: 'Support',
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://www.patreon.com/join/kherld/checkout?ru=undefined')),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -125,18 +182,13 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                     left: isSmall ? 10 : 20,
                     right: isSmall ? 10 : 20,
                   ),
-                  child: Container(
-                    child: SingleChildScrollView(
-                      scrollDirection:
-                          isSmall ? Axis.horizontal : Axis.vertical,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Chip(label: Text("Name")),
-                          Chip(label: Text("E-mail")),
-                        ],
-                      ),
-                    ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Chip(label: Text("Name")),
+                      Chip(label: Text("E-mail")),
+                    ],
                   ),
                 ),
                 SizedBox(height: 5),
@@ -188,6 +240,39 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LinkButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _LinkButton(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(10),
+          border:
+              Border.all(color: Theme.of(context).dividerColor.withOpacity(.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(icon, size: 16),
+            SizedBox(width: 8),
+            Text(label),
+          ],
+        ),
       ),
     );
   }
