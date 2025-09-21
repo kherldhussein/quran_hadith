@@ -1,16 +1,16 @@
-import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:just_audio/just_audio.dart';
+// audio playback handled by controllers; just_audio removed from home screen
 import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/screens/about.dart' as about;
 import 'package:quran_hadith/screens/favorite.dart';
 import 'package:quran_hadith/screens/hPage.dart';
 import 'package:quran_hadith/screens/qPage.dart';
+import 'package:quran_hadith/screens/bookmarks_screen.dart';
 import 'package:quran_hadith/screens/settings.dart';
+import 'package:quran_hadith/screens/statistics_screen.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/custom_button.dart';
 import 'package:quran_hadith/widgets/headerTitle.dart';
@@ -18,6 +18,17 @@ import 'package:quran_hadith/widgets/menu_list_items.dart';
 import 'package:quran_hadith/widgets/qh_nav.dart';
 import 'package:quran_hadith/widgets/shared_switcher.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:quran_hadith/screens/qPageView.dart';
+import 'package:quran_hadith/models/search/ayah.dart' as search_models;
+import 'package:quran_hadith/controller/search.dart' as qsearch;
+import 'package:quran_hadith/database/database_service.dart';
+import 'package:quran_hadith/database/hive_adapters.dart';
+import 'package:quran_hadith/models/daily_ayah.dart';
+import 'package:quran_hadith/models/reciter_model.dart';
+import 'package:quran_hadith/services/daily_ayah_service.dart';
+import 'package:quran_hadith/services/notification_service.dart';
+import 'package:quran_hadith/services/reciter_service.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 
 import '../controller/quranAPI.dart';
 
@@ -28,199 +39,1000 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
+class _NavRailItem {
+  final IconData icon;
+  final String label;
+
+  const _NavRailItem(this.icon, this.label);
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  List<Widget> screens = [QPage(), HPage(), Favorite(), Settings()];
-  late ValueNotifier<bool> _isExtended = ValueNotifier<bool>(false);
+  late final List<Widget> _contentScreens;
+  late ValueNotifier<bool> _isExtended;
+  final qsearch.Search _offlineSearch = qsearch.Search();
+  bool _searchReady = false;
+  DailyAyah? _dailyAyah;
+  bool _loadingDailyAyah = false;
+  ReadingProgress? _lastReadingProgress;
+  ListeningProgress? _lastListeningProgress;
+  bool _dailyAyahReminderEnabled = false;
+  bool _fridayReminderEnabled = false;
+  late TimeOfDay _dailyAyahTime;
+  late TimeOfDay _fridayReminderTime;
+  bool _isSchedulingDailyAyah = false;
+  bool _isSchedulingFriday = false;
+  late String _selectedReciter;
+  List<Reciter> _reciters = List<Reciter>.from(Reciter.fallback);
+  bool _loadingReciters = true;
+
+  final DailyAyahService _dailyAyahService = DailyAyahService.instance;
+  final QuranAPI _quranApi = QuranAPI();
+
+  static const List<_NavRailItem> _navItems = [
+    _NavRailItem(FontAwesomeIcons.house, 'Dashboard'),
+    _NavRailItem(FontAwesomeIcons.bookOpen, 'Quran'),
+    _NavRailItem(FontAwesomeIcons.bookOpenReader, 'Hadith'),
+    _NavRailItem(FontAwesomeIcons.heart, 'Favorites'),
+    _NavRailItem(FontAwesomeIcons.bookmark, 'Bookmarks'),
+    _NavRailItem(FontAwesomeIcons.chartLine, 'Statistics'),
+    _NavRailItem(FontAwesomeIcons.gear, 'Settings'),
+  ];
 
   @override
   void initState() {
     super.initState();
 
+    _contentScreens = [
+      const QPage(),
+      HPage(),
+      Favorite(),
+      const BookmarksScreen(),
+      const StatisticsScreen(),
+      const Settings(),
+    ];
+
     _isExtended = ValueNotifier<bool>(true);
-    // _playerState = player.state;
-    // player.getDuration().then(
-    //       (value) => setState(() {
-    //         _duration = value;
-    //       }),
-    //     );
-    // player.getCurrentPosition().then(
-    //       (value) => setState(() {
-    //         _position = value;
-    //       }),
-    //     );
-    // _initStreams();
+    _selectedReciter = SpUtil.getReciter();
+    _dailyAyahTime = _minutesToTimeOfDay(SpUtil.getDailyAyahTimeMinutes());
+    _fridayReminderTime =
+        _minutesToTimeOfDay(SpUtil.getFridayReminderTimeMinutes());
+    _dailyAyahReminderEnabled = SpUtil.isDailyAyahNotificationEnabled();
+    _fridayReminderEnabled = SpUtil.isFridayReminderEnabled();
+
+    _loadReciters();
+
+    _offlineSearch.loadSurah().then((_) {
+      if (mounted) setState(() => _searchReady = true);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialData();
+    });
+  }
+
+  Future<void> _loadReciters({bool forceRefresh = false}) async {
+    if (!mounted) return;
+    setState(() => _loadingReciters = true);
+    try {
+      final reciters =
+          await ReciterService.instance.getReciters(forceRefresh: forceRefresh);
+      if (!mounted) return;
+      setState(() {
+        _reciters = reciters;
+        _loadingReciters = false;
+      });
+    } catch (e) {
+      debugPrint('HomeScreen: Failed to load reciters: $e');
+      if (!mounted) return;
+      setState(() => _loadingReciters = false);
+    }
   }
 
   @override
   void setState(VoidCallback fn) {
-    // Subscriptions only can be closed asynchronously,
-    // therefore events can occur after widget has been disposed.
     if (mounted) {
       super.setState(fn);
     }
   }
 
-  late SurahList _searchResults = [] as SurahList;
-  final searchController = TextEditingController();
-  List<AudioPlayer> audioPlayers = [];
+  void _loadInitialData() {
+    _loadDailyAyah();
+    _loadActivitySummaries();
 
-  bool _isSearching = false;
+    if (_dailyAyahReminderEnabled) {
+      _scheduleDailyAyahNotification();
+    }
+    if (_fridayReminderEnabled) {
+      _scheduleFridayReminder();
+    }
+  }
 
-  void _performSearch() async {
+  Future<void> _loadDailyAyah({bool forceRefresh = false}) async {
+    if (!mounted) return;
     setState(() {
-      _isSearching = true;
+      _loadingDailyAyah = true;
     });
-
-    final keyword = searchController.text;
 
     try {
-      final searchResults = await QuranAPI().getSearch(keyWord: keyword);
-
+      final ayah = await _dailyAyahService.getDailyAyah(
+        forceRefresh: forceRefresh,
+      );
+      if (!mounted) return;
       setState(() {
-        _searchResults = searchResults;
+        _dailyAyah = ayah;
+        _loadingDailyAyah = false;
       });
     } catch (e) {
-      print('Error: $e');
+      debugPrint('HomeScreen: Failed to load daily ayah: $e');
+      if (!mounted) return;
+      setState(() {
+        _loadingDailyAyah = false;
+      });
+    }
+  }
+
+  void _loadActivitySummaries() {
+    final reading = database.getLastReadingProgress();
+    final listening = database.getLastListeningProgress();
+    if (!mounted) return;
+    setState(() {
+      _lastReadingProgress = reading;
+      _lastListeningProgress = listening;
+    });
+  }
+
+  TimeOfDay _minutesToTimeOfDay(int minutes) {
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    return TimeOfDay(hour: hours, minute: mins);
+  }
+
+  int _timeOfDayToMinutes(TimeOfDay time) => time.hour * 60 + time.minute;
+
+  String _formatTimeOfDay(BuildContext context, TimeOfDay time) {
+    return time.format(context);
+  }
+
+  String _formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) {
+      return '${diff.inMinutes} min ago';
+    }
+    if (diff.inHours < 24) {
+      return '${diff.inHours} h ago';
+    }
+    final days = diff.inDays;
+    if (days == 1) return 'Yesterday';
+    if (days < 7) return '$days days ago';
+    final weeks = (days / 7).floor();
+    return weeks == 1 ? 'Last week' : '$weeks weeks ago';
+  }
+
+  Future<void> _scheduleDailyAyahNotification() async {
+    if (!mounted) return;
+    setState(() => _isSchedulingDailyAyah = true);
+    try {
+      await NotificationService.instance.scheduleDailyNotification(
+        id: NotificationService.dailyAyahNotificationId,
+        time: _dailyAyahTime,
+        title: 'Daily Ayah Reminder',
+        body: _dailyAyah != null
+            ? '${_dailyAyah!.surahName} • ${_dailyAyah!.reference}'
+            : 'Take a moment to read today\'s ayah.',
+      );
+    } catch (e) {
+      debugPrint('HomeScreen: Failed to schedule daily reminder: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not schedule the daily reminder.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSchedulingDailyAyah = false);
+      }
+    }
+  }
+
+  Future<void> _scheduleFridayReminder() async {
+    if (!mounted) return;
+    setState(() => _isSchedulingFriday = true);
+    try {
+      await NotificationService.instance.scheduleWeeklyNotification(
+        id: NotificationService.fridayReminderNotificationId,
+        time: _fridayReminderTime,
+        weekday: DateTime.friday,
+        title: 'Friday Reminder',
+        body: 'Remember to recite Surah Al-Kahf and send salutations.',
+      );
+    } catch (e) {
+      debugPrint('HomeScreen: Failed to schedule Friday reminder: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not schedule the Friday reminder.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSchedulingFriday = false);
+      }
+    }
+  }
+
+  Future<void> _toggleDailyAyahReminder(bool value) async {
+    if (!mounted) return;
+    setState(() => _dailyAyahReminderEnabled = value);
+    final success = await SpUtil.setDailyAyahNotificationEnabled(value);
+    if (!success) {
+      if (!mounted) return;
+      setState(() => _dailyAyahReminderEnabled = !value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update daily ayah reminder.')),
+      );
+      return;
     }
 
-    setState(() {
-      _isSearching = false;
-    });
+    if (value) {
+      await _scheduleDailyAyahNotification();
+    } else {
+      await NotificationService.instance
+          .cancel(NotificationService.dailyAyahNotificationId);
+    }
+  }
+
+  Future<void> _toggleFridayReminder(bool value) async {
+    if (!mounted) return;
+    setState(() => _fridayReminderEnabled = value);
+    final success = await SpUtil.setFridayReminderEnabled(value);
+    if (!success) {
+      if (!mounted) return;
+      setState(() => _fridayReminderEnabled = !value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update Friday reminder.')),
+      );
+      return;
+    }
+
+    if (value) {
+      await _scheduleFridayReminder();
+    } else {
+      await NotificationService.instance
+          .cancel(NotificationService.fridayReminderNotificationId);
+    }
+  }
+
+  Future<void> _pickDailyAyahTime() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _dailyAyahTime,
+    );
+    if (selected != null) {
+      if (!mounted) return;
+      setState(() => _dailyAyahTime = selected);
+      await SpUtil.setDailyAyahTimeMinutes(_timeOfDayToMinutes(selected));
+      if (_dailyAyahReminderEnabled) {
+        await _scheduleDailyAyahNotification();
+      }
+    }
+  }
+
+  Future<void> _pickFridayReminderTime() async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _fridayReminderTime,
+    );
+    if (selected != null) {
+      if (!mounted) return;
+      setState(() => _fridayReminderTime = selected);
+      await SpUtil.setFridayReminderTimeMinutes(
+        _timeOfDayToMinutes(selected),
+      );
+      if (_fridayReminderEnabled) {
+        await _scheduleFridayReminder();
+      }
+    }
+  }
+
+  Future<void> _selectReciter(String reciterId) async {
+    if (_selectedReciter == reciterId) return;
+    final previous = _selectedReciter;
+    setState(() => _selectedReciter = reciterId);
+
+    final success = await SpUtil.setReciter(reciterId);
+    if (!success) {
+      if (!mounted) return;
+      setState(() => _selectedReciter = previous);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update reciter.')),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    final reciterName = ReciterService.instance
+        .resolveById(reciterId, within: _reciters)
+        .displayName;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Reciter set to $reciterName')),
+    );
+  }
+
+  List<Widget> _buildReciterPopover(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (_loadingReciters) {
+      return const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+
+    if (_reciters.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Text('No reciters available. Try refreshing.'),
+        ),
+        ListTile(
+          leading: const Icon(Icons.refresh),
+          title: const Text('Refresh reciters'),
+          onTap: () {
+            Navigator.of(context).pop();
+            _loadReciters(forceRefresh: true);
+          },
+        ),
+      ];
+    }
+
+    final tiles = _reciters.map<Widget>((reciter) {
+      final isSelected = reciter.id == _selectedReciter;
+      return ListTile(
+        leading: CircleAvatar(
+          radius: 16,
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+          child: FaIcon(
+            FontAwesomeIcons.headphones,
+            color: theme.colorScheme.primary,
+            size: 14,
+          ),
+        ),
+        title: Text(reciter.displayName),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (reciter.arabicName != null && reciter.arabicName!.isNotEmpty)
+              Text(
+                reciter.arabicName!,
+                style: const TextStyle(fontFamily: 'Amiri', fontSize: 13),
+              ),
+            Text(
+              reciter.styleLabel,
+              style: theme.textTheme.labelSmall,
+            ),
+          ],
+        ),
+        isThreeLine:
+            reciter.arabicName != null && reciter.arabicName!.isNotEmpty,
+        trailing: isSelected
+            ? Icon(Icons.check, color: theme.colorScheme.primary, size: 18)
+            : null,
+        onTap: () {
+          Navigator.of(context).pop();
+          _selectReciter(reciter.id);
+        },
+      );
+    }).toList();
+
+    tiles.add(const Divider());
+    tiles.add(
+      ListTile(
+        leading: _loadingReciters
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.refresh),
+        title: const Text('Refresh reciters'),
+        onTap: () {
+          Navigator.of(context).pop();
+          _loadReciters(forceRefresh: true);
+        },
+      ),
+    );
+
+    return tiles;
+  }
+
+  List<Widget> _buildNotificationPopover(BuildContext context) {
+    return [
+      SwitchListTile(
+        value: _dailyAyahReminderEnabled,
+        title: const Text('Daily Ayah Reminder'),
+        subtitle: Text(
+          'At ${_formatTimeOfDay(context, _dailyAyahTime)}',
+        ),
+        onChanged: (value) {
+          Navigator.of(context).pop();
+          _toggleDailyAyahReminder(value);
+        },
+      ),
+      ListTile(
+        enabled: _dailyAyahReminderEnabled,
+        leading: const Icon(Icons.schedule),
+        title: const Text('Reminder time'),
+        subtitle: Text(_formatTimeOfDay(context, _dailyAyahTime)),
+        trailing: _isSchedulingDailyAyah && _dailyAyahReminderEnabled
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : null,
+        onTap: _dailyAyahReminderEnabled
+            ? () {
+                Navigator.of(context).pop();
+                _pickDailyAyahTime();
+              }
+            : null,
+      ),
+      const Divider(),
+      SwitchListTile(
+        value: _fridayReminderEnabled,
+        title: const Text('Friday Reminder'),
+        subtitle: Text(
+          'At ${_formatTimeOfDay(context, _fridayReminderTime)}',
+        ),
+        onChanged: (value) {
+          Navigator.of(context).pop();
+          _toggleFridayReminder(value);
+        },
+      ),
+      ListTile(
+        enabled: _fridayReminderEnabled,
+        leading: const Icon(Icons.watch_later_outlined),
+        title: const Text('Reminder time'),
+        subtitle: Text(_formatTimeOfDay(context, _fridayReminderTime)),
+        trailing: _isSchedulingFriday && _fridayReminderEnabled
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : null,
+        onTap: _fridayReminderEnabled
+            ? () {
+                Navigator.of(context).pop();
+                _pickFridayReminderTime();
+              }
+            : null,
+      ),
+      if (!_dailyAyahReminderEnabled && !_fridayReminderEnabled)
+        const Padding(
+          padding: EdgeInsets.only(top: 12),
+          child: Text(
+            'Enable reminders to receive gentle nudges to reconnect daily.',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
+    ];
+  }
+
+  NavigationRailDestination _buildNavDestination(
+      _NavRailItem item, bool isCompact) {
+    return NavigationRailDestination(
+      icon: FaIcon(item.icon),
+      label: Padding(
+        padding: EdgeInsets.symmetric(vertical: isCompact ? 0 : 24),
+        child: Text(item.label),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeroBanner(context),
+          const SizedBox(height: 24),
+          _buildDailyAyahCard(context),
+          const SizedBox(height: 24),
+          _buildActivitySection(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroBanner(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        image: DecorationImage(
+          image: const AssetImage('assets/images/Banner.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withValues(alpha: 0.35),
+            BlendMode.darken,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Peace be upon you',
+            style: textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Reignite your connection today.',
+            style: textTheme.titleMedium?.copyWith(color: Colors.white70),
+          ),
+          const Spacer(),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.bookOpen,
+                label: 'Continue reading',
+                onTap: _openLastRead,
+              ),
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.play,
+                label: 'Resume listening',
+                onTap: _openLastListened,
+              ),
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.rotateRight,
+                label: 'Refresh ayah',
+                onTap: () => _loadDailyAyah(forceRefresh: true),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return ActionChip(
+      onPressed: onTap,
+      avatar: FaIcon(icon, size: 14, color: Colors.white),
+      label: Text(label),
+      labelStyle: const TextStyle(color: Colors.white),
+      backgroundColor: Colors.white.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+
+  Widget _buildDailyAyahCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ayah of the Day',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Refresh ayah',
+                onPressed: _loadingDailyAyah
+                    ? null
+                    : () => _loadDailyAyah(forceRefresh: true),
+                icon: _loadingDailyAyah
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(FontAwesomeIcons.rotateRight, size: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_loadingDailyAyah && _dailyAyah == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_dailyAyah != null)
+            _buildDailyAyahContent(context, _dailyAyah!)
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'Unable to load the ayah of the day. Please refresh to try again.',
+                style: textTheme.bodyMedium,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyAyahContent(BuildContext context, DailyAyah ayah) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Directionality(
+          textDirection: TextDirection.rtl,
+          child: Text(
+            ayah.arabicText,
+            style: textTheme.headlineSmall?.copyWith(
+              fontFamily: 'Amiri',
+              fontSize: 26,
+              height: 1.6,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          ayah.translation.isNotEmpty
+              ? ayah.translation
+              : 'Translation unavailable.',
+          style: textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Chip(
+              avatar: const FaIcon(FontAwesomeIcons.bookQuran, size: 14),
+              label: Text('${ayah.surahName} • ${ayah.reference}'),
+            ),
+            const SizedBox(width: 12),
+            TextButton.icon(
+              onPressed: () => _openDailyAyah(ayah),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Open'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivitySection(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = [
+          _buildLastReadCard(context),
+          _buildLastListenedCard(context),
+        ];
+        if (constraints.maxWidth < 640) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              cards[0],
+              const SizedBox(height: 16),
+              cards[1],
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: cards[0]),
+            const SizedBox(width: 16),
+            Expanded(child: cards[1]),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLastReadCard(BuildContext context) {
+    final progress = _lastReadingProgress;
+    final subtitle = progress != null
+        ? 'Surah ${progress.surahNumber} • Ayah ${progress.ayahNumber}'
+        : 'No reading activity yet';
+    final footer = progress != null
+        ? 'Updated ${_formatRelativeTime(progress.lastReadAt)}'
+        : 'Start reading to track progress.';
+    return _buildActivityCard(
+      context: context,
+      icon: FontAwesomeIcons.bookOpen,
+      title: 'Last Read',
+      subtitle: subtitle,
+      footer: footer,
+      actionLabel: progress != null ? 'Continue reading' : null,
+      onTap: progress != null ? _openLastRead : null,
+    );
+  }
+
+  Widget _buildLastListenedCard(BuildContext context) {
+    final progress = _lastListeningProgress;
+    final subtitle = progress != null
+        ? 'Surah ${progress.surahNumber} • Ayah ${progress.ayahNumber}'
+        : 'No listening activity yet';
+    final footer = progress != null
+        ? 'Position ${_formatAudioPosition(progress.positionMs)} • '
+            '${_formatRelativeTime(progress.lastListenedAt)}'
+        : 'Play a recitation to track listening progress.';
+    return _buildActivityCard(
+      context: context,
+      icon: FontAwesomeIcons.headphones,
+      title: 'Last Listened',
+      subtitle: subtitle,
+      footer: footer,
+      actionLabel: progress != null ? 'Resume listening' : null,
+      onTap: progress != null ? _openLastListened : null,
+    );
+  }
+
+  Widget _buildActivityCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String footer,
+    String? actionLabel,
+    VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor:
+                  theme.colorScheme.primary.withValues(alpha: 0.12),
+              child: FaIcon(icon, color: theme.colorScheme.primary, size: 18),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              footer,
+              style: textTheme.bodySmall?.copyWith(color: mutedColor),
+            ),
+            if (actionLabel != null) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: onTap,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: Text(actionLabel),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatAudioPosition(int positionMs) {
+    final duration = Duration(milliseconds: positionMs);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _openDailyAyah(DailyAyah ayah) async {
+    await _openSurahAt(ayah.surahNumber, ayah.ayahNumber);
+  }
+
+  Future<void> _openLastRead() async {
+    final progress = _lastReadingProgress;
+    if (progress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No reading progress yet.')),
+      );
+      return;
+    }
+    await _openSurahAt(progress.surahNumber, progress.ayahNumber);
+  }
+
+  Future<void> _openLastListened() async {
+    final progress = _lastListeningProgress;
+    if (progress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No listening progress yet.')),
+      );
+      return;
+    }
+    await _openSurahAt(progress.surahNumber, progress.ayahNumber);
+  }
+
+  Future<void> _openSurahAt(int surahNumber, int ayahNumber) async {
+    try {
+      final data = await _quranApi.getSuratAudio();
+      final surah = data.surahs!.firstWhere(
+        (s) => s.number == surahNumber,
+        orElse: () => data.surahs!.first,
+      );
+      final ayahs = surah.ayahs;
+      Get.to(() => QPageView(
+            suratName: surah.name,
+            suratNo: surah.number,
+            ayahList: ayahs,
+            englishMeaning: surah.englishNameTranslation,
+            suratEnglishName: surah.englishName,
+          ));
+    } catch (e) {
+      debugPrint(
+          'HomeScreen: Failed to open surah $surahNumber:$ayahNumber - $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open the selected surah. Please try again.'),
+        ),
+      );
+    }
   }
 
   //eef2f5
   @override
   Widget build(BuildContext context) {
     final isSmall = isDisplayVerySmallDesktop(context);
-    final isSmallX = isDisplaySmallDesktop(context);
-    // var quranAPI = Provider.of<QuranAPI>(context);
-    double height = MediaQuery.of(context).size.height;
-    final searchFocusNode = FocusNode();
-    final _searchBox = Padding(
-      padding: const EdgeInsets.fromLTRB(5, 7, 20, 7),
-      child: TextField(
-        maxLines: 1,
-        focusNode: searchFocusNode,
-        controller: searchController,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.only(right: 15),
-          filled: true,
-          focusColor: Theme.of(context).canvasColor,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Theme.of(context).canvasColor),
-          ),
-          suffixIcon: IconButton(
-            splashRadius: 1,
-            icon: const FaIcon(
-              FontAwesomeIcons.magnifyingGlass,
-              color: Colors.black,
+    final isCompact = isDisplaySmallDesktop(context);
+
+    final shouldExtendNav = !isSmall;
+    if (_isExtended.value != shouldExtendNav) {
+      _isExtended.value = shouldExtendNav;
+    }
+
+    final searchButton = IconButton(
+      tooltip: 'Search',
+      icon: const FaIcon(FontAwesomeIcons.magnifyingGlass),
+      onPressed: () {
+        if (_searchReady) {
+          showSearch(
+            context: context,
+            delegate: QuranSearchDelegate(
+              offlineSearch: _offlineSearch,
+              onSelect: (String surahName, int ayahNo) {
+                _quranApi.getSuratAudio().then((data) {
+                  final surah = data.surahs!.firstWhere(
+                    (e) => e.name == surahName || e.englishName == surahName,
+                    orElse: () => data.surahs!.first,
+                  );
+                  final ayahs = surah.ayahs;
+                  Get.to(() => QPageView(
+                        suratName: surah.name,
+                        suratNo: surah.number,
+                        ayahList: ayahs,
+                        englishMeaning: surah.englishNameTranslation,
+                        suratEnglishName: surah.englishName,
+                      ));
+                });
+              },
             ),
-            onPressed: () {
-              // QuranSearchDelegate(_performSearch);
-              showSearch(
-                  context: context,
-                  delegate: QuranSearchDelegate(_performSearch));
-            },
-          ),
-          hintStyle: const TextStyle(fontWeight: FontWeight.w300),
-          hintText: '    Search',
-          fillColor: Theme.of(context).appBarTheme.backgroundColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(40),
-            borderSide: BorderSide(color: Theme.of(context).canvasColor),
-          ),
-        ),
-      ),
+          );
+        }
+      },
     );
+
+    final Widget selectedContent = _selectedIndex == 0
+        ? _buildDashboard(context)
+        : _contentScreens[_selectedIndex - 1];
+
     return Scaffold(
       appBar: AppBar(
-        title: HeaderText(size: isSmallX ? 20 : 30),
+        title: HeaderText(size: isCompact ? 20 : 30),
         actions: [
-          SizedBox(
-              child: isSmall
-                  ? AnimSearchBar(
-                      width: isSmall ? 200 : 400,
-                      color: Theme.of(context).canvasColor,
-                      textController: searchController,
-                      onSuffixTap: () {
-                        setState(() {
-                          searchController.clear();
-                        });
-                      },
-                      onSubmitted: (String) {
-                        QuranSearchDelegate(_performSearch);
-                      },
-                    )
-                  : _searchBox,
-              width: isSmall ? 100 : 350),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                RoundCustomButton(
-                  children: [
-                    Center(child: Text('Listen To Beautiful Recitation')),
-                  ],
-                  icon: FontAwesomeIcons.headphonesSimple,
-                ),
-                RoundCustomButton(
-                  children: [
-                    Container(
-                      height: height / 4,
-                      child: Center(
-                        child: Column(
-                          children: [
-                            SizedBox(height: 38),
-                            FaIcon(FontAwesomeIcons.bell, size: 50),
-                            Text('No Notifications'),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                  icon: FontAwesomeIcons.bell,
-                )
-              ],
-            ),
+          searchButton,
+          RoundCustomButton(
+            icon: FontAwesomeIcons.headphones,
+            popoverHeight: 300,
+            popoverWidth: 280,
+            children: _buildReciterPopover(context),
           ),
-          SizedBox(width: isSmall ? 100 : 145),
-          isSmall
-              ? Container()
-              : RoundCustomButton2(
-                  children: [
-                    MItems(
-                        text: 'Donate on Patreon',
-                        pressed: () {
-                          launchUrl(Uri.parse(
-                              "https://www.patreon.com/join/kherld/checkout?ru=undefined"));
-                          Get.back();
-                        }),
-                    MItems(
-                        text: 'Bug Report',
-                        pressed: () {
-                          launchUrl(Uri.parse(
-                              'https://github.com/kherld-hussein/quran_hadith/issues/'));
-                          Get.back();
-                        }),
-                    MItems(
-                        text: 'Feature Request',
-                        pressed: () {
-                          launchUrl(Uri.parse(
-                              'https://github.com/kherld-hussein/quran_hadith/issues/'));
-                          Get.back();
-                        }),
-                    MItems(
-                        text: 'About',
-                        pressed: () {
-                          Get.back();
-                          about.showAboutDialog();
-                        })
-                  ],
-                  icon: FontAwesomeIcons.a,
-                ),
+          RoundCustomButton(
+            icon: FontAwesomeIcons.bell,
+            popoverHeight: 340,
+            popoverWidth: 280,
+            children: _buildNotificationPopover(context),
+          ),
+          SizedBox(width: isSmall ? 80 : 120),
+          if (!isSmall)
+            RoundCustomButton2(
+              children: [
+                MItems(
+                    text: 'Donate on Patreon',
+                    pressed: () {
+                      launchUrl(Uri.parse(
+                          'https://www.patreon.com/join/kherld/checkout?ru=undefined'));
+                      Get.back();
+                    }),
+                MItems(
+                    text: 'Bug Report',
+                    pressed: () {
+                      launchUrl(Uri.parse(
+                          'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                      Get.back();
+                    }),
+                MItems(
+                    text: 'Feature Request',
+                    pressed: () {
+                      launchUrl(Uri.parse(
+                          'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                      Get.back();
+                    }),
+                MItems(
+                    text: 'About',
+                    pressed: () {
+                      Get.back();
+                      about.showAboutDialog();
+                    }),
+              ],
+              icon: FontAwesomeIcons.a,
+            ),
         ],
         leading: Padding(
           padding: const EdgeInsets.only(left: 15.0, top: 5.0),
@@ -229,98 +1041,67 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Get.theme.brightness == Brightness.light
                 ? kAccentColor
                 : kDarkSecondaryColor,
-            child: ImageIcon(AssetImage('assets/images/Logo.png')),
+            child: const ImageIcon(AssetImage('assets/images/Logo.png')),
           ),
         ),
       ),
       body: Row(
         children: [
           LayoutBuilder(builder: (context, constraints) {
-            return Container(
-              child: SingleChildScrollView(
-                clipBehavior: Clip.antiAlias,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: ValueListenableBuilder<bool>(
-                        valueListenable: _isExtended,
-                        builder: (context, value, child) {
-                          return NavigationRail(
-                            destinations: [
-                              NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.bookOpen),
-                                label: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: isSmall ? 0 : 24),
-                                  child: SizedBox.shrink(),
-                                ),
-                              ),
-                              NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.bookOpenReader),
-                                label: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: isSmall ? 0 : 24),
-                                  child: SizedBox.shrink(),
-                                ),
-                              ),
-                              NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.heart),
-                                label: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: isSmall ? 0 : 24),
-                                  child: SizedBox.shrink(),
-                                ),
-                              ),
-                              NavigationRailDestination(
-                                icon: FaIcon(FontAwesomeIcons.gear),
-                                label: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: isSmall ? 0 : 20),
-                                  child: SizedBox.shrink(),
-                                ),
-                              ),
-                            ],
-                            selectedIndex: _selectedIndex,
-                            onDestinationSelected: (int index) {
-                              setState(() {
-                                _selectedIndex = index;
-                              });
-                            },
-                            labelType: NavigationRailLabelType.all,
-                            trailing: IconButton(
-                              tooltip: 'Exit',
-                              icon: FaIcon(FontAwesomeIcons.rightFromBracket),
-                              onPressed: () {
-                                SystemSound.play(SystemSoundType.alert);
-                                Get.dialog(
-                                  AlertDialog(
-                                    title:
-                                        Text('Are you sure you want to exit?'),
-                                    content: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        TextButton(
-                                          onPressed: () => SystemNavigator.pop(
-                                            animated: true,
-                                          ),
-                                          child: Text('Exit'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Get.back(),
-                                          child: Text('Cancel'),
-                                        )
-                                      ],
+            return SingleChildScrollView(
+              clipBehavior: Clip.antiAlias,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: _isExtended,
+                    builder: (context, isExtended, child) {
+                      return NavigationRail(
+                        extended: isExtended,
+                        destinations: _navItems
+                            .map((item) => _buildNavDestination(item, isSmall))
+                            .toList(),
+                        selectedIndex: _selectedIndex,
+                        onDestinationSelected: (index) {
+                          setState(() => _selectedIndex = index);
+                        },
+                        labelType: isExtended
+                            ? NavigationRailLabelType.none
+                            : NavigationRailLabelType.all,
+                        trailing: IconButton(
+                          tooltip: 'Exit',
+                          icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
+                          onPressed: () {
+                            SystemSound.play(SystemSoundType.alert);
+                            Get.dialog(
+                              AlertDialog(
+                                title: const Text(
+                                    'Are you sure you want to exit?'),
+                                content: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton(
+                                      onPressed: () => SystemNavigator.pop(
+                                        animated: true,
+                                      ),
+                                      child: const Text('Exit'),
                                     ),
-                                    icon: FaIcon(
-                                        FontAwesomeIcons.solidCircleQuestion),
-                                  ),
-                                  name: 'Exit Dialog',
-                                );
-                              },
-                            ),
-                          );
-                        }),
+                                    TextButton(
+                                      onPressed: () => Get.back(),
+                                      child: const Text('Cancel'),
+                                    )
+                                  ],
+                                ),
+                                icon: const FaIcon(
+                                    FontAwesomeIcons.solidCircleQuestion),
+                              ),
+                              name: 'Exit Dialog',
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -328,13 +1109,19 @@ class _HomeScreenState extends State<HomeScreen> {
           }),
           Expanded(
             child: SharedAxisTransitionSwitcher(
-              child: QhNav(child: screens[_selectedIndex]),
+              child: QhNav(
+                child: KeyedSubtree(
+                  key: ValueKey(_selectedIndex),
+                  child: selectedContent,
+                ),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -342,9 +1129,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class QuranSearchDelegate extends SearchDelegate {
-  final Function performSearch;
+  final qsearch.Search offlineSearch;
+  final void Function(String surahName, int ayahNo) onSelect;
 
-  QuranSearchDelegate(this.performSearch);
+  QuranSearchDelegate({required this.offlineSearch, required this.onSelect});
 
   @override
   List<Widget>? buildActions(BuildContext context) {
@@ -366,50 +1154,64 @@ class QuranSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    return ListTile(
-      title: Text('result.keyword'),
-      subtitle: Text('Surah: ${'result.surah'}'),
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final suggestionList = getSuggestions(query);
-    return ListView.builder(
-      itemCount: suggestionList.length,
-      itemBuilder: (context, index) {
-        final suggestion = suggestionList[index];
-
-        return ListTile(
-          title: Text(suggestion),
-          onTap: () {
-            query = suggestion;
-            showResults(context);
+    return FutureBuilder<List<search_models.Aya>>(
+      future: offlineSearch.searchByWord(query.trim()),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
+        final results = snapshot.data!;
+        if (results.isEmpty) {
+          return Center(child: Text('No matches for "$query"'));
+        }
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final aya = results[index];
+            return ListTile(
+              title: Text(aya.text, textAlign: TextAlign.right),
+              subtitle: Text('Surah: ${aya.surah ?? ''}  •  Ayah: ${aya.num}'),
+              onTap: () {
+                close(context, aya.text);
+                onSelect(aya.surah ?? '', aya.num);
+              },
+            );
           },
         );
       },
     );
   }
 
-  List<String> getSuggestions(String query) {
-    // Implement your logic to fetch and filter suggestions based on the query
-    // For example, you can search through a list of suggestions or make an API request
-
-    // Dummy implementation - returning hardcoded suggestions
-    final dummySuggestions = [
-      'Surah Al-Fatiha',
-      'Surah Al-Baqarah',
-      'Surah Al-Imran',
-      'Surah An-Nisa',
-      'Surah Al-Maidah',
-      'Surah Al-Anam',
-      'Surah Al-Araf',
-      'Surah Al-Anfal',
-    ];
-
-    return dummySuggestions
-        .where((suggestion) =>
-            suggestion.toLowerCase().startsWith(query.toLowerCase()))
-        .toList();
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.isEmpty) {
+      return Center(child: Text('Search any word'));
+    }
+    return FutureBuilder<List<search_models.Aya>>(
+      future: offlineSearch.searchByWord(query.trim()),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
+        final results = snapshot.data!;
+        return ListView.builder(
+          itemCount: results.length.clamp(0, 20),
+          itemBuilder: (context, index) {
+            final aya = results[index];
+            return ListTile(
+              title: Text(aya.text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right),
+              subtitle: Text('Surah: ${aya.surah ?? ''}'),
+              onTap: () {
+                close(context, null);
+                onSelect(aya.surah ?? '', aya.num);
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }
