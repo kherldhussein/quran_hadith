@@ -10,9 +10,16 @@ import 'menu_list_items.dart';
 class RoundCustomButton extends StatelessWidget {
   final List<Widget>? children;
   final IconData? icon;
+  final double popoverWidth;
+  final double popoverHeight;
 
-  const RoundCustomButton({Key? key, this.icon, this.children})
-      : super(key: key);
+  const RoundCustomButton({
+    Key? key,
+    this.icon,
+    this.children,
+    this.popoverWidth = 260,
+    this.popoverHeight = 280,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +35,8 @@ class RoundCustomButton extends StatelessWidget {
         child: IconButton(
           onPressed: () {
             showPopover(
-                width: 250,
-                height: 265,
+                width: popoverWidth,
+                height: popoverHeight,
                 context: context,
                 backgroundColor: Theme.of(context).canvasColor,
                 bodyBuilder: (context) => ListItems(children: children));
@@ -76,7 +83,10 @@ class RoundCustomButton2 extends StatelessWidget {
                 bodyBuilder: (context) => ListItems(children: children));
           },
           splashRadius: 1,
-          icon: Text('Support',style: TextStyle(color: kLightSecondaryColor),),
+          icon: Text(
+            'Support',
+            style: TextStyle(color: kLightSecondaryColor),
+          ),
         ),
       ),
     );
