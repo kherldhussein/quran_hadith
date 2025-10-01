@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void showShareDialog({required BuildContext context, text}) {
-  showAnimatedDialog<void>(
+  showDialog<void>(
     context: context,
     barrierDismissible: false,
-    animationType: DialogTransitionType.fade,
     builder: (context) => SocialShare(text: text),
   );
 }
