@@ -293,7 +293,7 @@ class _QuranHadithAppState extends State<QuranHadithApp>
 /// App constants
 class AppConstants {
   static const String appName = "Qur'an & Hadith";
-  static const String appVersion = "1.0.0";
+  static const String appVersion = "2.0.0";
   static const Duration splashDuration = Duration(seconds: 2);
   static const Duration transitionDuration = Duration(milliseconds: 300);
 
