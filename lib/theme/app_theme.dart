@@ -27,7 +27,7 @@ const kLight = Color(0xFFFDFDFD);
 const kDark = Color(0xff021a13);
 const kLinkC = Color(0xFF249ffd);
 
-final circularIndicator = CircularProgressIndicator(
+const circularIndicator = CircularProgressIndicator(
   valueColor: AlwaysStoppedAnimation<Color>(kDarkSecondaryColor),
 );
 
@@ -52,8 +52,8 @@ ThemeData get darkTheme {
     primaryTextTheme:
         _buildTextTheme(base.primaryTextTheme, kTextLight, kTextLighter),
     tooltipTheme: base.tooltipTheme.copyWith(
-      textStyle: TextStyle(color: kLightPrimaryColor),
-      decoration: BoxDecoration(
+      textStyle: const TextStyle(color: kLightPrimaryColor),
+      decoration: const BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(14)),
         color: kIconDark,
       ),
@@ -65,7 +65,7 @@ ThemeData get darkTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     tabBarTheme: base.tabBarTheme.copyWith(
-      indicator: BubbleTabIndicator(
+      indicator: const BubbleTabIndicator(
         tabBarIndicatorSize: TabBarIndicatorSize.tab,
         indicatorColor: kIconDark,
         indicatorHeight: 25.0,
@@ -96,7 +96,7 @@ ThemeData get darkTheme {
       elevation: .0,
     ),
     dialogTheme: base.dialogTheme.copyWith(
-      contentTextStyle: TextStyle(color: kDarkColor),
+      contentTextStyle: const TextStyle(color: kDarkColor),
       backgroundColor: kDarkPrimaryColor,
     ),
     colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
@@ -123,14 +123,14 @@ ThemeData get theme {
         _buildTextTheme(base.primaryTextTheme, kTextDark, kTextDarker),
     textTheme: _buildTextTheme(base.textTheme, kTextDark, kTextDark),
     tooltipTheme: base.tooltipTheme.copyWith(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(14)),
         color: kIconDark,
       ),
-      textStyle: TextStyle(color: kDark),
+      textStyle: const TextStyle(color: kDark),
     ),
     tabBarTheme: base.tabBarTheme.copyWith(
-      indicator: BubbleTabIndicator(
+      indicator: const BubbleTabIndicator(
         indicatorHeight: 25.0,
         indicatorColor: kIconDark,
         tabBarIndicatorSize: TabBarIndicatorSize.tab,
@@ -154,7 +154,7 @@ ThemeData get theme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     dialogTheme: base.dialogTheme.copyWith(
-      contentTextStyle: TextStyle(color: kDarkColor),
+      contentTextStyle: const TextStyle(color: kDarkColor),
     ),
     appBarTheme: base.appBarTheme.copyWith(
       systemOverlayStyle: SystemUiOverlayStyle.light,
