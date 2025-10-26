@@ -158,7 +158,7 @@ class AudioController extends ChangeNotifier {
     }
   }
 
-  /// Set audio source and prepare for playback
+  /// Set audio source and prepare for playback (remote URL with temp cache)
   Future<void> setAudioSource(String url) async {
     if (_isDisposed) return;
     if (url.isEmpty) {
@@ -213,6 +213,28 @@ class AudioController extends ChangeNotifier {
     }
   }
 
+  /// Set local audio source directly (no network/caching)
+  Future<void> setLocalSource(String filePath) async {
+    if (_isDisposed) return;
+    await _init();
+    if (!_playerAvailable || _player == null) {
+      throw Exception(
+          'Audio backend is not available on this platform (libmpv missing?).');
+    }
+    try {
+      buttonNotifier.value = ButtonState.loading;
+      try {
+        await _player!.stop();
+      } catch (_) {}
+      await _player!.open(Media(filePath));
+      buttonNotifier.value = ButtonState.paused;
+      debugPrint('AudioController: Local source set: $filePath');
+    } catch (e) {
+      debugPrint('AudioController: Failed to set local source: $e');
+      rethrow;
+    }
+  }
+
   void play() async {
     if (_isDisposed) return;
     if (!_playerAvailable || _player == null) {
@@ -252,6 +274,22 @@ class AudioController extends ChangeNotifier {
       await _player!.seek(position);
     } catch (e) {
       debugPrint("Error seeking audio: $e");
+    }
+  }
+
+  /// Set playback speed (rate). 1.0 = normal, 0.5 = half-speed, 2.0 = double-speed.
+  Future<void> setSpeed(double speed) async {
+    if (_isDisposed) return;
+    await _init();
+    if (!_playerAvailable || _player == null) {
+      debugPrint('AudioController: setSpeed() called but player unavailable.');
+      return;
+    }
+    try {
+      await _player!.setRate(speed);
+      debugPrint('AudioController: Playback speed set to $speed');
+    } catch (e) {
+      debugPrint('AudioController: Failed to set speed: $e');
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:rxdart/rxdart.dart' as rx;
 import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
+import 'package:quran_hadith/services/reciter_service.dart';
 
 /// Enhanced audio controller with advanced features
 class EnhancedAudioController extends ChangeNotifier {
@@ -11,6 +12,7 @@ class EnhancedAudioController extends ChangeNotifier {
   AudioPlayer? _audioPlayer;
   bool _playerInitAttempted = false;
   bool _playerAvailable = false;
+  VoidCallback? _reciterListener;
 
   // Per-surah ayah counts (1..114)
   static const List<int> _ayahCounts = [
@@ -178,6 +180,15 @@ class EnhancedAudioController extends ChangeNotifier {
   EnhancedAudioController() {
     // Start player init in background but don't crash if it fails.
     _init();
+
+    // Listen to global reciter changes and update immediately
+    _reciterListener = () async {
+      final id = ReciterService.instance.currentReciterId.value;
+      if (id.isNotEmpty && id != _reciter) {
+        await setReciter(id);
+      }
+    };
+    ReciterService.instance.currentReciterId.addListener(_reciterListener!);
   }
 
   Future<void> _init() async {
@@ -244,7 +255,9 @@ class EnhancedAudioController extends ChangeNotifier {
   Future<void> _loadSettings() async {
     try {
       final prefs = database.getPreferences();
-      _reciter = prefs.reciter;
+      // Prefer current in-memory/global reciter if available; fallback to saved prefs
+      final global = ReciterService.instance.currentReciterId.value;
+      _reciter = (global.isNotEmpty ? global : prefs.reciter);
       await setSpeed(prefs.playbackSpeed);
     } catch (e) {
       debugPrint('Error loading audio settings: $e');
@@ -601,7 +614,7 @@ class EnhancedAudioController extends ChangeNotifier {
 
   /// Toggle repeat mode
   void toggleRepeatMode() {
-    final modes = RepeatMode.values;
+    const modes = RepeatMode.values;
     final currentIndex = modes.indexOf(repeatModeNotifier.value);
     final nextIndex = (currentIndex + 1) % modes.length;
     setRepeatMode(modes[nextIndex]);
@@ -722,6 +735,11 @@ class EnhancedAudioController extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    if (_reciterListener != null) {
+      ReciterService.instance.currentReciterId
+          .removeListener(_reciterListener!);
+      _reciterListener = null;
+    }
     _audioPlayer?.dispose();
     progressNotifier.dispose();
     buttonNotifier.dispose();
