@@ -135,7 +135,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final size = MediaQuery.of(context).size;
+    // final size = MediaQuery.of(context).size;
     final isDesktop = isDisplayDesktop(context);
     final theme = Theme.of(context);
 
