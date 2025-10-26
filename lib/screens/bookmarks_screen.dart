@@ -126,7 +126,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         color: theme.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -398,14 +398,15 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
                           FaIcon(FontAwesomeIcons.trash,
-                              size: 16, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
+                              size: 16, color: theme.colorScheme.error),
+                          const SizedBox(width: 8),
+                          Text('Delete',
+                              style: TextStyle(color: theme.colorScheme.error)),
                         ],
                       ),
                     ),
@@ -471,7 +472,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             onPressed: () => _showEditBookmarkDialog(context, bookmark),
           ),
           IconButton(
-            icon: const FaIcon(FontAwesomeIcons.trash, color: Colors.red),
+            icon:
+                FaIcon(FontAwesomeIcons.trash, color: theme.colorScheme.error),
             onPressed: () => _deleteBookmark(bookmark),
           ),
         ],
@@ -481,21 +483,21 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailSection('Location', [
+            _buildDetailSection(theme, 'Location', [
               Text('Surah ${bookmark.surahNumber}'),
               if (bookmark.ayahNumber != null)
                 Text('Ayah ${bookmark.ayahNumber}'),
             ]),
             if (bookmark.notes != null && bookmark.notes!.isNotEmpty)
-              _buildDetailSection('Notes', [
+              _buildDetailSection(theme, 'Notes', [
                 Text(bookmark.notes!),
               ]),
             if (bookmark.category != null)
-              _buildDetailSection('Category', [
+              _buildDetailSection(theme, 'Category', [
                 Chip(label: Text(bookmark.category!)),
               ]),
             if (bookmark.tags.isNotEmpty)
-              _buildDetailSection('Tags', [
+              _buildDetailSection(theme, 'Tags', [
                 Wrap(
                   spacing: 8,
                   children: bookmark.tags
@@ -503,10 +505,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       .toList(),
                 ),
               ]),
-            _buildDetailSection('Created', [
+            _buildDetailSection(theme, 'Created', [
               Text(_formatDate(bookmark.createdAt)),
             ]),
-            _buildDetailSection('Last Updated', [
+            _buildDetailSection(theme, 'Last Updated', [
               Text(_formatDate(bookmark.updatedAt)),
             ]),
             const SizedBox(height: 24),
@@ -524,7 +526,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 
-  Widget _buildDetailSection(String title, List<Widget> children) {
+  Widget _buildDetailSection(
+      ThemeData theme, String title, List<Widget> children) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
@@ -532,10 +535,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 8),
@@ -631,7 +634,9 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError),
             child: const Text('Delete'),
           ),
         ],

@@ -145,7 +145,7 @@ class _QPageViewState extends State<QPageView>
                 content: Text(
                   'Finished playing ${widget.suratEnglishName}',
                 ),
-                backgroundColor: Colors.green,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
                 behavior: SnackBarBehavior.floating,
                 duration: const Duration(seconds: 2),
               ),
@@ -366,11 +366,11 @@ class _QPageViewState extends State<QPageView>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_audioError!),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'Retry',
-              textColor: Colors.white,
+              textColor: Theme.of(context).colorScheme.onPrimary,
               onPressed: () => _playAyahAudio(ayah),
             ),
           ),
@@ -389,9 +389,9 @@ class _QPageViewState extends State<QPageView>
   Future<void> _playSurah() async {
     if (widget.ayahList == null || widget.ayahList!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No ayahs available to play'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('No ayahs available to play'),
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
         ),
       );
       return;
@@ -466,7 +466,7 @@ class _QPageViewState extends State<QPageView>
           duration: const Duration(seconds: 3),
           action: SnackBarAction(
             label: 'Stop',
-            textColor: Colors.white,
+            textColor: Theme.of(context).colorScheme.onPrimary,
             onPressed: () {
               setState(() => _isSurahPlaybackMode = false);
               _audioController.pause();
@@ -594,7 +594,7 @@ class _QPageViewState extends State<QPageView>
         color: theme.appBarTheme.backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: theme.colorScheme.onSurface.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -652,21 +652,22 @@ class _QPageViewState extends State<QPageView>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
+                    color: theme.colorScheme.secondary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green, width: 1),
+                    border: Border.all(
+                        color: theme.colorScheme.secondary, width: 1),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(FontAwesomeIcons.download,
-                          size: 12, color: Colors.green),
-                      SizedBox(width: 4),
+                          size: 12, color: theme.colorScheme.secondary),
+                      const SizedBox(width: 4),
                       Text(
                         'Offline',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.green,
+                          color: theme.colorScheme.secondary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -881,7 +882,7 @@ class _QPageViewState extends State<QPageView>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.colorScheme.onSurface.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -968,7 +969,7 @@ class _QPageViewState extends State<QPageView>
                           ? FontAwesomeIcons.solidHeart
                           : FontAwesomeIcons.heart,
                       color: _favoriteStates[ayah.number!] ?? false
-                          ? Colors.red
+                          ? theme.colorScheme.secondary
                           : theme.colorScheme.onSurface.withOpacity(0.5),
                       size: 18,
                     ),
@@ -1110,7 +1111,7 @@ class _QPageViewState extends State<QPageView>
           case ButtonState.playing when isThisAyahPlaying:
             return IconButton(
               icon: const Icon(FontAwesomeIcons.pause, size: 18),
-              color: Colors.red,
+              color: theme.colorScheme.primary,
               onPressed: () {
                 _audioController.pause();
                 setState(() => _currentlyPlayingAyah = null);
@@ -1168,14 +1169,14 @@ class _QPageViewState extends State<QPageView>
                 icon: FontAwesomeIcons.heart,
                 label: 'Favorite',
                 onTap: () => _toggleFavorite(ayah.number!),
-                color: Colors.red,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               _buildOptionChip(
                 icon: FontAwesomeIcons.shareNodes,
                 label: 'Share',
                 onTap: () =>
                     share.showShareDialog(context: context, text: ayah.text!),
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
               ),
               _buildOptionChip(
                 icon: FontAwesomeIcons.copy,
@@ -1187,7 +1188,7 @@ class _QPageViewState extends State<QPageView>
                     const SnackBar(content: Text('Copied to clipboard')),
                   );
                 },
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               _buildOptionChip(
                 icon: FontAwesomeIcons.bookOpen,
@@ -1196,7 +1197,7 @@ class _QPageViewState extends State<QPageView>
                   // TODO: Implement study mode
                   Get.back();
                 },
-                color: Colors.orange,
+                color: Theme.of(context).colorScheme.tertiary,
               ),
             ],
           ),
@@ -1226,7 +1227,7 @@ class _QPageViewState extends State<QPageView>
       onPressed: () => _scrollToAyah(1),
       backgroundColor: theme.colorScheme.primary,
       tooltip: 'Scroll to top',
-      child: const Icon(FontAwesomeIcons.arrowUp, color: Colors.white),
+      child: Icon(FontAwesomeIcons.arrowUp, color: theme.colorScheme.onPrimary),
     );
   }
 

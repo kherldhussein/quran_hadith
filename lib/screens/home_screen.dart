@@ -13,6 +13,7 @@ import 'package:quran_hadith/screens/settings.dart';
 import 'package:quran_hadith/screens/statistics_screen.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/custom_button.dart';
+import 'package:quran_hadith/widgets/app_dialogs.dart';
 import 'package:quran_hadith/widgets/headerTitle.dart';
 import 'package:quran_hadith/widgets/menu_list_items.dart';
 import 'package:quran_hadith/widgets/qh_nav.dart';
@@ -1076,33 +1077,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         trailing: IconButton(
                           tooltip: 'Exit',
                           icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
-                          onPressed: () {
+                          onPressed: () async {
                             SystemSound.play(SystemSoundType.alert);
-                            Get.dialog(
-                              AlertDialog(
-                                title: const Text(
-                                    'Are you sure you want to exit?'),
-                                content: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    TextButton(
-                                      onPressed: () => SystemNavigator.pop(
-                                        animated: true,
-                                      ),
-                                      child: const Text('Exit'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Get.back(),
-                                      child: const Text('Cancel'),
-                                    )
-                                  ],
-                                ),
-                                icon: const FaIcon(
-                                    FontAwesomeIcons.solidCircleQuestion),
-                              ),
-                              name: 'Exit Dialog',
-                            );
+                            await AppDialogs.handleExit(context);
                           },
                         ),
                       );

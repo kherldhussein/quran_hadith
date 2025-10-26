@@ -90,9 +90,9 @@ class _FavoriteState extends State<Favorite>
             children: [
               Row(
                 children: [
-                  const FaIcon(
+                  FaIcon(
                     FontAwesomeIcons.solidHeart,
-                    color: Colors.red,
+                    color: theme.colorScheme.secondary,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -193,11 +193,12 @@ class _FavoriteState extends State<Favorite>
                 backgroundColor: theme.colorScheme.surface,
                 selectedColor: theme.colorScheme.primary,
                 labelStyle: TextStyle(
-                  color:
-                      isSelected ? Colors.white : theme.colorScheme.onSurface,
+                  color: isSelected
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
-                checkmarkColor: Colors.white,
+                checkmarkColor: theme.colorScheme.onPrimary,
               ),
             );
           }).toList(),
@@ -272,19 +273,19 @@ class _FavoriteState extends State<Favorite>
     switch (type) {
       case 'surah':
         icon = FontAwesomeIcons.book;
-        color = Colors.blue;
+        color = theme.colorScheme.primary;
         break;
       case 'ayah':
         icon = FontAwesomeIcons.quoteRight;
-        color = Colors.green;
+        color = theme.colorScheme.secondary;
         break;
       case 'hadith':
         icon = FontAwesomeIcons.bookQuran;
-        color = Colors.orange;
+        color = theme.colorScheme.tertiary;
         break;
       default:
         icon = FontAwesomeIcons.solidHeart;
-        color = Colors.red;
+        color = theme.colorScheme.secondary;
     }
 
     return Card(
@@ -324,7 +325,7 @@ class _FavoriteState extends State<Favorite>
                   ),
                   IconButton(
                     icon: const FaIcon(FontAwesomeIcons.solidHeart, size: 16),
-                    color: Colors.red,
+                    color: theme.colorScheme.secondary,
                     onPressed: () async {
                       await favManager.removeFavorite(fav['id'] as String);
                       setState(() {});
@@ -478,7 +479,7 @@ class _FavoriteState extends State<Favorite>
           highlightColor: theme.colorScheme.surface,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
             ),
           ),

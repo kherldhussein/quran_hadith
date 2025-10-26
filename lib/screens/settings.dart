@@ -7,6 +7,8 @@ import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
+import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'package:quran_hadith/screens/audio_settings.dart';
@@ -351,8 +353,23 @@ class _SettingsState extends State<Settings> {
                     value: 'ar.muhammadayyoub', child: Text('Muhammad Ayyoub')),
               ],
               onChanged: (value) {
-                setState(() => _preferences.reciter = value!);
+                if (value == null || value.isEmpty) return;
+                setState(() => _preferences.reciter = value);
+                // Persist in both legacy and new storage keys
+                SpUtil.setReciter(value);
+                appSP.setString('selectedReciter', value);
+                // Broadcast to app-wide reciter service so audio updates immediately
+                ReciterService.instance.setCurrentReciterId(value);
                 _savePreferences();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Reciter set to $value'),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                );
               },
               theme: theme,
             ),
@@ -587,13 +604,17 @@ class _SettingsState extends State<Settings> {
     required Function(T?) onChanged,
     required ThemeData theme,
   }) {
+    // Ensure the value exists in items, otherwise use first item's value
+    final itemValues = items.map((item) => item.value).toList();
+    final safeValue = itemValues.contains(value) ? value : itemValues.first;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          initialValue: value,
+          value: safeValue,
           items: items,
           onChanged: onChanged,
           decoration: InputDecoration(
