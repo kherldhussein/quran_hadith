@@ -9,7 +9,7 @@ import 'package:animations/animations.dart';
 
 /// Advanced bookmarks screen with categories, search, and organization
 class BookmarksScreen extends StatefulWidget {
-  const BookmarksScreen({Key? key}) : super(key: key);
+  const BookmarksScreen({super.key});
 
   @override
   _BookmarksScreenState createState() => _BookmarksScreenState();
@@ -52,7 +52,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
     // Apply category filter
     if (_selectedCategory != null) {
-      filtered = filtered.where((b) => b.category == _selectedCategory).toList();
+      filtered =
+          filtered.where((b) => b.category == _selectedCategory).toList();
     }
 
     // Apply search filter
@@ -136,7 +137,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         children: [
           Row(
             children: [
-              FaIcon(FontAwesomeIcons.bookmark, color: theme.colorScheme.primary),
+              FaIcon(FontAwesomeIcons.bookmark,
+                  color: theme.colorScheme.primary),
               const SizedBox(width: 12),
               Text(
                 'Bookmarks',
@@ -163,11 +165,13 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search bookmarks...',
-                    prefixIcon: const Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
+                    prefixIcon:
+                        const Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                   onChanged: (value) {
                     setState(() => _searchQuery = value);
@@ -179,7 +183,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
               // Sort dropdown
               PopupMenuButton<String>(
-                icon: const FaIcon(FontAwesomeIcons.arrowDownWideShort, size: 18),
+                icon:
+                    const FaIcon(FontAwesomeIcons.arrowDownWideShort, size: 18),
                 tooltip: 'Sort by',
                 onSelected: (value) {
                   setState(() => _sortBy = value);
@@ -193,10 +198,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                         FaIcon(
                           FontAwesomeIcons.clock,
                           size: 16,
-                          color: _sortBy == 'date' ? theme.colorScheme.primary : null,
+                          color: _sortBy == 'date'
+                              ? theme.colorScheme.primary
+                              : null,
                         ),
                         const SizedBox(width: 8),
-                        Text('By Date'),
+                        const Text('By Date'),
                       ],
                     ),
                   ),
@@ -207,10 +214,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                         FaIcon(
                           FontAwesomeIcons.bookQuran,
                           size: 16,
-                          color: _sortBy == 'surah' ? theme.colorScheme.primary : null,
+                          color: _sortBy == 'surah'
+                              ? theme.colorScheme.primary
+                              : null,
                         ),
                         const SizedBox(width: 8),
-                        Text('By Surah'),
+                        const Text('By Surah'),
                       ],
                     ),
                   ),
@@ -221,10 +230,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                         FaIcon(
                           FontAwesomeIcons.font,
                           size: 16,
-                          color: _sortBy == 'name' ? theme.colorScheme.primary : null,
+                          color: _sortBy == 'name'
+                              ? theme.colorScheme.primary
+                              : null,
                         ),
                         const SizedBox(width: 8),
-                        Text('By Name'),
+                        const Text('By Name'),
                       ],
                     ),
                   ),
@@ -272,7 +283,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   label: Text(category),
                   selected: _selectedCategory == category,
                   onSelected: (selected) {
-                    setState(() => _selectedCategory = selected ? category : null);
+                    setState(
+                        () => _selectedCategory = selected ? category : null);
                     _applyFilters();
                   },
                   selectedColor: theme.colorScheme.primary.withOpacity(0.2),
@@ -294,8 +306,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           openElevation: 0,
           closedColor: Colors.transparent,
           openColor: Colors.transparent,
-          closedBuilder: (context, action) => _buildBookmarkCard(bookmark, theme),
-          openBuilder: (context, action) => _buildBookmarkDetails(bookmark, theme),
+          closedBuilder: (context, action) =>
+              _buildBookmarkCard(bookmark, theme),
+          openBuilder: (context, action) =>
+              _buildBookmarkDetails(bookmark, theme),
           transitionDuration: const Duration(milliseconds: 300),
         );
       },
@@ -360,40 +374,44 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
                 // Actions
                 PopupMenuButton(
-                  icon: const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 16),
+                  icon:
+                      const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 16),
                   itemBuilder: (context) => [
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: 'navigate',
                       child: Row(
-                        children: const [
-                          FaIcon(FontAwesomeIcons.arrowUpRightFromSquare, size: 16),
+                        children: [
+                          FaIcon(FontAwesomeIcons.arrowUpRightFromSquare,
+                              size: 16),
                           SizedBox(width: 8),
                           Text('Go to Ayah'),
                         ],
                       ),
                     ),
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: 'edit',
                       child: Row(
-                        children: const [
+                        children: [
                           FaIcon(FontAwesomeIcons.penToSquare, size: 16),
                           SizedBox(width: 8),
                           Text('Edit'),
                         ],
                       ),
                     ),
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: 'delete',
                       child: Row(
-                        children: const [
-                          FaIcon(FontAwesomeIcons.trash, size: 16, color: Colors.red),
+                        children: [
+                          FaIcon(FontAwesomeIcons.trash,
+                              size: 16, color: Colors.red),
                           SizedBox(width: 8),
                           Text('Delete', style: TextStyle(color: Colors.red)),
                         ],
                       ),
                     ),
                   ],
-                  onSelected: (value) => _handleBookmarkAction(bookmark, value.toString()),
+                  onSelected: (value) =>
+                      _handleBookmarkAction(bookmark, value.toString()),
                 ),
               ],
             ),
@@ -430,7 +448,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   ...bookmark.tags.map((tag) => Chip(
                         label: Text(tag),
                         avatar: const FaIcon(FontAwesomeIcons.tag, size: 12),
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
                         labelStyle: const TextStyle(fontSize: 12),
                       )),
                 ],
@@ -464,7 +483,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           children: [
             _buildDetailSection('Location', [
               Text('Surah ${bookmark.surahNumber}'),
-              if (bookmark.ayahNumber != null) Text('Ayah ${bookmark.ayahNumber}'),
+              if (bookmark.ayahNumber != null)
+                Text('Ayah ${bookmark.ayahNumber}'),
             ]),
             if (bookmark.notes != null && bookmark.notes!.isNotEmpty)
               _buildDetailSection('Notes', [
@@ -478,7 +498,9 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               _buildDetailSection('Tags', [
                 Wrap(
                   spacing: 8,
-                  children: bookmark.tags.map((tag) => Chip(label: Text(tag))).toList(),
+                  children: bookmark.tags
+                      .map((tag) => Chip(label: Text(tag)))
+                      .toList(),
                 ),
               ]),
             _buildDetailSection('Created', [
@@ -572,7 +594,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   Future<void> _navigateToAyah(Bookmark bookmark) async {
     try {
       final data = await QuranAPI().getSuratAudio();
-      final surah = data.surahs!.firstWhere((s) => s.number == bookmark.surahNumber);
+      final surah =
+          data.surahs!.firstWhere((s) => s.number == bookmark.surahNumber);
 
       Get.to(() => QPageView(
             suratName: surah.name,

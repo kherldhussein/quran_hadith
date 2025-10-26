@@ -12,7 +12,7 @@ import 'dart:convert';
 import 'package:quran_hadith/screens/audio_settings.dart';
 
 class Settings extends StatefulWidget {
-  const Settings({Key? key}) : super(key: key);
+  const Settings({super.key});
 
   @override
   _SettingsState createState() => _SettingsState();
@@ -195,10 +195,10 @@ class _SettingsState extends State<Settings> {
               label: 'Language',
               value: _preferences.language,
               items: [
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'ar', child: Text('العربية')),
-                DropdownMenuItem(value: 'ur', child: Text('اردو')),
-                DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
+                const DropdownMenuItem(value: 'en', child: Text('English')),
+                const DropdownMenuItem(value: 'ar', child: Text('العربية')),
+                const DropdownMenuItem(value: 'ur', child: Text('اردو')),
+                const DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
               ],
               onChanged: (value) {
                 setState(() => _preferences.language = value!);
@@ -248,9 +248,10 @@ class _SettingsState extends State<Settings> {
               label: 'Font Family',
               value: _preferences.fontFamily,
               items: [
-                DropdownMenuItem(value: 'Amiri', child: Text('Amiri')),
-                DropdownMenuItem(value: 'Poppins', child: Text('Poppins')),
-                DropdownMenuItem(
+                const DropdownMenuItem(value: 'Amiri', child: Text('Amiri')),
+                const DropdownMenuItem(
+                    value: 'Poppins', child: Text('Poppins')),
+                const DropdownMenuItem(
                     value: 'System', child: Text('System Default')),
               ],
               onChanged: (value) {
@@ -336,17 +337,17 @@ class _SettingsState extends State<Settings> {
               label: 'Quick Reciter Select',
               value: _preferences.reciter,
               items: [
-                DropdownMenuItem(
+                const DropdownMenuItem(
                     value: 'ar.alafasy', child: Text('Mishary Alafasy')),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                     value: 'ar.abdulbasit', child: Text('Abdul Basit')),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                     value: 'ar.husary',
                     child: Text('Mahmoud Khalil Al-Hussary')),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                     value: 'ar.minshawi',
                     child: Text('Mohamed Siddiq El-Minshawi')),
-                DropdownMenuItem(
+                const DropdownMenuItem(
                     value: 'ar.muhammadayyoub', child: Text('Muhammad Ayyoub')),
               ],
               onChanged: (value) {
@@ -507,13 +508,13 @@ class _SettingsState extends State<Settings> {
           icon: FontAwesomeIcons.circleInfo,
           theme: theme,
           children: [
-            ListTile(
-              title: const Text('Version'),
-              subtitle: const Text('1.0.0'),
+            const ListTile(
+              title: Text('Version'),
+              subtitle: Text('1.0.0'),
             ),
-            ListTile(
-              title: const Text('Developer'),
-              subtitle: const Text('Your Name'),
+            const ListTile(
+              title: Text('Developer'),
+              subtitle: Text('Khalid Hussein'),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -589,7 +590,7 @@ class _SettingsState extends State<Settings> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
           initialValue: value,

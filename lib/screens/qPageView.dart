@@ -15,6 +15,8 @@ import 'dart:async';
 import '../controller/audio_controller.dart';
 import '../controller/favorite.dart';
 import '../utils/sp_util.dart';
+import 'package:quran_hadith/services/reciter_service.dart';
+import 'package:quran_hadith/services/offline_audio_service.dart';
 
 class QPageView extends StatefulWidget {
   final List<Ayah>? ayahList;
@@ -25,14 +27,14 @@ class QPageView extends StatefulWidget {
   final bool? isFavorite;
 
   const QPageView({
-    Key? key,
+    super.key,
     this.ayahList,
     this.suratName,
     this.suratEnglishName,
     this.englishMeaning,
     this.suratNo,
     this.isFavorite,
-  }) : super(key: key);
+  });
 
   @override
   _QPageViewState createState() => _QPageViewState();
@@ -52,9 +54,10 @@ class _QPageViewState extends State<QPageView>
   bool _isAudioLoading = false;
   String? _audioError;
   bool _isSurahPlaybackMode = false;
-  int _surahPlaybackIndex = 0;
   DateTime? _sessionStartTime;
   Timer? _progressTrackingTimer;
+  VoidCallback? _reciterListener;
+  bool _isOfflineDownloaded = false;
 
   @override
   void initState() {
@@ -66,6 +69,8 @@ class _QPageViewState extends State<QPageView>
     _startProgressTracking();
     _loadTranslations();
     _setupAudioCompletionListener();
+    _setupReciterChangeListener();
+    _checkOfflineStatus();
   }
 
   /// Setup listener for audio completion to enable continuous playback
@@ -74,33 +79,78 @@ class _QPageViewState extends State<QPageView>
     _audioController.buttonNotifier.addListener(_onAudioStateChanged);
   }
 
+  /// Listen to reciter changes and restart current ayah with the new voice
+  void _setupReciterChangeListener() {
+    _reciterListener = () {
+      if (!mounted) return;
+      if (_currentlyPlayingAyah != null && !_isAudioLoading) {
+        final ayahNo = _currentlyPlayingAyah!;
+        final match = widget.ayahList!
+            .firstWhere((a) => a.number == ayahNo, orElse: () => Ayah());
+        if (match.number != null) {
+          // Restart playback of the same ayah using the new reciter
+          _playAyahAudio(match);
+        }
+      }
+    };
+    ReciterService.instance.currentReciterId.addListener(_reciterListener!);
+  }
+
   void _onAudioStateChanged() {
-    // Check if we're in surah playback mode and audio just finished
-    if (_isSurahPlaybackMode &&
-        _audioController.buttonNotifier.value == ButtonState.paused &&
+    // Check if audio just finished
+    if (_audioController.buttonNotifier.value == ButtonState.paused &&
         !_isAudioLoading) {
-      // Check if there are more ayahs to play
-      if (_surahPlaybackIndex < widget.ayahList!.length - 1) {
-        // Play next ayah after a short delay
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (!mounted || !_isSurahPlaybackMode) return;
-          _surahPlaybackIndex++;
-          _playAyahAudio(widget.ayahList![_surahPlaybackIndex]);
-        });
-      } else {
-        // Finished playing entire surah
-        _isSurahPlaybackMode = false;
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Finished playing ${widget.suratEnglishName}',
+      final repeatMode = SpUtil.getRepeatMode();
+      final autoPlayNext = SpUtil.getAutoPlayNextAyah();
+
+      // Handle repeat mode for single ayah
+      if (repeatMode == 'ayah' && _currentlyPlayingAyah != null) {
+        final match = widget.ayahList!.firstWhere(
+            (a) => a.number == _currentlyPlayingAyah,
+            orElse: () => Ayah());
+        if (match.number != null) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!mounted) return;
+            _playAyahAudio(match);
+          });
+          return;
+        }
+      }
+
+      // Check if we're in surah playback mode or auto-play is enabled
+      if ((_isSurahPlaybackMode || autoPlayNext) &&
+          _currentlyPlayingAyah != null) {
+        final currentIndex = widget.ayahList!
+            .indexWhere((a) => a.number == _currentlyPlayingAyah);
+
+        if (currentIndex != -1 && currentIndex < widget.ayahList!.length - 1) {
+          // Play next ayah after a short delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!mounted) return;
+            _playAyahAudio(widget.ayahList![currentIndex + 1]);
+          });
+        } else if (repeatMode == 'surah' &&
+            currentIndex == widget.ayahList!.length - 1) {
+          // Restart surah from the beginning
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!mounted) return;
+            _playAyahAudio(widget.ayahList![0]);
+          });
+        } else if (_isSurahPlaybackMode) {
+          // Finished playing entire surah
+          _isSurahPlaybackMode = false;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Finished playing ${widget.suratEnglishName}',
+                ),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
               ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
-            ),
-          );
+            );
+          }
         }
       }
     }
@@ -110,6 +160,20 @@ class _QPageViewState extends State<QPageView>
     _loadFavoriteStates();
     _loadLastReadPosition();
     // Audio will be loaded on-demand when user clicks play
+  }
+
+  /// Check if this surah is downloaded for offline playback
+  Future<void> _checkOfflineStatus() async {
+    if (widget.suratNo == null || widget.ayahList == null) return;
+    final reciterId = ReciterService.instance.currentReciterId.value;
+    final downloaded = await OfflineAudioService.instance.isSurahDownloaded(
+      reciterId: reciterId,
+      surahNumber: widget.suratNo!,
+      ayahCount: widget.ayahList!.length,
+    );
+    if (mounted) {
+      setState(() => _isOfflineDownloaded = downloaded);
+    }
   }
 
   /// Load translations for this surah
@@ -230,36 +294,55 @@ class _QPageViewState extends State<QPageView>
 
     try {
       final quranAPI = Provider.of<QuranAPI>(context, listen: false);
-      final audioUrl =
-          await quranAPI.getAyahAudioUrl(widget.suratNo!, ayah.number!);
 
-      if (audioUrl != null && audioUrl.isNotEmpty) {
-        await _audioController.setAudioSource(audioUrl);
+      // Prefer local offline file if available
+      final reciterId = ReciterService.instance.currentReciterId.value;
+      final localFile = await OfflineAudioService.instance.getLocalAyahFile(
+        reciterId: reciterId,
+        surahNumber: widget.suratNo!,
+        ayahNumber: ayah.number!,
+      );
+
+      if (localFile != null) {
+        await _audioController.setLocalSource(localFile.path);
+        await _audioController.setSpeed(SpUtil.getAudioSpeed());
         _audioController.play();
-
-        // Save listening progress to database
-        await _saveListeningProgress(ayah.number!, 0);
-
-        // Also save to SharedPreferences for backward compatibility
-        SpUtil.setLastListen(
-          surah: widget.suratNo!,
-          ayah: ayah.number!,
-          positionMs: 0,
-        );
       } else {
-        setState(() {
-          _audioError = 'Audio not available for this ayah';
-          _currentlyPlayingAyah = null;
-        });
-
-        // Show error to user
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_audioError!),
-            backgroundColor: Colors.orange,
-          ),
+        final audioUrl = await quranAPI.getAyahAudioUrl(
+          widget.suratNo!,
+          ayah.number!,
         );
+
+        if (audioUrl == null || audioUrl.isEmpty) {
+          setState(() {
+            _audioError = 'Audio not available for this ayah';
+            _currentlyPlayingAyah = null;
+          });
+
+          // Show error to user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_audioError!),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+
+        await _audioController.setAudioSource(audioUrl);
+        await _audioController.setSpeed(SpUtil.getAudioSpeed());
+        _audioController.play();
       }
+
+      // Save listening progress to database
+      await _saveListeningProgress(ayah.number!, 0);
+
+      // Also save to SharedPreferences for backward compatibility
+      SpUtil.setLastListen(
+        surah: widget.suratNo!,
+        ayah: ayah.number!,
+        positionMs: 0,
+      );
     } catch (e) {
       debugPrint("Error playing audio for ayah ${ayah.number}: $e");
 
@@ -366,7 +449,6 @@ class _QPageViewState extends State<QPageView>
     // Enable surah playback mode
     setState(() {
       _isSurahPlaybackMode = true;
-      _surahPlaybackIndex = 0;
     });
 
     // Start playing from the first ayah
@@ -447,8 +529,8 @@ class _QPageViewState extends State<QPageView>
         lastListenedAt: DateTime.now(),
         totalListenTimeSeconds: listenTime + 5,
         completed: false,
-        reciter: 'ar.alafasy',
-        playbackSpeed: 1.0,
+        reciter: ReciterService.instance.currentReciterId.value,
+        playbackSpeed: SpUtil.getAudioSpeed(),
       );
 
       await database.saveListeningProgress(progress);
@@ -560,6 +642,40 @@ class _QPageViewState extends State<QPageView>
             ),
           ),
 
+          // Offline Download Badge
+          if (_isOfflineDownloaded)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Tooltip(
+                message: 'Available offline',
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green, width: 1),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(FontAwesomeIcons.download,
+                          size: 12, color: Colors.green),
+                      SizedBox(width: 4),
+                      Text(
+                        'Offline',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           // Play Surah Button
           IconButton(
             icon: Icon(
@@ -591,18 +707,38 @@ class _QPageViewState extends State<QPageView>
                   ],
                 ),
               ),
+              const PopupMenuItem(
+                value: 'download_surah',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.download, size: 18),
+                    SizedBox(width: 12),
+                    Text('Download Surah for Offline'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'audio_settings',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.sliders, size: 18),
+                    SizedBox(width: 12),
+                    Text('Audio Settings'),
+                  ],
+                ),
+              ),
               const PopupMenuDivider(),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'font_small',
-                child: const Text('Small Font'),
+                child: Text('Small Font'),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'font_medium',
-                child: const Text('Medium Font'),
+                child: Text('Medium Font'),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'font_large',
-                child: const Text('Large Font'),
+                child: Text('Large Font'),
               ),
             ],
           ),
@@ -1089,8 +1225,8 @@ class _QPageViewState extends State<QPageView>
     return FloatingActionButton(
       onPressed: () => _scrollToAyah(1),
       backgroundColor: theme.colorScheme.primary,
-      child: const Icon(FontAwesomeIcons.arrowUp, color: Colors.white),
       tooltip: 'Scroll to top',
+      child: const Icon(FontAwesomeIcons.arrowUp, color: Colors.white),
     );
   }
 
@@ -1098,6 +1234,12 @@ class _QPageViewState extends State<QPageView>
     switch (value) {
       case 'translation':
         setState(() => _showTranslation = !_showTranslation);
+        break;
+      case 'download_surah':
+        _promptDownloadSurah();
+        break;
+      case 'audio_settings':
+        _showAudioSettingsBottomSheet();
         break;
       case 'font_small':
         setState(() => _fontSize = 20.0);
@@ -1109,6 +1251,260 @@ class _QPageViewState extends State<QPageView>
         setState(() => _fontSize = 28.0);
         break;
     }
+  }
+
+  Future<void> _promptDownloadSurah() async {
+    if (widget.suratNo == null || widget.ayahList == null) return;
+    final reciterId = ReciterService.instance.currentReciterId.value;
+    final ayahCount = widget.ayahList!.length;
+
+    final already = await OfflineAudioService.instance.isSurahDownloaded(
+      reciterId: reciterId,
+      surahNumber: widget.suratNo!,
+      ayahCount: ayahCount,
+    );
+
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Offline Audio'),
+        content: Text(
+          already
+              ? 'Offline audio is already available for ${widget.suratEnglishName} with $reciterId.'
+              : 'Download ${widget.suratEnglishName} ($ayahCount ayahs) for offline playback with $reciterId?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'cancel'),
+            child: const Text('Close'),
+          ),
+          if (already)
+            TextButton(
+              onPressed: () async {
+                await OfflineAudioService.instance.removeSurah(
+                  reciterId: reciterId,
+                  surahNumber: widget.suratNo!,
+                );
+                if (mounted) Navigator.pop(context, 'removed');
+              },
+              child: const Text('Remove'),
+            ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, 'download'),
+            child: Text(already ? 'Re-download' : 'Download'),
+          ),
+        ],
+      ),
+    );
+
+    if (action == 'removed') {
+      if (!mounted) return;
+      await _checkOfflineStatus(); // Refresh offline status
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Removed offline audio for ${widget.suratEnglishName}'),
+        ),
+      );
+      return;
+    }
+    if (action != 'download') return;
+
+    final cancelToken = CancelToken();
+    final downloadedVN = ValueNotifier<int>(0);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ValueListenableBuilder<int>(
+        valueListenable: downloadedVN,
+        builder: (context, downloaded, _) {
+          final progress = ayahCount == 0 ? 0.0 : downloaded / ayahCount;
+          return AlertDialog(
+            title: const Text('Downloading Surah'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
+                const SizedBox(height: 12),
+                Text('Downloaded $downloaded / $ayahCount ayahs'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  cancelToken.cancel();
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await OfflineAudioService.instance.downloadSurah(
+      reciterId: reciterId,
+      surahNumber: widget.suratNo!,
+      ayahCount: ayahCount,
+      onProgress: (d, t) => downloadedVN.value = d,
+      cancelToken: cancelToken,
+    );
+
+    if (mounted) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      await _checkOfflineStatus(); // Refresh offline status
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Downloaded ${widget.suratEnglishName} for offline'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  void _showAudioSettingsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        double speed = SpUtil.getAudioSpeed();
+        bool autoPlayNext = SpUtil.getAutoPlayNextAyah();
+        String repeatMode = SpUtil.getRepeatMode();
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(FontAwesomeIcons.sliders),
+                      SizedBox(width: 8),
+                      Text('Audio Settings',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Playback Speed
+                  Text('Playback speed: ${speed.toStringAsFixed(2)}x'),
+                  Slider(
+                    value: speed,
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 15,
+                    label: '${speed.toStringAsFixed(2)}x',
+                    onChanged: (v) {
+                      setState(() => speed = v);
+                      SpUtil.setAudioSpeed(v);
+                      // Apply speed to currently playing audio
+                      if (_currentlyPlayingAyah != null) {
+                        _audioController.setSpeed(v);
+                      }
+                    },
+                  ),
+
+                  const Divider(),
+
+                  // Auto-play next ayah
+                  SwitchListTile(
+                    title: const Text('Auto-play next ayah'),
+                    subtitle: const Text(
+                        'Automatically play next ayah after current finishes'),
+                    value: autoPlayNext,
+                    onChanged: (v) {
+                      setState(() => autoPlayNext = v);
+                      SpUtil.setAutoPlayNextAyah(v);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Repeat Mode
+                  const Text('Repeat Mode',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('None'),
+                        selected: repeatMode == 'none',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => repeatMode = 'none');
+                            SpUtil.setRepeatMode('none');
+                          }
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Repeat Ayah'),
+                        selected: repeatMode == 'ayah',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => repeatMode = 'ayah');
+                            SpUtil.setRepeatMode('ayah');
+                          }
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Repeat Surah'),
+                        selected: repeatMode == 'surah',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => repeatMode = 'surah');
+                            SpUtil.setRepeatMode('surah');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            speed = 1.0;
+                            autoPlayNext = false;
+                            repeatMode = 'none';
+                          });
+                          SpUtil.setAudioSpeed(1.0);
+                          SpUtil.setAutoPlayNextAyah(false);
+                          SpUtil.setRepeatMode('none');
+                          if (_currentlyPlayingAyah != null) {
+                            _audioController.setSpeed(1.0);
+                          }
+                        },
+                        child: const Text('Reset All'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   String _formatAyahNumber(int number) {
@@ -1129,6 +1525,10 @@ class _QPageViewState extends State<QPageView>
     _progressTrackingTimer?.cancel();
     // Remove audio completion listener
     _audioController.buttonNotifier.removeListener(_onAudioStateChanged);
+    if (_reciterListener != null) {
+      ReciterService.instance.currentReciterId
+          .removeListener(_reciterListener!);
+    }
     // Save one last time before disposing, but avoid setState calls inside
     // _saveReadingProgress that could run after dispose. We call it and ignore
     // any setState inside (the method checks mounted before setState).

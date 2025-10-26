@@ -6,9 +6,12 @@ import 'package:quran_hadith/controller/favorite.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:quran_hadith/screens/qPageView.dart';
+import 'package:quran_hadith/controller/quranAPI.dart';
+import 'package:quran_hadith/screens/hadith_detail.dart';
 
 class Favorite extends StatefulWidget {
-  const Favorite({Key? key}) : super(key: key);
+  const Favorite({super.key});
 
   @override
   _FavoriteState createState() => _FavoriteState();
@@ -46,12 +49,12 @@ class _FavoriteState extends State<Favorite>
                       kDarkPrimaryColor.withOpacity(0.9),
                     ],
                   )
-                : LinearGradient(
+                : const LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      const Color(0xffeef2f5),
-                      const Color(0xffe8f4f8),
+                      Color(0xffeef2f5),
+                      Color(0xffe8f4f8),
                     ],
                   ),
           ),
@@ -87,7 +90,7 @@ class _FavoriteState extends State<Favorite>
             children: [
               Row(
                 children: [
-                  FaIcon(
+                  const FaIcon(
                     FontAwesomeIcons.solidHeart,
                     color: Colors.red,
                     size: 24,
@@ -290,10 +293,7 @@ class _FavoriteState extends State<Favorite>
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: () {
-          // Navigate to the favorite item
-          // TODO: Implement navigation
-        },
+        onTap: () => _openFavoriteTarget(fav),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -373,6 +373,80 @@ class _FavoriteState extends State<Favorite>
         ),
       ),
     );
+  }
+
+  Future<void> _openFavoriteTarget(Map<String, dynamic> fav) async {
+    try {
+      final type = (fav['type'] as String?)?.toLowerCase() ?? '';
+      final metadata = (fav['metadata'] as Map?)?.cast<String, dynamic>();
+
+      switch (type) {
+        case 'hadith':
+          final id = fav['id'] as String?; // e.g., bukhari_123
+          final number = (id != null && id.contains('_'))
+              ? id.split('_').last
+              : (metadata?['number']?.toString() ?? '');
+          final bookSlug = metadata?['book'] as String? ??
+              ((id != null && id.contains('_')) ? id.split('_').first : '');
+          if (bookSlug.isEmpty || number.isEmpty) {
+            Get.snackbar('Missing info', 'Could not open hadith');
+            return;
+          }
+          Get.to(() => HadithDetailPage(
+                bookSlug: bookSlug,
+                number: number,
+                arabic: metadata?['text'] as String?,
+                translation: metadata?['translation'] as String?,
+              ));
+          break;
+        case 'ayah':
+          final surahNo =
+              (metadata?['surah'] as int?) ?? _parseSurahFromId(fav['id']);
+          if (surahNo == null) {
+            Get.snackbar('Missing info', 'Could not determine surah');
+            return;
+          }
+          final data = await QuranAPI().getSuratAudio();
+          final surah = data.surahs?.firstWhere(
+            (s) => s.number == surahNo,
+            orElse: () => throw Exception('Surah not found'),
+          );
+          Get.to(() => QPageView(
+                suratName: surah?.name,
+                suratNo: surahNo,
+                ayahList: surah?.ayahs,
+                englishMeaning: surah?.englishNameTranslation,
+                suratEnglishName: surah?.englishName,
+              ));
+          break;
+        case 'surah':
+        default:
+          // For surah, id stores Arabic name; name stores English.
+          final idName = fav['id'] as String?;
+          final data = await QuranAPI().getSuratAudio();
+          final surah = data.surahs?.firstWhere(
+            (s) => s.name == idName,
+            orElse: () => data.surahs!.first,
+          );
+          Get.to(() => QPageView(
+                suratName: surah?.name,
+                suratNo: surah?.number,
+                ayahList: surah?.ayahs,
+                englishMeaning: surah?.englishNameTranslation,
+                suratEnglishName: surah?.englishName,
+              ));
+      }
+    } catch (e) {
+      Get.snackbar('Navigation error', e.toString());
+    }
+  }
+
+  int? _parseSurahFromId(dynamic id) {
+    if (id is String && id.contains(':')) {
+      final left = id.split(':').first;
+      return int.tryParse(left);
+    }
+    return null;
   }
 
   Future<List<Map<String, dynamic>>> _loadFavorites(

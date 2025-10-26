@@ -6,7 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 /// Statistics and analytics dashboard
 class StatisticsScreen extends StatefulWidget {
-  const StatisticsScreen({Key? key}) : super(key: key);
+  const StatisticsScreen({super.key});
 
   @override
   _StatisticsScreenState createState() => _StatisticsScreenState();
@@ -41,14 +41,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         'totalBookmarks': bookmarks.length,
         'totalNotes': studyNotes.length,
         'totalReadingTime': _calculateTotalTime(readingHistory),
-        'totalListeningTime': _calculateTotalTime(listeningHistory, isListening: true),
+        'totalListeningTime':
+            _calculateTotalTime(listeningHistory, isListening: true),
         'uniqueSurahsRead': _calculateUniqueSurahs(readingHistory),
-        'uniqueSurahsListened': _calculateUniqueSurahs(listeningHistory, isListening: true),
-        'averageSessionDuration': _calculateAverageSessionDuration(readingHistory),
+        'uniqueSurahsListened':
+            _calculateUniqueSurahs(listeningHistory, isListening: true),
+        'averageSessionDuration':
+            _calculateAverageSessionDuration(readingHistory),
         'readingStreak': _calculateStreak(readingHistory),
         'favoriteReciter': _calculateFavoriteReciter(listeningHistory),
         'mostReadSurah': _calculateMostReadSurah(readingHistory),
-        'weeklyActivity': _calculateWeeklyActivity(readingHistory, listeningHistory),
+        'weeklyActivity':
+            _calculateWeeklyActivity(readingHistory, listeningHistory),
         'progressByJuz': _calculateProgressByJuz(readingHistory),
         'lastRead': lastRead,
         'lastListened': lastListened,
@@ -70,7 +74,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     });
   }
 
-  int _calculateUniqueSurahs(List<dynamic> history, {bool isListening = false}) {
+  int _calculateUniqueSurahs(List<dynamic> history,
+      {bool isListening = false}) {
     final surahs = history.map((item) {
       if (isListening) {
         return (item as ListeningProgress).surahNumber;
@@ -83,7 +88,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   int _calculateAverageSessionDuration(List<ReadingProgress> history) {
     if (history.isEmpty) return 0;
-    final total = history.fold<int>(0, (sum, item) => sum + item.totalTimeSpentSeconds);
+    final total =
+        history.fold<int>(0, (sum, item) => sum + item.totalTimeSpentSeconds);
     return total ~/ history.length;
   }
 
@@ -178,14 +184,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     for (final item in readingHistory) {
       final dayIndex = 6 - now.difference(item.lastReadAt).inDays;
       if (dayIndex >= 0 && dayIndex < 7) {
-        weeklyData[dayIndex]['reading'] = (weeklyData[dayIndex]['reading'] as int) + (item.totalTimeSpentSeconds ~/ 60);
+        weeklyData[dayIndex]['reading'] =
+            (weeklyData[dayIndex]['reading'] as int) +
+                (item.totalTimeSpentSeconds ~/ 60);
       }
     }
 
     for (final item in listeningHistory) {
       final dayIndex = 6 - now.difference(item.lastListenedAt).inDays;
       if (dayIndex >= 0 && dayIndex < 7) {
-        weeklyData[dayIndex]['listening'] = (weeklyData[dayIndex]['listening'] as int) + (item.totalListenTimeSeconds ~/ 60);
+        weeklyData[dayIndex]['listening'] =
+            (weeklyData[dayIndex]['listening'] as int) +
+                (item.totalListenTimeSeconds ~/ 60);
       }
     }
 
@@ -250,7 +260,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           children: [
             Row(
               children: [
-                FaIcon(FontAwesomeIcons.chartLine, color: theme.colorScheme.primary),
+                FaIcon(FontAwesomeIcons.chartLine,
+                    color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
                   'Statistics',
@@ -389,7 +400,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         Expanded(
           child: Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -397,7 +409,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Row(
                     children: [
-                      FaIcon(FontAwesomeIcons.bookOpen, color: Colors.blue, size: 20),
+                      const FaIcon(FontAwesomeIcons.bookOpen,
+                          color: Colors.blue, size: 20),
                       const SizedBox(width: 12),
                       Text(
                         'Last Read',
@@ -451,7 +464,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         Expanded(
           child: Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -459,7 +473,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Row(
                     children: [
-                      FaIcon(FontAwesomeIcons.headphones, color: Colors.green, size: 20),
+                      const FaIcon(FontAwesomeIcons.headphones,
+                          color: Colors.green, size: 20),
                       const SizedBox(width: 12),
                       Text(
                         'Last Listened',
@@ -540,7 +555,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildWeeklyActivityChart(ThemeData theme) {
-    final weeklyActivity = _stats['weeklyActivity'] as List<Map<String, dynamic>>? ?? [];
+    final weeklyActivity =
+        _stats['weeklyActivity'] as List<Map<String, dynamic>>? ?? [];
 
     return Card(
       elevation: 2,
@@ -565,7 +581,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ? Center(
                       child: Text(
                         'No activity data available',
-                        style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                        style:
+                            TextStyle(color: theme.textTheme.bodySmall?.color),
                       ),
                     )
                   : BarChart(
@@ -579,7 +596,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                if (value.toInt() >= 0 && value.toInt() < weeklyActivity.length) {
+                                if (value.toInt() >= 0 &&
+                                    value.toInt() < weeklyActivity.length) {
                                   return Text(
                                     weeklyActivity[value.toInt()]['day'],
                                     style: const TextStyle(fontSize: 12),
@@ -589,14 +607,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               },
                             ),
                           ),
-                          leftTitles: AxisTitles(
+                          leftTitles: const AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: 40,
                             ),
                           ),
-                          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                         ),
                         borderData: FlBorderData(show: false),
                         barGroups: weeklyActivity.asMap().entries.map((entry) {
@@ -604,7 +624,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             x: entry.key,
                             barRods: [
                               BarChartRodData(
-                                toY: (entry.value['reading'] + entry.value['listening']).toDouble(),
+                                toY: (entry.value['reading'] +
+                                        entry.value['listening'])
+                                    .toDouble(),
                                 color: theme.colorScheme.primary,
                                 width: 16,
                                 borderRadius: BorderRadius.circular(4),
@@ -622,7 +644,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildDetailedStats(ThemeData theme) {
-    final mostRead = _stats['mostReadSurah'] as Map<String, int>? ?? {'number': 0, 'count': 0};
+    final mostRead = _stats['mostReadSurah'] as Map<String, int>? ??
+        {'number': 0, 'count': 0};
 
     return Card(
       elevation: 2,
@@ -641,12 +664,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildStatRow('Unique Surahs Read', '${_stats['uniqueSurahsRead'] ?? 0}/114', theme),
-            _buildStatRow('Unique Surahs Listened', '${_stats['uniqueSurahsListened'] ?? 0}/114', theme),
-            _buildStatRow('Most Read Surah', 'Surah ${mostRead['number']} (${mostRead['count']} times)', theme),
-            _buildStatRow('Favorite Reciter', _stats['favoriteReciter'] ?? 'N/A', theme),
-            _buildStatRow('Total Study Notes', '${_stats['totalNotes'] ?? 0}', theme),
-            _buildStatRow('Average Session', _formatDuration(_stats['averageSessionDuration'] ?? 0), theme),
+            _buildStatRow('Unique Surahs Read',
+                '${_stats['uniqueSurahsRead'] ?? 0}/114', theme),
+            _buildStatRow('Unique Surahs Listened',
+                '${_stats['uniqueSurahsListened'] ?? 0}/114', theme),
+            _buildStatRow(
+                'Most Read Surah',
+                'Surah ${mostRead['number']} (${mostRead['count']} times)',
+                theme),
+            _buildStatRow(
+                'Favorite Reciter', _stats['favoriteReciter'] ?? 'N/A', theme),
+            _buildStatRow(
+                'Total Study Notes', '${_stats['totalNotes'] ?? 0}', theme),
+            _buildStatRow('Average Session',
+                _formatDuration(_stats['averageSessionDuration'] ?? 0), theme),
           ],
         ),
       ),
@@ -659,7 +690,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
+          Text(label,
+              style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
           Text(
             value,
             style: const TextStyle(fontWeight: FontWeight.bold),

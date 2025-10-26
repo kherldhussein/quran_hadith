@@ -28,6 +28,7 @@ import 'package:quran_hadith/models/reciter_model.dart';
 import 'package:quran_hadith/services/daily_ayah_service.dart';
 import 'package:quran_hadith/services/notification_service.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 
 import '../controller/quranAPI.dart';
@@ -85,8 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _contentScreens = [
       const QPage(),
-      HPage(),
-      Favorite(),
+      const HPage(),
+      const Favorite(),
       const BookmarksScreen(),
       const StatisticsScreen(),
       const Settings(),
@@ -346,6 +347,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedReciter = reciterId);
 
     final success = await SpUtil.setReciter(reciterId);
+    // Also persist via new settings key and notify listeners
+    await appSP.setString('selectedReciter', reciterId);
+    ReciterService.instance.setCurrentReciterId(reciterId);
     if (!success) {
       if (!mounted) return;
       setState(() => _selectedReciter = previous);
@@ -558,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeroBanner(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
-      height: 180,
+      height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         image: DecorationImage(
@@ -573,6 +577,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Peace be upon you',
@@ -1002,6 +1007,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(width: isSmall ? 80 : 120),
           if (!isSmall)
             RoundCustomButton2(
+              icon: FontAwesomeIcons.a,
               children: [
                 MItems(
                     text: 'Donate on Patreon',
@@ -1031,7 +1037,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       about.showAboutDialog();
                     }),
               ],
-              icon: FontAwesomeIcons.a,
             ),
         ],
         leading: Padding(
@@ -1138,7 +1143,7 @@ class QuranSearchDelegate extends SearchDelegate {
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: Icon(Icons.clear),
+        icon: const Icon(Icons.clear),
         onPressed: () => query = '',
       ),
     ];
@@ -1147,7 +1152,7 @@ class QuranSearchDelegate extends SearchDelegate {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.arrow_back),
+      icon: const Icon(Icons.arrow_back),
       onPressed: () => close(context, ''),
     );
   }
@@ -1158,7 +1163,7 @@ class QuranSearchDelegate extends SearchDelegate {
       future: offlineSearch.searchByWord(query.trim()),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         final results = snapshot.data!;
         if (results.isEmpty) {
@@ -1185,13 +1190,13 @@ class QuranSearchDelegate extends SearchDelegate {
   @override
   Widget buildSuggestions(BuildContext context) {
     if (query.isEmpty) {
-      return Center(child: Text('Search any word'));
+      return const Center(child: Text('Search any word'));
     }
     return FutureBuilder<List<search_models.Aya>>(
       future: offlineSearch.searchByWord(query.trim()),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         final results = snapshot.data!;
         return ListView.builder(

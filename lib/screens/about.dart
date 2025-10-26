@@ -1,15 +1,24 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../layout/adaptive.dart';
 import '../theme/app_theme.dart';
-import '../widgets/headerTitle.dart';
 
 void showAboutDialog() {
+  // Desktop: open as a dedicated page to feel like a separate window
+  if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    Get.to(() => const AboutStandalonePage(), routeName: '/about');
+    return;
+  }
+  // Mobile/Web: show as a dialog
   Get.dialog(
-    About(),
+    const AboutDialogSheet(),
     name: 'About QH',
     barrierDismissible: false,
     transitionCurve: Curves.easeInOutCirc,
@@ -17,40 +26,101 @@ void showAboutDialog() {
 }
 
 /// todo: Implement native Linux tab - Scroll from the bottom
-class About extends StatelessWidget {
+class AboutDialogSheet extends StatelessWidget {
+  const AboutDialogSheet({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    final theme = Theme.of(context);
+    return Dialog(
       elevation: 0,
-      backgroundColor: Theme.of(context).canvasColor,
-      content: Container(height: 560, width: 560, child: AboutView()),
+      backgroundColor: theme.canvasColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 820, maxHeight: 680),
+        child: const AboutView(standalone: false),
+      ),
+    );
+  }
+}
+
+/// Desktop standalone page that feels like a separate window of the app
+class AboutStandalonePage extends StatelessWidget {
+  const AboutStandalonePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('About Qur’ān Hadith'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+            icon: const FaIcon(FontAwesomeIcons.circleXmark, size: 18),
+            onPressed: () => Navigator.of(context).maybePop(),
+          )
+        ],
+      ),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 980),
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.canvasColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context)
+                  .dividerColor
+                  .withAlpha((0.15 * 255).round()),
+            ),
+          ),
+          child: const AboutView(standalone: true),
+        ),
+      ),
     );
   }
 }
 
 class AboutView extends StatefulWidget {
+  final bool standalone; // true when shown as a standalone page on desktop
+  const AboutView({super.key, this.standalone = false});
+
   @override
-  _AboutViewState createState() => _AboutViewState();
+  AboutViewState createState() => AboutViewState();
 }
 
-class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
-  final List<Tab> tabs = <Tab>[
-    Tab(text: "Qur’ān Hadith"),
-    Tab(text: "Author"),
-    Tab(text: "Licenses")
+class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
+  final List<Tab> tabs = const <Tab>[
+    Tab(text: 'App'),
+    Tab(text: 'Author'),
+    Tab(text: 'License'),
   ];
   late TabController _tabController;
+  PackageInfo? _info;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(vsync: this, length: tabs.length);
+    _loadInfo();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInfo() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _info = info);
+    } catch (_) {
+      // ignore
+    }
   }
 
   @override
@@ -60,18 +130,37 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: FaIcon(FontAwesomeIcons.circleXmark),
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            onPressed: () => Navigator.of(context).pop(),
-            splashRadius: 10,
-          )
-        ],
+        elevation: 0,
+        scrolledUnderElevation: 0,
         backgroundColor: Theme.of(context).canvasColor,
-        title: Text("About Qur’ān Hadith"),
+        title: const Text('About Qur’ān Hadith'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          if (!widget.standalone &&
+              !kIsWeb &&
+              (Platform.isLinux || Platform.isWindows || Platform.isMacOS))
+            Padding(
+              padding: const EdgeInsets.only(right: 4.0),
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Get.to(() => const AboutStandalonePage(),
+                      routeName: '/about');
+                },
+                icon: const FaIcon(
+                    FontAwesomeIcons.upRightAndDownLeftFromCenter,
+                    size: 14),
+                label: const Text('Open window'),
+              ),
+            ),
+          IconButton(
+            icon: const FaIcon(FontAwesomeIcons.circleXmark),
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+            onPressed: () => Navigator.of(context).pop(),
+            splashRadius: 18,
+          )
+        ],
         bottom: TabBar(
           tabs: tabs,
           isScrollable: true,
@@ -83,197 +172,322 @@ class _AboutViewState extends State<AboutView> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: [
-          Container(
-            child: ListView(
-              padding: EdgeInsets.all(10),
-              children: [
-                SizedBox(height: 20),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/Logo.png',
-                        color: Color(0xff06291d),
-                        scale: 7,
-                      ),
-                      HeaderText(size: isSmall ? 30 : 40),
-                    ],
-                  ),
+          _buildAppTab(context, isSmall, theme),
+          _buildAuthorTab(context, isSmall, theme),
+          _buildLicenseTab(context, theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppTab(BuildContext context, bool isSmall, TextTheme theme) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Header banner
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primary.withAlpha((0.15 * 255).round()),
+                primary.withAlpha((0.05 * 255).round()),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color:
+                  Theme.of(context).dividerColor.withAlpha((0.2 * 255).round()),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/Logo.png',
+                  height: isSmall ? 54 : 72,
+                  width: isSmall ? 54 : 72,
+                  fit: BoxFit.contain,
                 ),
-                SizedBox(height: 10),
-                Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Qur’ān Hadith', style: theme.headlineSmall),
-                        SizedBox(height: 8),
-                        Text(
-                          'Version: 1.0.0 (build 1)',
-                          style: theme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'About',
-                          style: theme.titleLarge,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Qur’ān Hadith helps you read, listen and search the Qur’ān and browse Hadith collections with a clean, desktop-friendly experience. Supports offline favorites, resume reading/listening, and adaptive theming.',
-                          style: theme.titleMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _LinkButton(
-                      icon: FontAwesomeIcons.github,
-                      label: 'Source Code',
-                      onTap: () => launchUrl(Uri.parse(
+                    Text('Qur’ān Hadith',
+                        style: theme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        )),
+                    const SizedBox(height: 4),
+                    Text(
+                      _info == null
+                          ? '—'
+                          : 'Version ${_info!.version} (build ${_info!.buildNumber})',
+                      style: theme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: () => launchUrl(Uri.parse(
+                    'https://github.com/kherld-hussein/quran_hadith')),
+                icon: const FaIcon(FontAwesomeIcons.github, size: 16),
+                label: const Text('GitHub'),
+              )
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // About text & actions
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('About', style: theme.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  'Qur’ān Hadith helps you read, listen, and search the Qur’ān and browse Hadith collections with a clean, desktop-friendly experience. It supports offline favorites, resume reading/listening, and adaptive theming.',
+                  style: theme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => launchUrl(Uri.parse(
                           'https://github.com/kherld-hussein/quran_hadith')),
+                      icon: const FaIcon(FontAwesomeIcons.github, size: 16),
+                      label: const Text('Repository'),
                     ),
-                    _LinkButton(
-                      icon: FontAwesomeIcons.bug,
-                      label: 'Report a Bug',
-                      onTap: () => launchUrl(Uri.parse(
-                          'https://github.com/kherld-hussein/quran_hadith/issues/')),
-                    ),
-                    _LinkButton(
-                      icon: FontAwesomeIcons.lightbulb,
-                      label: 'Request Feature',
-                      onTap: () => launchUrl(Uri.parse(
-                          'https://github.com/kherld-hussein/quran_hadith/issues/')),
-                    ),
-                    _LinkButton(
-                      icon: FontAwesomeIcons.heart,
-                      label: 'Support',
-                      onTap: () => launchUrl(Uri.parse(
-                          'https://www.patreon.com/join/kherld/checkout?ru=undefined')),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final diagnostics = _diagnosticsString();
+                        await Clipboard.setData(
+                            ClipboardData(text: diagnostics));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Diagnostics copied')),
+                          );
+                        }
+                      },
+                      icon: const FaIcon(FontAwesomeIcons.copy, size: 14),
+                      label: const Text('Copy diagnostics'),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          Container(
-            child: ListView(
-              padding: EdgeInsets.all(10),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Quick links
+        const Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _LinkButton(
+              icon: FontAwesomeIcons.bug,
+              label: 'Report a Bug',
+              url: 'https://github.com/kherld-hussein/quran_hadith/issues/',
+            ),
+            _LinkButton(
+              icon: FontAwesomeIcons.lightbulb,
+              label: 'Request Feature',
+              url: 'https://github.com/kherld-hussein/quran_hadith/issues/',
+            ),
+            _LinkButton(
+              icon: FontAwesomeIcons.heart,
+              label: 'Support',
+              url: 'https://www.patreon.com/join/kherld/checkout?ru=undefined',
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // System info
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: isSmall ? 10 : 20.0,
-                    left: isSmall ? 10 : 20,
-                    right: isSmall ? 10 : 20,
-                  ),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      Chip(label: Text("Name")),
-                      Chip(label: Text("E-mail")),
-                    ],
-                  ),
+                Text('System', style: theme.titleLarge),
+                const SizedBox(height: 8),
+                _InfoRow(
+                  icon: FontAwesomeIcons.desktop,
+                  label: 'Platform',
+                  value: _platformString(),
                 ),
-                SizedBox(height: 5),
-                ListTile(
-                  title: Text(
-                    'Khalid Hussein',
-                    style: TextStyle(fontSize: isSmall ? 10 : 24),
-                  ),
-                  contentPadding: EdgeInsets.only(top: 20),
-                  trailing: GestureDetector(
-                    child: Text(
-                      'kherld11@gmail.com',
-                      style: theme.titleMedium!.copyWith(
-                        decoration: TextDecoration.underline,
-                        fontSize: isSmall ? 10 : 20,
-                        color: kLinkC,
-                      ),
-                    ),
-                    onTap: () =>
-                        launchUrl(Uri.parse('mailto:kherld11@gmail.com')),
-                  ),
+                const SizedBox(height: 6),
+                const _InfoRow(
+                  icon: FontAwesomeIcons.gear,
+                  label: 'Mode',
+                  value: kReleaseMode ? 'Release' : 'Debug/Profile',
                 ),
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-            child: ListView(
-              padding: EdgeInsets.all(10),
-              children: [
-                Text(
-                  "Qur’ān Hadith is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
-                  "the Free Software Foundation, either version 3 of the License, or (at your option) any later version. \n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah, "
-                  "You should have received a copy of the GNU General Public License along with this program. \nIf not, see",
-                  style: theme.titleLarge,
-                ),
-                InkWell(
-                  splashColor: Theme.of(context).scaffoldBackgroundColor,
-                  hoverColor: Theme.of(context).scaffoldBackgroundColor,
-                  highlightColor: Theme.of(context).scaffoldBackgroundColor,
-                  child: Text(
-                    "http://www.gnu.org/licenses/",
-                    style: theme.titleLarge!.copyWith(color: kLinkC),
-                  ),
-                  onTap: () =>
-                      launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
-                ),
-              ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLicenseTab(BuildContext context, TextTheme theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+      child: ListView(
+        padding: const EdgeInsets.all(10),
+        children: [
+          Text(
+            'Qur’ān Hadith is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nQur’ān Hadith is distributed in the hope that it will be useful In Sha Allah. You should have received a copy of the GNU General Public License along with this program. If not, see',
+            style: theme.titleLarge,
+          ),
+          InkWell(
+            splashColor: Theme.of(context).scaffoldBackgroundColor,
+            hoverColor: Theme.of(context).scaffoldBackgroundColor,
+            highlightColor: Theme.of(context).scaffoldBackgroundColor,
+            child: Text(
+              'http://www.gnu.org/licenses/',
+              style: theme.titleLarge!.copyWith(color: kLinkC),
             ),
+            onTap: () => launchUrl(Uri.parse('http://www.gnu.org/licenses/')),
           ),
         ],
       ),
     );
+  }
+
+  String _platformString() {
+    if (kIsWeb) return 'Web';
+    try {
+      return '${Platform.operatingSystem} ${Platform.version.split(' ').first}';
+    } catch (_) {
+      return 'Unknown';
+    }
+  }
+
+  Widget _buildAuthorTab(BuildContext context, bool isSmall, TextTheme theme) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Author', style: theme.titleLarge),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const FaIcon(FontAwesomeIcons.user, size: 14),
+                    const SizedBox(width: 8),
+                    Text('Khalid Hussein', style: theme.titleMedium),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () =>
+                      launchUrl(Uri.parse('mailto:kherld.hussein@gmail.com')),
+                  child: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.envelope, size: 14),
+                      const SizedBox(width: 8),
+                      Text(
+                        'kherld.hussein@gmail.com',
+                        style: theme.titleMedium?.copyWith(
+                            color: kLinkC,
+                            decoration: TextDecoration.underline),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _diagnosticsString() {
+    final v = _info == null
+        ? '—'
+        : 'Version ${_info!.version} (build ${_info!.buildNumber})';
+    final p = _platformString();
+    final mode = kReleaseMode ? 'Release' : 'Debug/Profile';
+    return 'Qur’ān Hadith\n$v\nPlatform: $p\nMode: $mode';
   }
 }
 
 class _LinkButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final String url;
   const _LinkButton(
-      {required this.icon, required this.label, required this.onTap});
+      {required this.icon, required this.label, required this.url});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () => launchUrl(Uri.parse(url)),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(10),
-          border:
-              Border.all(color: Theme.of(context).dividerColor.withOpacity(.2)),
+          border: Border.all(
+            color:
+                Theme.of(context).dividerColor.withAlpha((0.2 * 255).round()),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             FaIcon(icon, size: 16),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(label),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _InfoRow(
+      {required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context).textTheme;
+    return Row(
+      children: [
+        FaIcon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(label, style: theme.titleMedium),
+        const Spacer(),
+        Text(value,
+            style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }

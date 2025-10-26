@@ -10,7 +10,7 @@ import 'package:quran_hadith/screens/home_screen.dart';
 import '../theme/app_theme.dart';
 
 class SplashScreen extends StatelessWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +31,11 @@ class SplashScreen extends StatelessWidget {
 }
 
 class WindowButtons extends StatelessWidget {
-  const WindowButtons({Key? key}) : super(key: key);
+  const WindowButtons({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = kDarkSecondaryColor;
+    const theme = kDarkSecondaryColor;
     return Row(
       children: [
         MinimizeWindowButton(
@@ -67,22 +67,22 @@ class WindowButtons extends StatelessWidget {
             SystemSound.play(SystemSoundType.alert);
             Get.dialog(
               AlertDialog(
-                title: Text('Are you sure you want to exit?'),
+                title: const Text('Are you sure you want to exit?'),
                 content: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
                       onPressed: () => SystemNavigator.pop(),
-                      child: Text('Exit'),
+                      child: const Text('Exit'),
                     ),
                     TextButton(
                       onPressed: () => Get.back(),
-                      child: Text('Cancel'),
+                      child: const Text('Cancel'),
                     )
                   ],
                 ),
                 iconColor: theme.withOpacity(.5),
-                icon: FaIcon(FontAwesomeIcons.solidCircleQuestion),
+                icon: const FaIcon(FontAwesomeIcons.solidCircleQuestion),
               ),
               name: 'Exit Dialog',
             );

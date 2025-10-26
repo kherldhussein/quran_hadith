@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:quran_hadith/models/reciter_model.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 
 class AudioSettingsScreen extends StatefulWidget {
   const AudioSettingsScreen({super.key});
@@ -728,6 +729,11 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                                       'selectedReciter',
                                       reciter.id,
                                     );
+                                    // Keep legacy storage in sync
+                                    await SpUtil.setReciter(reciter.id);
+                                    // Notify globally so active players update
+                                    ReciterService.instance
+                                        .setCurrentReciterId(reciter.id);
                                     if (context.mounted) {
                                       Navigator.of(context).pop();
                                       ScaffoldMessenger.of(context)
@@ -1050,10 +1056,10 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Audio cache cleared'),
+                const SnackBar(
+                  content: Text('Audio cache cleared'),
                   behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
                 ),
               );
             },
@@ -1078,6 +1084,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
 
     await Future.wait([
       _saveSetting('selectedReciter', _selectedReciterId),
+      SpUtil.setReciter(_selectedReciterId),
       _saveSetting('playbackSpeed', _playbackSpeed),
       _saveSetting('autoPlay', _autoPlay),
       _saveSetting(
@@ -1090,12 +1097,15 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
       _saveSetting('downloadOverWifiOnly', _downloadOverWifiOnly),
     ]);
 
+    // Notify global listeners about reset reciter
+    ReciterService.instance.setCurrentReciterId(_selectedReciterId);
+
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Audio settings reset to defaults'),
+      const SnackBar(
+        content: Text('Audio settings reset to defaults'),
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
   }

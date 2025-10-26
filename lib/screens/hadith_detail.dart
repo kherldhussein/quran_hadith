@@ -10,12 +10,12 @@ class HadithDetailPage extends StatelessWidget {
   final String? translation;
 
   const HadithDetailPage({
-    Key? key,
+    super.key,
     required this.bookSlug,
     required this.number,
     this.arabic,
     this.translation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

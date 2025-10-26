@@ -74,8 +74,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   Future<void> _loadProgressData() async {
     try {
-      final lastRead = await database.getLastReadingProgress();
-      final lastListened = await database.getLastListeningProgress();
+      final lastRead = database.getLastReadingProgress();
+      final lastListened = database.getLastListeningProgress();
 
       if (!mounted) return;
       setState(() {
@@ -353,12 +353,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                   kDarkPrimaryColor.withOpacity(0.9),
                 ],
               )
-            : LinearGradient(
+            : const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xffeef2f5),
-                  const Color(0xffe8f4f8),
+                  Color(0xffeef2f5),
+                  Color(0xffe8f4f8),
                 ],
               ),
         borderRadius: const BorderRadius.only(
@@ -1044,7 +1044,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
         children: [
           Row(
             children: [
-              Icon(FontAwesomeIcons.solidStar, color: Colors.white, size: 14),
+              const Icon(FontAwesomeIcons.solidStar,
+                  color: Colors.white, size: 14),
               const SizedBox(width: 8),
               Text(
                 'AYAH OF THE DAY',
@@ -1092,7 +1093,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: Colors.white, size: 16),
+                  const Icon(Icons.arrow_forward,
+                      color: Colors.white, size: 16),
                 ],
               ),
             ),
@@ -1145,7 +1147,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(FontAwesomeIcons.exclamationTriangle,
+            const Icon(FontAwesomeIcons.exclamationTriangle,
                 size: 64, color: Colors.orange),
             const SizedBox(height: 20),
             Text(
