@@ -497,6 +497,7 @@ class DatabaseService {
   }
 
   // ============ META CACHE (RECITERS ETC) ============
+  // Also used for lightweight caches like Hadith books/pages
 
   Future<void> cacheReciters(List<Reciter> reciters) async {
     final box = Hive.box(_metaBox);
@@ -531,6 +532,64 @@ class DatabaseService {
     if (value is String) {
       return DateTime.tryParse(value);
     }
+    return null;
+  }
+
+  // ============ HADITH CACHE (BOOKS + PAGES) ============
+
+  Future<void> cacheHadithBooks(
+      String languageCode, List<Map<String, dynamic>> books) async {
+    final box = Hive.box(_metaBox);
+    await box.put('hadith_books_$languageCode', books);
+    await box.put('hadith_books_${languageCode}_cached_at',
+        DateTime.now().toIso8601String());
+  }
+
+  List<Map<String, dynamic>>? getCachedHadithBooksRaw(String languageCode) {
+    final box = Hive.box(_metaBox);
+    final raw = box.get('hadith_books_$languageCode');
+    if (raw is List) {
+      return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+    return null;
+  }
+
+  DateTime? getHadithBooksCachedAt(String languageCode) {
+    final box = Hive.box(_metaBox);
+    final value = box.get('hadith_books_${languageCode}_cached_at');
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  Future<void> cacheHadithPage({
+    required String book,
+    required int page,
+    required Map<String, dynamic> payload,
+  }) async {
+    final box = Hive.box(_metaBox);
+    final key = 'hadith_page_${book}_$page';
+    await box.put(key, payload);
+    await box.put('${key}_cached_at', DateTime.now().toIso8601String());
+  }
+
+  Map<String, dynamic>? getCachedHadithPageRaw(
+      {required String book, required int page}) {
+    final box = Hive.box(_metaBox);
+    final key = 'hadith_page_${book}_$page';
+    final raw = box.get(key);
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return null;
+  }
+
+  DateTime? getHadithPageCachedAt({required String book, required int page}) {
+    final box = Hive.box(_metaBox);
+    final baseKey = 'hadith_page_${book}_$page';
+    final value = box.get('${baseKey}_cached_at');
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
     return null;
   }
 
