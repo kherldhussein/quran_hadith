@@ -18,6 +18,7 @@ import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/services/notification_service.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
+import 'package:quran_hadith/services/native_desktop_service.dart';
 
 import 'controller/hadithAPI.dart';
 import 'theme/app_theme.dart';
@@ -46,9 +47,9 @@ void main() async {
       // setlocale: char *setlocale(int category, const char *locale);
       final setlocale =
           dylib.lookupFunction<_NativeSetLocale, _DartSetLocale>('setlocale');
-      const int LC_NUMERIC = 4; // common value on POSIX systems
+      const int lcNumeric = 4; // common value on POSIX systems
       final ptr = 'C'.toNativeUtf8();
-      setlocale(LC_NUMERIC, ptr.cast<ffi.Int8>());
+      setlocale(lcNumeric, ptr.cast<ffi.Int8>());
       pkgffi.malloc.free(ptr);
     } catch (e) {
       debugPrint('Warning: failed to setlocale(LC_NUMERIC, "C"): $e');
@@ -95,6 +96,14 @@ Future<void> _initializeApp() async {
     debugPrint('Warning: appSP.init() failed: $e');
   }
 
+  // Initialize in-memory current reciter from storage so audio uses the
+  // correct voice before any UI interaction.
+  try {
+    await ReciterService.instance.initializeCurrentReciter();
+  } catch (e) {
+    debugPrint('Warning initializing current reciter: $e');
+  }
+
   try {
     await NotificationService.instance.initialize();
   } catch (e) {
@@ -118,6 +127,15 @@ Future<void> _initializeApp() async {
     themeState.loadTheme(isDarkMode);
   } catch (e) {
     debugPrint('Warning loading theme: $e');
+  }
+
+  // Initialize native desktop service for system tray and window management
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    try {
+      await nativeDesktop.initialize();
+    } catch (e) {
+      debugPrint('Warning initializing native desktop: $e');
+    }
   }
 }
 
