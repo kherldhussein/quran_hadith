@@ -32,7 +32,7 @@ const circularIndicator = CircularProgressIndicator(
 );
 
 ThemeData get darkTheme {
-  final base = ThemeData.dark();
+  final base = ThemeData.dark(useMaterial3: true);
   return base.copyWith(
     cardColor: kDividerDark,
     brightness: Brightness.dark,
@@ -99,13 +99,32 @@ ThemeData get darkTheme {
       contentTextStyle: const TextStyle(color: kDarkColor),
       backgroundColor: kDarkPrimaryColor,
     ),
-    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
-        .copyWith(secondary: kAccentColor),
+    colorScheme: const ColorScheme(
+      brightness: Brightness.dark,
+      primary: kAccentColor,
+      onPrimary: kTextLight,
+      secondary: kLinkC,
+      onSecondary: kTextLight,
+      tertiary: kLightSecondaryColor,
+      onTertiary: kTextLight,
+      surface: kDividerDark,
+      onSurface: kTextLight,
+      surfaceContainerHighest: kDarkPrimaryColor,
+      onSurfaceVariant: kTextLight,
+      error: Colors.red,
+      onError: kTextLight,
+      outline: kIconDark,
+      outlineVariant: kDividerDark,
+      inversePrimary: kAccentColor,
+      inverseSurface: kLight,
+      scrim: kDarkColor,
+      shadow: kDarkColor,
+    ),
   );
 }
 
 ThemeData get theme {
-  final base = ThemeData.light();
+  final base = ThemeData.light(useMaterial3: true);
   return base.copyWith(
     cardColor: kLight,
     brightness: Brightness.light,
@@ -169,8 +188,29 @@ ThemeData get theme {
       ),
       backgroundColor: kLight,
     ),
-    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.green)
-        .copyWith(secondary: kAccentColor),
+    colorScheme: ColorScheme(
+      brightness: Brightness.light,
+      primary: kAccentColor,
+      onPrimary: kTextLighter,
+      secondary: kLinkC,
+      onSecondary: kTextLighter,
+      tertiary: kDarkSecondaryColor,
+      onTertiary: kTextLighter,
+      surface: kLight,
+      onSurface: kTextDark,
+      surfaceVariant: kLightPrimaryColor,
+      onSurfaceVariant: kTextDark,
+      background: kBackgroundLight,
+      onBackground: kTextDarker,
+      error: Colors.red,
+      onError: kTextLighter,
+      outline: kIconDark,
+      outlineVariant: kDividerLight,
+      inversePrimary: kAccentColor,
+      inverseSurface: kDarkPrimaryColor,
+      scrim: kDarkColor,
+      shadow: kDarkColor,
+    ),
   );
 }
 

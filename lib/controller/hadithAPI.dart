@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:quran_hadith/database/database_service.dart';
 
 // Define a sealed class for better state management (Success, Error, Loading)
 sealed class HadithFetchResult {
@@ -26,18 +27,42 @@ Map<String, List<HadithBook>> _hadithBooksCache = {};
 
 class HadithAPI {
   static const String base = 'https://api.hadith.gading.dev';
+  static const Duration cacheTTL = Duration(hours: 24);
 
   // Renamed from getBooks to getHadithBooks for clarity and added languageCode
   // Added languageCode for dynamic fetching (simulated for now)
   Future<HadithFetchResult> getHadithBooks({String languageCode = 'en'}) async {
-    // Check cache first
-    if (_hadithBooksCache.containsKey(languageCode) && _hadithBooksCache[languageCode]!.isNotEmpty) {
-      print('Serving Hadith books from cache for language: $languageCode');
+    // 1) Check in-memory cache
+    if (_hadithBooksCache.containsKey(languageCode) &&
+        _hadithBooksCache[languageCode]!.isNotEmpty) {
       return HadithFetchSuccess(_hadithBooksCache[languageCode]!);
     }
 
+    // 2) Try local database cache (fresh)
+    List<Map<String, dynamic>>? cachedRaw;
+    DateTime? cachedAt;
     try {
-      final res = await http.get(Uri.parse('$base/books')); // Current API doesn't support language param, so we simulate.
+      cachedRaw = database.getCachedHadithBooksRaw(languageCode);
+      cachedAt = database.getHadithBooksCachedAt(languageCode);
+      if (cachedRaw != null && cachedRaw.isNotEmpty && !_isStale(cachedAt)) {
+        final books = cachedRaw.map((m) {
+          return HadithBook(
+            name: (m['name'] as String?) ?? 'Unknown Book',
+            slug: (m['slug'] as String?) ?? '',
+            total: _asInt(m['total']),
+          );
+        }).toList();
+        _hadithBooksCache[languageCode] = books;
+        return HadithFetchSuccess(books);
+      }
+    } catch (e) {
+      // Non-fatal: fall back to network
+      print('Hadith books local cache error: $e');
+    }
+
+    try {
+      final res = await http.get(Uri.parse(
+          '$base/books')); // Current API doesn't support language param, so we simulate.
 
       if (res.statusCode != 200) {
         throw Exception('Failed to load books: Status code ${res.statusCode}');
@@ -55,13 +80,36 @@ class HadithAPI {
         return HadithBook(name: name, slug: slug, total: total);
       }).toList();
 
-      // Store in cache
+      // Store in memory and DB cache
       _hadithBooksCache[languageCode] = fetchedBooks;
-      print('Fetched and cached Hadith books for language: $languageCode');
+      try {
+        await database.cacheHadithBooks(
+            languageCode,
+            fetchedBooks
+                .map((b) => {'name': b.name, 'slug': b.slug, 'total': b.total})
+                .toList());
+      } catch (e) {
+        print('Failed to persist Hadith books cache: $e');
+      }
+
       return HadithFetchSuccess(fetchedBooks);
     } catch (e) {
       print('Error fetching Hadith books: $e');
-      return HadithFetchError('Failed to load Hadith books. Please check your internet connection or try again.', e);
+      // Stale-if-error: return cached books even if stale
+      if (cachedRaw != null && cachedRaw.isNotEmpty) {
+        final books = cachedRaw.map((m) {
+          return HadithBook(
+            name: (m['name'] as String?) ?? 'Unknown Book',
+            slug: (m['slug'] as String?) ?? '',
+            total: _asInt(m['total']),
+          );
+        }).toList();
+        _hadithBooksCache[languageCode] = books;
+        return HadithFetchSuccess(books);
+      }
+      return HadithFetchError(
+          'Failed to load Hadith books. Please check your internet connection or try again.',
+          e);
     }
   }
 
@@ -83,11 +131,36 @@ class HadithAPI {
   }
 
   Future<HadithPage> getHadiths({required String book, int page = 1}) async {
+    // 1) Try local database cache first
+    Map<String, dynamic>? cached;
+    DateTime? cachedAt;
+    try {
+      cached = database.getCachedHadithPageRaw(book: book, page: page);
+      cachedAt = database.getHadithPageCachedAt(book: book, page: page);
+      if (cached != null && !_isStale(cachedAt)) {
+        final items = (cached['hadiths'] as List? ?? [])
+            .map((e) => HadithItem(
+                  number: (e['number'] ?? '').toString(),
+                  arab: (e['arab'] as String?) ?? '',
+                  id: (e['id'] as String?) ?? '',
+                ))
+            .toList();
+        return HadithPage(
+          book: (cached['book'] as String?) ?? book,
+          hadiths: items,
+          available: _asInt(cached['available']) ?? 0,
+        );
+      }
+    } catch (e) {
+      print('Hadith page local cache error: $e');
+    }
+
     try {
       // API expects range like "1-10" for page 1, "11-20" for page 2, etc.
       final startRange = ((page - 1) * 10) + 1;
       final endRange = page * 10;
-      final res = await http.get(Uri.parse('$base/books/$book?range=$startRange-$endRange'));
+      final res = await http
+          .get(Uri.parse('$base/books/$book?range=$startRange-$endRange'));
 
       if (res.statusCode != 200) {
         throw Exception('Failed to load hadiths: ${res.statusCode}');
@@ -119,16 +192,60 @@ class HadithAPI {
         );
       }).toList();
 
-      return HadithPage(
+      final pageObj = HadithPage(
         book: name ?? book,
         hadiths: hadiths,
         available: available,
       );
+
+      // Persist to DB cache for offline use
+      try {
+        await database.cacheHadithPage(
+          book: book,
+          page: page,
+          payload: {
+            'book': pageObj.book,
+            'available': pageObj.available,
+            'hadiths': hadiths
+                .map((h) => {
+                      'number': h.number,
+                      'arab': h.arab,
+                      'id': h.id,
+                    })
+                .toList(),
+          },
+        );
+      } catch (e) {
+        print('Failed to persist Hadith page cache: $e');
+      }
+
+      return pageObj;
     } catch (e) {
       print('Error fetching hadiths: $e');
+      // Stale-if-error: return cached page even if stale
+      if (cached != null) {
+        final items = (cached['hadiths'] as List? ?? [])
+            .map((e) => HadithItem(
+                  number: (e['number'] ?? '').toString(),
+                  arab: (e['arab'] as String?) ?? '',
+                  id: (e['id'] as String?) ?? '',
+                ))
+            .toList();
+        return HadithPage(
+          book: (cached['book'] as String?) ?? book,
+          hadiths: items,
+          available: _asInt(cached['available']) ?? items.length,
+        );
+      }
       // Return safe empty page instead of throwing to avoid UI crash
       return HadithPage(book: book, hadiths: const [], available: 0);
     }
+  }
+
+  bool _isStale(DateTime? cachedAt) {
+    if (cachedAt == null) return true;
+    final age = DateTime.now().difference(cachedAt);
+    return age > cacheTTL;
   }
 }
 
@@ -152,7 +269,6 @@ class HadithPage {
   final int available;
   HadithPage({this.book, required this.hadiths, this.available = 0});
 }
-
 
 // Helper: safely convert dynamic to int
 int? _asInt(dynamic v) {
