@@ -1,7 +1,7 @@
 class Aya {
-  int _num;
-  String _text;
-  String? _surah;
+  final int _num;
+  final String _text;
+  final String? _surah;
 
   Aya(this._num, this._text, this._surah);
 
