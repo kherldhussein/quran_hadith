@@ -44,7 +44,7 @@ class SearchWidget extends SearchDelegate<SurahList> {
   Widget buildResults(BuildContext context) {
     var quranAPI = Provider.of<QuranAPI>(context);
     return FutureBuilder(
-        future: quranAPI.getSearch(keyWord: this.query),
+        future: quranAPI.getSearch(keyWord: query),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (!snapshot.hasData) return Container();
           return ListView.builder(
@@ -52,14 +52,14 @@ class SearchWidget extends SearchDelegate<SurahList> {
               itemBuilder: (context, index) {
                 return SuratTile(
                   isFavorite: true,
-                  colorI: Color(0xffe0f5f0),
+                  colorI: const Color(0xffe0f5f0),
                   radius: 20,
                   ayahList: snapshot.data.surahs[index].ayahs,
                   suratNo: snapshot.data.surahs[index].number,
                   icon: FontAwesomeIcons.heart,
                   revelationType: snapshot.data.surahs[index].revelationType,
                   englishTrans:
-                  snapshot.data.surahs[index].englishNameTranslation,
+                      snapshot.data.surahs[index].englishNameTranslation,
                   englishName: snapshot.data.surahs[index].englishName,
                   name: snapshot.data.surahs[index].name,
                 );
@@ -73,11 +73,11 @@ class SearchWidget extends SearchDelegate<SurahList> {
         future: quran,
         builder: (context, AsyncSnapshot<QuranAPI> snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: Text('Nothing was found'));
+            return const Center(child: Text('Nothing was found'));
           }
           return ListView(
-            // children: snapshot.data,
-          );
+              // children: snapshot.data,
+              );
         });
   }
 }
