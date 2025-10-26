@@ -26,6 +26,8 @@ class StorageKeys {
   static const String fridayReminderEnabled = 'FRIDAY_REMINDER_ENABLED';
   static const String fridayReminderTimeMinutes =
       'FRIDAY_REMINDER_TIME_MINUTES';
+  static const String autoPlayNextAyah = 'AUTO_PLAY_NEXT_AYAH';
+  static const String repeatMode = 'REPEAT_MODE';
 }
 
 /// Enhanced utility class for managing app preferences with better error handling and type safety
@@ -299,5 +301,27 @@ class SpUtil {
 
   static Future<bool> setFridayReminderTimeMinutes(int minutes) {
     return appSP.setInt(StorageKeys.fridayReminderTimeMinutes, minutes);
+  }
+
+  // ============ AUDIO PLAYBACK SETTINGS ============
+
+  /// Get auto-play next ayah setting
+  static bool getAutoPlayNextAyah() {
+    return appSP.getBool(StorageKeys.autoPlayNextAyah, defaultValue: false);
+  }
+
+  /// Set auto-play next ayah
+  static Future<bool> setAutoPlayNextAyah(bool value) {
+    return appSP.setBool(StorageKeys.autoPlayNextAyah, value);
+  }
+
+  /// Get repeat mode: 'none', 'ayah', 'surah'
+  static String getRepeatMode() {
+    return appSP.getString(StorageKeys.repeatMode, defaultValue: 'none');
+  }
+
+  /// Set repeat mode
+  static Future<bool> setRepeatMode(String mode) {
+    return appSP.setString(StorageKeys.repeatMode, mode);
   }
 }
