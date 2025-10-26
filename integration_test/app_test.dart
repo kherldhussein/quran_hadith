@@ -13,6 +13,7 @@ import 'package:quran_hadith/main.dart' as app;
 
 // void main() => run(_testMain);
 
+// ignore: unused_element
 void _testMain() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.

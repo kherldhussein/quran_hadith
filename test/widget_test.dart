@@ -13,7 +13,7 @@ import 'package:quran_hadith/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(QuranHadithApp());
+    await tester.pumpWidget(const QuranHadithApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
