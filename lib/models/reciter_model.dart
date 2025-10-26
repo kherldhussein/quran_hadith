@@ -32,14 +32,28 @@ class Reciter {
       translatedName = translated;
     }
 
-    final audioPrefix = json['audio_url_prefix'] as String? ??
-        json['audio_url'] as String? ??
-        json['relative_path'] as String?;
+    // Safely extract audio prefix, handling both String and potential Map types
+    String? audioPrefix;
+    final audioUrlPrefix = json['audio_url_prefix'];
+    final audioUrl = json['audio_url'];
+    final relativePath = json['relative_path'];
 
-    String identifier = json['identifier'] as String? ??
-        json['slug'] as String? ??
-        json['id']?.toString() ??
-        '';
+    if (audioUrlPrefix is String) {
+      audioPrefix = audioUrlPrefix;
+    } else if (audioUrl is String) {
+      audioPrefix = audioUrl;
+    } else if (relativePath is String) {
+      audioPrefix = relativePath;
+    }
+
+    // Safely extract identifier
+    String identifier = '';
+    final jsonId = json['identifier'] ?? json['slug'] ?? json['id'];
+    if (jsonId is String) {
+      identifier = jsonId;
+    } else if (jsonId != null) {
+      identifier = jsonId.toString();
+    }
 
     if (identifier.isEmpty && audioPrefix != null) {
       final segments = audioPrefix.split('/');
@@ -47,20 +61,37 @@ class Reciter {
       if (candidate.isNotEmpty) identifier = candidate;
     }
 
+    // Safely extract name
+    String name = 'Unknown Reciter';
+    final jsonName = json['name'];
+    if (jsonName is String) {
+      name = jsonName;
+    } else if (translatedName != null) {
+      name = translatedName;
+    }
+
+    // Safely extract other string fields
+    String? safeExtract(dynamic value) {
+      if (value is String) return value;
+      if (value is Map) return null;
+      return value?.toString();
+    }
+
     return Reciter(
       id: identifier.isEmpty ? 'unknown_reciter' : identifier,
-      name: json['name'] as String? ?? translatedName ?? 'Unknown Reciter',
-      arabicName: json['arabic_name'] as String? ??
+      name: name,
+      arabicName: safeExtract(json['arabic_name']) ??
           (translatedLanguage == 'Arabic' ? translatedName : null),
       translatedName: translatedName,
-      language: json['language'] as String? ?? translatedLanguage,
-      style: json['style'] as String? ??
-          json['recitation_style'] as String? ??
-          json['type'] as String?,
-      description: json['description'] as String? ??
-          json['bio'] as String? ??
-          json['about'] as String?,
-      avatarUrl: json['profile_picture'] as String? ?? json['image'] as String?,
+      language: safeExtract(json['language']) ?? translatedLanguage,
+      style: safeExtract(json['style']) ??
+          safeExtract(json['recitation_style']) ??
+          safeExtract(json['type']),
+      description: safeExtract(json['description']) ??
+          safeExtract(json['bio']) ??
+          safeExtract(json['about']),
+      avatarUrl:
+          safeExtract(json['profile_picture']) ?? safeExtract(json['image']),
       audioUrlPrefix: audioPrefix,
     );
   }
