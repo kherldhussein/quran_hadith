@@ -8,12 +8,12 @@ class ModernSearchDialog extends StatefulWidget {
   final String hintText;
 
   const ModernSearchDialog({
-    Key? key,
+    super.key,
     required this.items,
     required this.onItemSelected,
     this.title = 'Search',
     this.hintText = 'Search...',
-  }) : super(key: key);
+  });
 
   @override
   State<ModernSearchDialog> createState() => _ModernSearchDialogState();

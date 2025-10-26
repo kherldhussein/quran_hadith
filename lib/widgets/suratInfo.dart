@@ -10,21 +10,21 @@ class SurahInformation extends StatelessWidget {
   final String? englishNameTranslation;
 
   const SurahInformation({
-    Key? key,
+    super.key,
     this.surahNumber,
     this.arabicName,
     this.englishName,
     this.englishNameTranslation,
     this.ayahs,
     this.revelationType,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: AlignmentDirectional.centerStart,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

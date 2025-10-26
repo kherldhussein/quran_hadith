@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ListItems extends StatelessWidget {
-  ListItems({Key? key, this.children}) : super(key: key);
+  const ListItems({super.key, this.children});
   final List<Widget>? children;
 
   @override
@@ -17,20 +17,20 @@ class MItems extends StatelessWidget {
   final VoidCallback? pressed;
   final String? text;
 
-  const MItems({Key? key, this.text, this.pressed}) : super(key: key);
+  const MItems({super.key, this.text, this.pressed});
 
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
     return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => pressed!(),
       child: Container(
         alignment: AlignmentDirectional.centerStart,
         constraints: BoxConstraints(minHeight: height / 12),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(text!),
       ),
-      borderRadius: BorderRadius.circular(20),
-      onTap: () => pressed!(),
     );
   }
 }

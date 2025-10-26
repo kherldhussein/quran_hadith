@@ -14,12 +14,12 @@ class RoundCustomButton extends StatelessWidget {
   final double popoverHeight;
 
   const RoundCustomButton({
-    Key? key,
+    super.key,
     this.icon,
     this.children,
     this.popoverWidth = 260,
     this.popoverHeight = 280,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class RoundCustomButton extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(isSmall ? 4 : 8.0),
       child: Container(
-        constraints: BoxConstraints(minWidth: 0),
+        constraints: const BoxConstraints(minWidth: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Theme.of(context).canvasColor),
           borderRadius: BorderRadius.circular(isSmall ? 30 : 20),
@@ -55,16 +55,15 @@ class RoundCustomButton2 extends StatelessWidget {
   final List<Widget>? children;
   final IconData? icon;
 
-  const RoundCustomButton2({Key? key, this.icon, this.children})
-      : super(key: key);
+  const RoundCustomButton2({super.key, this.icon, this.children});
 
   @override
   Widget build(BuildContext context) {
     final isSmall = isDisplayVerySmallDesktop(context);
     return Padding(
-      padding: EdgeInsets.all(10.0),
+      padding: const EdgeInsets.all(10.0),
       child: Container(
-        constraints: BoxConstraints(minWidth: 0),
+        constraints: const BoxConstraints(minWidth: 0),
         width: 80,
         decoration: BoxDecoration(
           // border: Border.all(color: Color(0xffeef2f5)),
@@ -83,7 +82,7 @@ class RoundCustomButton2 extends StatelessWidget {
                 bodyBuilder: (context) => ListItems(children: children));
           },
           splashRadius: 1,
-          icon: Text(
+          icon: const Text(
             'Support',
             style: TextStyle(color: kLightSecondaryColor),
           ),

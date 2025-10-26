@@ -2,7 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 
 class QhNav extends StatefulWidget {
-  const QhNav({required this.child});
+  const QhNav({super.key, required this.child});
 
   final Widget child;
 
@@ -31,7 +31,8 @@ class _QhNavState extends State<QhNav> {
 }
 
 class FadeThroughTransitionSwitcher extends StatelessWidget {
-  const FadeThroughTransitionSwitcher({required this.fillColor, required this.child});
+  const FadeThroughTransitionSwitcher(
+      {super.key, required this.fillColor, required this.child});
 
   final Widget child;
   final Color fillColor;
@@ -42,9 +43,9 @@ class FadeThroughTransitionSwitcher extends StatelessWidget {
       transitionBuilder: (child, animation, secondaryAnimation) {
         return FadeThroughTransition(
           fillColor: fillColor,
-          child: child,
           animation: animation,
           secondaryAnimation: secondaryAnimation,
+          child: child,
         );
       },
       child: child,

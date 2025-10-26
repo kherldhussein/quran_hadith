@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class HeaderText extends StatelessWidget {
   final double? size;
 
-  const HeaderText({Key? key, this.size}) : super(key: key);
+  const HeaderText({super.key, this.size});
 
   @override
   Widget build(BuildContext context) {

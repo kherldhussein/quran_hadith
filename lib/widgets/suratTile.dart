@@ -24,7 +24,7 @@ class SuratTile extends StatefulWidget {
   final String? name;
 
   const SuratTile({
-    Key? key,
+    super.key,
     this.name,
     this.icon,
     this.colorI,
@@ -37,7 +37,7 @@ class SuratTile extends StatefulWidget {
     this.englishTrans,
     this.revelationType,
     this.isFavorite = false,
-  }) : super(key: key);
+  });
 
   @override
   _SuratTileState createState() => _SuratTileState();
@@ -134,6 +134,7 @@ class _SuratTileState extends State<SuratTile> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,7 +200,7 @@ class _SuratTileState extends State<SuratTile> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   AutoSizeText(
                     widget.englishName ?? '',
                     style: TextStyle(
@@ -210,7 +211,7 @@ class _SuratTileState extends State<SuratTile> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Row(
                     children: [
                       AutoSizeText(
@@ -235,7 +236,6 @@ class _SuratTileState extends State<SuratTile> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
                 ],
               ),
             ),
