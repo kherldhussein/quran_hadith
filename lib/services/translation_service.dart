@@ -96,7 +96,7 @@ class TranslationService extends ChangeNotifier {
   List<String> _enabledTranslations = ['en.sahih'];
   bool _isLoading = false;
   String? _error;
-  Map<String, double> _downloadProgress = {};
+  final Map<String, double> _downloadProgress = {};
 
   // Getters
   List<String> get enabledTranslations =>

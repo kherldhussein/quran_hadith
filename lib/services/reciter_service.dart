@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/models/reciter_model.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
+import 'package:quran_hadith/utils/sp_util.dart';
 
 class ReciterService {
   ReciterService._();
@@ -20,6 +22,37 @@ class ReciterService {
 
   List<Reciter>? _inMemory;
   DateTime? _lastFetched;
+
+  /// Notifies listeners when the current reciter changes across the app.
+  /// Defaults to 'ar.alafasy'.
+  final ValueNotifier<String> currentReciterId =
+      ValueNotifier<String>('ar.alafasy');
+
+  /// Initialize the current reciter from storage, preferring the new
+  /// audio settings key and falling back to legacy SpUtil.
+  /// Safe to call multiple times.
+  Future<void> initializeCurrentReciter() async {
+    try {
+      await appSP.init();
+    } catch (_) {}
+    final fromSettings =
+        appSP.getString('selectedReciter', defaultValue: '').trim();
+    final fromLegacy = SpUtil.getReciter();
+    final resolved =
+        (fromSettings.isNotEmpty ? fromSettings : fromLegacy).trim();
+    if (resolved.isNotEmpty && resolved != currentReciterId.value) {
+      currentReciterId.value = resolved;
+    }
+  }
+
+  /// Update the current reciter and notify listeners. Persistence should be
+  /// handled by the caller (UI) to avoid coupling storage here.
+  void setCurrentReciterId(String id) {
+    if (id.isEmpty) return;
+    if (id != currentReciterId.value) {
+      currentReciterId.value = id;
+    }
+  }
 
   Future<List<Reciter>> getReciters({bool forceRefresh = false}) async {
     if (!forceRefresh && _inMemory != null) {

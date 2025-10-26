@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
@@ -44,7 +46,7 @@ class NotificationService {
       defaultActionName: 'Open notification',
     );
 
-    final settings = const InitializationSettings(
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,
       macOS: darwinSettings,
@@ -85,6 +87,13 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
+    // zonedSchedule is not supported on Linux and Web
+    if (kIsWeb || Platform.isLinux) {
+      debugPrint(
+          'NotificationService: Scheduled notifications not supported on ${kIsWeb ? 'Web' : 'Linux'}');
+      return;
+    }
+
     await initialize();
     final dateTime = _nextInstanceOfTime(time);
     await _plugin.zonedSchedule(
@@ -109,6 +118,13 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
+    // zonedSchedule is not supported on Linux and Web
+    if (kIsWeb || Platform.isLinux) {
+      debugPrint(
+          'NotificationService: Scheduled notifications not supported on ${kIsWeb ? 'Web' : 'Linux'}');
+      return;
+    }
+
     await initialize();
     final dateTime = _nextInstanceOfTime(time, weekday: weekday);
     await _plugin.zonedSchedule(

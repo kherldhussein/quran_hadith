@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:quran_hadith/models/daily_ayah.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
+import 'package:quran_hadith/utils/shared_p.dart';
+import 'package:quran_hadith/services/reciter_service.dart';
 
 /// Service responsible for retrieving and caching the daily ayah.
 class DailyAyahService {
@@ -11,8 +13,23 @@ class DailyAyahService {
 
   static final DailyAyahService instance = DailyAyahService._();
 
-  static const String _dailyAyahEndpoint =
-      'https://api.alquran.cloud/v1/ayah/random/ar.alafasy,en.sahih';
+  static const String _translationEdition = 'en.sahih';
+
+  Future<String> _buildEndpoint() async {
+    try {
+      await appSP.init();
+    } catch (_) {}
+    final fromSettings =
+        appSP.getString('selectedReciter', defaultValue: '').trim();
+    final legacy = SpUtil.getReciter().trim();
+    final inMemory = ReciterService.instance.currentReciterId.value.trim();
+    final reciter = fromSettings.isNotEmpty
+        ? fromSettings
+        : (legacy.isNotEmpty
+            ? legacy
+            : (inMemory.isNotEmpty ? inMemory : 'ar.alafasy'));
+    return 'https://api.alquran.cloud/v1/ayah/random/$reciter,$_translationEdition';
+  }
 
   /// Fetch the ayah of the day. Cached locally to avoid multiple network calls per day.
   Future<DailyAyah?> getDailyAyah({bool forceRefresh = false}) async {
@@ -27,8 +44,9 @@ class DailyAyahService {
     }
 
     try {
+      final endpoint = await _buildEndpoint();
       final response = await http
-          .get(Uri.parse(_dailyAyahEndpoint))
+          .get(Uri.parse(endpoint))
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {

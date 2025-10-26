@@ -51,8 +51,12 @@ class NativeDesktopService with WindowListener {
       }
 
       // Initialize system tray if enabled
+      // Note: On Linux, this requires ayatana-appindicator3 library
       if (prefs.enableSystemTray) {
         await _initializeSystemTray();
+      } else if (Platform.isLinux) {
+        debugPrint(
+            'System tray disabled. To enable, install: sudo apt-get install ayatana-appindicator3-0.1');
       }
 
       // Initialize hotkeys if enabled
@@ -76,7 +80,7 @@ class NativeDesktopService with WindowListener {
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
       // macOS settings
-      final DarwinInitializationSettings macOSSettings =
+      const DarwinInitializationSettings macOSSettings =
           DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -84,7 +88,7 @@ class NativeDesktopService with WindowListener {
       );
 
       // Linux settings
-      final LinuxInitializationSettings linuxSettings =
+      const LinuxInitializationSettings linuxSettings =
           LinuxInitializationSettings(
         defaultActionName: 'Open notification',
       );
@@ -176,10 +180,24 @@ class NativeDesktopService with WindowListener {
   // Todo - requires ayatana-appindicator3 on Linux
 
   Future<void> _initializeSystemTray() async {
-    debugPrint('System tray Todo - requires ayatana-appindicator3');
     if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) return;
 
+    // On Linux, warn but don't attempt if likely to fail
+    if (Platform.isLinux) {
+      debugPrint('⚠️  System tray requested on Linux');
+      debugPrint(
+          '   This requires: ayatana-appindicator3-0.1 libayatana-appindicator3-dev');
+      debugPrint(
+          '   Install with: sudo apt-get install ayatana-appindicator3-0.1 libayatana-appindicator3-dev');
+      debugPrint('   Skipping system tray initialization to prevent crash.');
+      debugPrint('   You can enable it after installing the library.');
+      _systemTrayEnabled = false;
+      return;
+    }
+
     try {
+      debugPrint('Initializing system tray...');
+
       // Initialize system tray
       await _systemTray.initSystemTray(
         title: "Qur'an & Hadith",
@@ -190,9 +208,12 @@ class NativeDesktopService with WindowListener {
       await _setupSystemTrayMenu();
 
       _systemTrayEnabled = true;
-      debugPrint('System tray initialized');
+      debugPrint('✓ System tray initialized successfully');
     } catch (e) {
-      debugPrint('Error initializing system tray: $e');
+      _systemTrayEnabled = false;
+      debugPrint('✗ System tray initialization failed: $e');
+      debugPrint('  Continuing without system tray support.');
+      // Don't rethrow - allow app to continue without system tray
     }
   }
 
@@ -210,12 +231,20 @@ class NativeDesktopService with WindowListener {
         onClicked: (menuItem) => _onPlayPauseCallback?.call(),
       ),
       MenuItemLabel(
-        label: 'Next',
+        label: 'Next Ayah',
         onClicked: (menuItem) => _onNextCallback?.call(),
       ),
       MenuItemLabel(
-        label: 'Previous',
+        label: 'Previous Ayah',
         onClicked: (menuItem) => _onPreviousCallback?.call(),
+      ),
+      MenuSeparator(),
+      MenuItemLabel(
+        label: 'Search',
+        onClicked: (menuItem) {
+          _showWindow();
+          _onSearchCallback?.call();
+        },
       ),
       MenuSeparator(),
       MenuItemLabel(
@@ -225,6 +254,8 @@ class NativeDesktopService with WindowListener {
     ]);
 
     await _systemTray.setContextMenu(menu);
+    await _systemTray
+        .setToolTip('Qur\'an & Hadith - Audio continues in background');
   }
 
   String _getTrayIconPath() {
@@ -253,6 +284,32 @@ class NativeDesktopService with WindowListener {
       }
     } catch (e) {
       debugPrint('Error updating system tray: $e');
+    }
+  }
+
+  /// Update system tray with playback info
+  Future<void> updatePlaybackInfo({
+    String? surahName,
+    int? ayahNumber,
+    bool isPlaying = false,
+  }) async {
+    if (!_systemTrayEnabled) return;
+
+    try {
+      final status = isPlaying ? '▶' : '⏸';
+      String tooltip = 'Qur\'an & Hadith';
+
+      if (surahName != null && ayahNumber != null) {
+        tooltip = '$status $surahName - Ayah $ayahNumber';
+      } else if (surahName != null) {
+        tooltip = '$status $surahName';
+      } else if (isPlaying) {
+        tooltip = '$status Playing';
+      }
+
+      await _systemTray.setToolTip(tooltip);
+    } catch (e) {
+      debugPrint('Error updating playback info: $e');
     }
   }
 
@@ -346,17 +403,24 @@ class NativeDesktopService with WindowListener {
   void onWindowClose() async {
     final prefs = database.getPreferences();
 
-    if (prefs.enableSystemTray) {
-      // Minimize to tray instead of closing
+    // Only minimize to tray if both enabled AND successfully initialized
+    if (prefs.enableSystemTray && _systemTrayEnabled) {
+      // Minimize to tray instead of closing - audio continues playing
+      debugPrint('Minimizing to tray - audio playback continues in background');
       await _hideWindow();
     } else {
+      // User preference: exit app completely, or system tray not available
+      if (prefs.enableSystemTray && !_systemTrayEnabled) {
+        debugPrint(
+            'System tray requested but not available - exiting normally');
+      }
       await _exitApp();
     }
   }
 
   @override
   void onWindowMinimize() {
-    debugPrint('Window minimized');
+    debugPrint('Window minimized - audio playback continues');
   }
 
   @override

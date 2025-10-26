@@ -7,7 +7,7 @@ class Surah {
   String? _name;
   int? _index;
   Map<String, dynamic>? _verses;
-  String _surahPath;
+  final String _surahPath;
 
   Surah(this._surahPath);
 
