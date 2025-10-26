@@ -125,6 +125,9 @@ class _ModernSearchDialogState extends State<ModernSearchDialog>
 
                 // Results
                 _buildResults(theme),
+                const SizedBox(height: 8),
+                // Subtle keyboard hint footer for better UX
+                _KeyboardHints(),
               ],
             ),
           ),
@@ -415,6 +418,31 @@ class _ModernSearchDialogState extends State<ModernSearchDialog>
               color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small footer widget with keyboard hints
+class _KeyboardHints extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.textTheme.bodySmall?.color?.withOpacity(0.7);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Row(
+        children: [
+          Icon(Icons.keyboard_return, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text('Enter to select',
+              style: theme.textTheme.bodySmall?.copyWith(color: color)),
+          const SizedBox(width: 12),
+          Icon(Icons.keyboard_hide_rounded, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text('Esc to close',
+              style: theme.textTheme.bodySmall?.copyWith(color: color)),
         ],
       ),
     );

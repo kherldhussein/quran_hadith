@@ -76,6 +76,14 @@ class _HadithBookContentState extends State<HadithBookContent> {
       setState(() => _loadingMore = true);
       final res = await api.getHadiths(book: widget.bookSlug, page: page);
       if (!mounted) return;
+
+      debugPrint(
+          'HadithBookContent loaded: ${res.hadiths.length} hadiths, available: ${res.available}');
+      if (res.hadiths.isNotEmpty) {
+        debugPrint(
+            'Sample hadith - arab: "${res.hadiths.first.arab?.substring(0, 50)}", id: "${res.hadiths.first.id?.substring(0, 50)}"');
+      }
+
       setState(() {
         _available = res.available;
         if (append) {
@@ -321,7 +329,7 @@ class _HadithCard extends StatelessWidget {
                                   : FontAwesomeIcons.heart,
                               size: 18,
                               color: isFavorite
-                                  ? Colors.red
+                                  ? theme.colorScheme.secondary
                                   : theme.colorScheme.onSurface
                                       .withOpacity(0.5),
                             ),
@@ -346,38 +354,58 @@ class _HadithCard extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Arabic Text
-                      if (showArabic && (hadith.arab ?? '').isNotEmpty) ...[
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceVariant
-                                .withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            hadith.arab!,
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              height: 1.8,
-                              fontFamily: 'Amiri',
+                      // Content section
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Arabic Text (always show if available, regardless of toggle for better UX)
+                          if ((hadith.arab ?? '').isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant
+                                    .withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                hadith.arab!,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  height: 1.8,
+                                  fontFamily: 'Amiri',
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                            const SizedBox(height: 16),
+                          ],
 
-                      // Translation (id field contains translation)
-                      if ((hadith.id ?? '').isNotEmpty)
-                        Text(
-                          hadith.id!,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.6,
-                            color: theme.colorScheme.onSurface.withOpacity(0.9),
-                          ),
-                        ),
+                          // Translation (id field contains translation)
+                          if ((hadith.id ?? '').isNotEmpty)
+                            Text(
+                              hadith.id!,
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.6,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.9),
+                              ),
+                            ),
+
+                          // Show message if both are empty
+                          if ((hadith.arab ?? '').isEmpty &&
+                              (hadith.id ?? '').isEmpty)
+                            Text(
+                              'No text available for this hadith',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.5),
+                              ),
+                            ),
+                        ],
+                      ),
 
                       const SizedBox(height: 16),
 
