@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
-import 'package:quran_hadith/theme/app_theme.dart';
+// import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/modern_search_dialog.dart';
 import 'package:shimmer/shimmer.dart';
@@ -164,23 +164,14 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
   Widget _buildMainContent(ThemeData theme, bool isDesktop) {
     return Container(
       decoration: BoxDecoration(
-        gradient: theme.brightness == Brightness.dark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  kDarkPrimaryColor,
-                  kDarkPrimaryColor.withOpacity(0.9),
-                ],
-              )
-            : const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xffeef2f5),
-                  Color(0xffe8f4f8),
-                ],
-              ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceVariant.withOpacity(0.9),
+          ],
+        ),
       ),
       child: Column(
         children: [
@@ -200,7 +191,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: theme.colorScheme.onSurface.withOpacity(0.05),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -219,7 +210,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: theme.colorScheme.onSurface.withOpacity(0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -580,7 +571,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
             title: 'Total Books',
             value: '9',
             icon: FontAwesomeIcons.bookQuran,
-            color: Colors.blue,
+            color: theme.colorScheme.primary,
             theme: theme,
           ),
           const SizedBox(height: 16),
@@ -589,7 +580,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
             title: 'Favorites',
             value: '-',
             icon: FontAwesomeIcons.heart,
-            color: Colors.red,
+            color: theme.colorScheme.secondary,
             theme: theme,
             onTap: () {
               // Open the Favorites screen
@@ -618,13 +609,13 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
               children: [
                 Row(
                   children: [
-                    const Icon(FontAwesomeIcons.solidStar,
-                        color: Colors.white, size: 14),
+                    Icon(FontAwesomeIcons.solidStar,
+                        color: theme.colorScheme.onPrimary, size: 14),
                     const SizedBox(width: 8),
                     Text(
                       'HADITH OF THE DAY',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.95),
+                        color: theme.colorScheme.onPrimary.withOpacity(0.95),
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                         letterSpacing: 1.2,
@@ -633,10 +624,10 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Messenger of Allāh ﷺ said: "You will see your Lord on the Day of Resurrection, just as you see the sun and the moon clearly."',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                     fontSize: 14,
                     height: 1.6,
                   ),
@@ -719,7 +710,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
             height: 60,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -767,10 +758,10 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               FontAwesomeIcons.exclamationTriangle,
               size: 64,
-              color: Colors.orange,
+              color: Theme.of(context).colorScheme.tertiary,
             ),
             const SizedBox(height: 20),
             Text(
