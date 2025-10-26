@@ -254,7 +254,8 @@ class TranslationData extends HiveObject {
   final String translator;
 
   @HiveField(4)
-  final Map<String, String> ayahTranslations; // key: surah:ayah, value: translation
+  final Map<String, String>
+      ayahTranslations; // key: surah:ayah, value: translation
 
   @HiveField(5)
   final DateTime cachedAt;
@@ -326,7 +327,8 @@ class UserPreferences extends HiveObject {
     this.showTranslation = true,
     List<String>? enabledTranslations,
     this.enableNotifications = true,
-    this.enableSystemTray = true,
+    this.enableSystemTray =
+        false, // Disabled by default to avoid crashes on Linux without ayatana-appindicator3
     this.theme = 'auto',
     this.enableGlobalShortcuts = false,
   }) : enabledTranslations = enabledTranslations ?? ['en.sahih'];
