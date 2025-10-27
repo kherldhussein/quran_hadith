@@ -169,7 +169,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
           end: Alignment.bottomRight,
           colors: [
             theme.colorScheme.surface,
-            theme.colorScheme.surfaceVariant.withOpacity(0.9),
+            theme.colorScheme.surfaceContainerHighest.withOpacity(0.9),
           ],
         ),
       ),

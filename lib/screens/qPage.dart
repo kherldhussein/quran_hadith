@@ -537,8 +537,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       crossAxisCount = 1; // Mobile
     } else if (screenWidth < 900) {
       crossAxisCount = 2; // Small tablet
-    } else if (screenWidth < 1200) {
-      crossAxisCount = 3; // Large tablet / Small desktop
+    } else if (screenWidth < 1400) {
+      crossAxisCount = 2; // Large tablet / Small desktop
     } else if (screenWidth < 1600) {
       crossAxisCount = 3; // Medium desktop
     } else if (screenWidth < 2000) {

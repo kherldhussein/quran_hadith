@@ -235,8 +235,8 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                 ),
               ),
               FilledButton.icon(
-                onPressed: () => launchUrl(Uri.parse(
-                    'https://github.com/kherld-hussein/quran_hadith')),
+                onPressed: () => launchUrl(
+                    Uri.parse('https://github.com/kherldhussein/quran_hadith')),
                 icon: const FaIcon(FontAwesomeIcons.github, size: 16),
                 label: const Text('GitHub'),
               )
@@ -265,7 +265,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
                   children: [
                     TextButton.icon(
                       onPressed: () => launchUrl(Uri.parse(
-                          'https://github.com/kherld-hussein/quran_hadith')),
+                          'https://github.com/kherldhussein/quran_hadith')),
                       icon: const FaIcon(FontAwesomeIcons.github, size: 16),
                       label: const Text('Repository'),
                     ),
@@ -301,12 +301,12 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
             _LinkButton(
               icon: FontAwesomeIcons.bug,
               label: 'Report a Bug',
-              url: 'https://github.com/kherld-hussein/quran_hadith/issues/',
+              url: 'https://github.com/kherldhussein/quran_hadith/issues/',
             ),
             _LinkButton(
               icon: FontAwesomeIcons.lightbulb,
               label: 'Request Feature',
-              url: 'https://github.com/kherld-hussein/quran_hadith/issues/',
+              url: 'https://github.com/kherldhussein/quran_hadith/issues/',
             ),
             _LinkButton(
               icon: FontAwesomeIcons.heart,
@@ -429,7 +429,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
         ? '—'
         : 'Version ${_info!.version} (build ${_info!.buildNumber})';
     final p = _platformString();
-    final mode = kReleaseMode ? 'Release' : 'Debug/Profile';
+    const mode = kReleaseMode ? 'Release' : 'Debug/Profile';
     return 'Qur’ān Hadith\n$v\nPlatform: $p\nMode: $mode';
   }
 }
