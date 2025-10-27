@@ -6,12 +6,32 @@ class ThemeState extends ChangeNotifier {
 
   bool get isDarkMode => _isDarkMode;
 
-  void updateTheme() async {
+  /// Update theme (toggle) - instantly notifies all listeners
+  void updateTheme() {
     _isDarkMode = !_isDarkMode;
-    await SpUtil.setThemed(_isDarkMode);
+    // Fire notifyListeners BEFORE saving to SharedPreferences for instant UI update
     notifyListeners();
+    // Save asynchronously to not block UI
+    SpUtil.setThemed(_isDarkMode).catchError((e) {
+      debugPrint('❌ Failed to save theme preference: $e');
+      return false;
+    });
   }
 
+  /// Set theme to a specific mode (not toggle) - instantly notifies all listeners
+  void setTheme(bool isDark) {
+    if (_isDarkMode == isDark) return; // No change needed
+    _isDarkMode = isDark;
+    // Fire notifyListeners BEFORE saving to SharedPreferences for instant UI update
+    notifyListeners();
+    // Save asynchronously to not block UI
+    SpUtil.setThemed(_isDarkMode).catchError((e) {
+      debugPrint('❌ Failed to save theme preference: $e');
+      return false;
+    });
+  }
+
+  /// Load theme at startup (synchronous for initial state)
   Future<void> loadTheme(bool dark) async {
     _isDarkMode = dark;
     notifyListeners();
