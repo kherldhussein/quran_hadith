@@ -13,8 +13,8 @@ class ReciterService {
   final Dio _client = Dio(
     BaseOptions(
       baseUrl: 'https://api.qurancdn.com/api/qdc/audio',
-      connectTimeout: const Duration(seconds: 10).inMilliseconds,
-      receiveTimeout: const Duration(seconds: 10).inMilliseconds,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
     ),
   );
 

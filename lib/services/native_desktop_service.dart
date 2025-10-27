@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:system_tray/system_tray.dart';
 import 'package:quran_hadith/database/database_service.dart';
 
 /// Native desktop features service
@@ -16,8 +15,6 @@ class NativeDesktopService with WindowListener {
   NativeDesktopService._internal();
 
   // Services
-  final SystemTray _systemTray =
-      SystemTray(); // Todo - requires ayatana-appindicator3 on Linux
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
   // final AppWindow _appWindow = AppWindow();
@@ -177,140 +174,16 @@ class NativeDesktopService with WindowListener {
   }
 
   // ============ SYSTEM TRAY ============
-  // Todo - requires ayatana-appindicator3 on Linux
+  // System tray functionality removed due to Linux dependency issues
 
   Future<void> _initializeSystemTray() async {
-    if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) return;
-
-    // On Linux, warn but don't attempt if likely to fail
-    if (Platform.isLinux) {
-      debugPrint('⚠️  System tray requested on Linux');
-      debugPrint(
-          '   This requires: ayatana-appindicator3-0.1 libayatana-appindicator3-dev');
-      debugPrint(
-          '   Install with: sudo apt-get install ayatana-appindicator3-0.1 libayatana-appindicator3-dev');
-      debugPrint('   Skipping system tray initialization to prevent crash.');
-      debugPrint('   You can enable it after installing the library.');
-      _systemTrayEnabled = false;
-      return;
-    }
-
-    try {
-      debugPrint('Initializing system tray...');
-
-      // Initialize system tray
-      await _systemTray.initSystemTray(
-        title: "Qur'an & Hadith",
-        iconPath: _getTrayIconPath(),
-      );
-
-      // Set menu
-      await _setupSystemTrayMenu();
-
-      _systemTrayEnabled = true;
-      debugPrint('✓ System tray initialized successfully');
-    } catch (e) {
-      _systemTrayEnabled = false;
-      debugPrint('✗ System tray initialization failed: $e');
-      debugPrint('  Continuing without system tray support.');
-      // Don't rethrow - allow app to continue without system tray
-    }
+    // System tray disabled - not available on all platforms
+    _systemTrayEnabled = false;
+    debugPrint('System tray disabled on this platform');
   }
 
   Future<void> _setupSystemTrayMenu() async {
-    final Menu menu = Menu();
-
-    await menu.buildFrom([
-      MenuItemLabel(
-        label: 'Show Window',
-        onClicked: (menuItem) => _showWindow(),
-      ),
-      MenuSeparator(),
-      MenuItemLabel(
-        label: 'Play/Pause',
-        onClicked: (menuItem) => _onPlayPauseCallback?.call(),
-      ),
-      MenuItemLabel(
-        label: 'Next Ayah',
-        onClicked: (menuItem) => _onNextCallback?.call(),
-      ),
-      MenuItemLabel(
-        label: 'Previous Ayah',
-        onClicked: (menuItem) => _onPreviousCallback?.call(),
-      ),
-      MenuSeparator(),
-      MenuItemLabel(
-        label: 'Search',
-        onClicked: (menuItem) {
-          _showWindow();
-          _onSearchCallback?.call();
-        },
-      ),
-      MenuSeparator(),
-      MenuItemLabel(
-        label: 'Exit',
-        onClicked: (menuItem) => _exitApp(),
-      ),
-    ]);
-
-    await _systemTray.setContextMenu(menu);
-    await _systemTray
-        .setToolTip('Qur\'an & Hadith - Audio continues in background');
-  }
-
-  String _getTrayIconPath() {
-    if (Platform.isWindows) {
-      return 'assets/images/tray_icon.ico';
-    } else if (Platform.isMacOS) {
-      return 'assets/images/tray_icon.png';
-    } else {
-      return 'assets/images/tray_icon.png';
-    }
-  }
-
-  /// Update system tray
-  Future<void> updateSystemTray({
-    String? title,
-    String? tooltip,
-  }) async {
-    if (!_systemTrayEnabled) return;
-
-    try {
-      if (title != null) {
-        await _systemTray.setTitle(title);
-      }
-      if (tooltip != null) {
-        await _systemTray.setToolTip(tooltip);
-      }
-    } catch (e) {
-      debugPrint('Error updating system tray: $e');
-    }
-  }
-
-  /// Update system tray with playback info
-  Future<void> updatePlaybackInfo({
-    String? surahName,
-    int? ayahNumber,
-    bool isPlaying = false,
-  }) async {
-    if (!_systemTrayEnabled) return;
-
-    try {
-      final status = isPlaying ? '▶' : '⏸';
-      String tooltip = 'Qur\'an & Hadith';
-
-      if (surahName != null && ayahNumber != null) {
-        tooltip = '$status $surahName - Ayah $ayahNumber';
-      } else if (surahName != null) {
-        tooltip = '$status $surahName';
-      } else if (isPlaying) {
-        tooltip = '$status Playing';
-      }
-
-      await _systemTray.setToolTip(tooltip);
-    } catch (e) {
-      debugPrint('Error updating playback info: $e');
-    }
+    // Not implemented
   }
 
   // ============ HOTKEYS ============
@@ -445,12 +318,8 @@ class NativeDesktopService with WindowListener {
   // ============ FEATURE TOGGLES ============
 
   Future<void> enableSystemTray(bool enable) async {
-    if (enable && !_systemTrayEnabled) {
-      await _initializeSystemTray();
-    } else if (!enable && _systemTrayEnabled) {
-      await _systemTray.destroy();
-      _systemTrayEnabled = false;
-    }
+    // System tray functionality is disabled
+    debugPrint('System tray is not available on this platform');
   }
 
   Future<void> enableNotifications(bool enable) async {
@@ -474,10 +343,6 @@ class NativeDesktopService with WindowListener {
   Future<void> dispose() async {
     try {
       windowManager.removeListener(this);
-
-      if (_systemTrayEnabled) {
-        await _systemTray.destroy();
-      }
 
       if (_hotkeysEnabled) {
         await hotKeyManager.unregisterAll();
