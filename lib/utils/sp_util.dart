@@ -90,7 +90,8 @@ class SpUtil {
   }
 
   // ============ THEME ============
-  static bool getThemed() => appSP.getBool(StorageKeys.isDarkMode);
+  static bool getThemed() =>
+      appSP.getBool(StorageKeys.isDarkMode, defaultValue: false);
 
   static Future<bool> setThemed(bool value) {
     return appSP.setBool(StorageKeys.isDarkMode, value);

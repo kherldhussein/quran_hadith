@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// debugPrint is already imported via foundation.dart above
 
 /// Custom exceptions for Shared Preferences operations
 class StorageException implements Exception {
@@ -55,7 +58,7 @@ class SharedP {
       // Do not throw - mark as not initialized and log. Callers will
       // attempt lazy-initialization and proceed with defaults if needed.
       _isInitialized = false;
-      print('Warning: Failed to initialize SharedPreferences: $e');
+      debugPrint('⚠️ Failed to initialize SharedPreferences: $e');
     }
   }
 
@@ -70,7 +73,8 @@ class SharedP {
         await init();
       } catch (e) {
         // Log but don't throw - provide graceful degradation
-        print('Warning: Failed to auto-initialize SharedPreferences: $e');
+        debugPrint(
+            '⚠️ Warning: Failed to auto-initialize SharedPreferences: $e');
         // Return without throwing to allow app to continue
       }
     }
