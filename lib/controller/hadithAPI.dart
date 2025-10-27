@@ -46,10 +46,12 @@ class HadithAPI {
       cachedAt = database.getHadithBooksCachedAt(languageCode);
       if (cachedRaw != null && cachedRaw.isNotEmpty && !_isStale(cachedAt)) {
         final books = cachedRaw.map((m) {
+          // Support both 'id' and 'slug' fields for backward compatibility
+          final bookId = (m['id'] as String?) ?? (m['slug'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
-            slug: (m['slug'] as String?) ?? '',
-            total: _asInt(m['total']),
+            slug: bookId,
+            total: _asInt(m['available']) ?? _asInt(m['total']),
           );
         }).toList();
         _hadithBooksCache[languageCode] = books;
@@ -75,9 +77,10 @@ class HadithAPI {
       List<HadithBook> fetchedBooks = list.map((raw) {
         final e = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
         final name = _getLocalizedBookName(e['name'] as String?, languageCode);
-        final slug = (e['slug'] as String?) ?? '';
-        final total = _asInt(e['total']);
-        return HadithBook(name: name, slug: slug, total: total);
+        // API returns 'id' field as the book identifier, not 'slug'
+        final bookId = (e['id'] as String?) ?? (e['slug'] as String?) ?? '';
+        final available = _asInt(e['available']) ?? _asInt(e['total']);
+        return HadithBook(name: name, slug: bookId, total: available);
       }).toList();
 
       // Store in memory and DB cache
@@ -86,7 +89,11 @@ class HadithAPI {
         await database.cacheHadithBooks(
             languageCode,
             fetchedBooks
-                .map((b) => {'name': b.name, 'slug': b.slug, 'total': b.total})
+                .map((b) => {
+                      'name': b.name,
+                      'id': b.slug, // Store as 'id' to match API response
+                      'available': b.total
+                    })
                 .toList());
       } catch (e) {
         print('Failed to persist Hadith books cache: $e');
@@ -98,10 +105,12 @@ class HadithAPI {
       // Stale-if-error: return cached books even if stale
       if (cachedRaw != null && cachedRaw.isNotEmpty) {
         final books = cachedRaw.map((m) {
+          // Support both 'id' and 'slug' fields for backward compatibility
+          final bookId = (m['id'] as String?) ?? (m['slug'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
-            slug: (m['slug'] as String?) ?? '',
-            total: _asInt(m['total']),
+            slug: bookId,
+            total: _asInt(m['available']) ?? _asInt(m['total']),
           );
         }).toList();
         _hadithBooksCache[languageCode] = books;
@@ -177,18 +186,53 @@ class HadithAPI {
         final rawItems = data['hadiths'];
         if (rawItems is List) items = rawItems;
         name = data['name'] as String?;
-        available = _asInt(data['available']) ?? 0;
+        // Try multiple fields for available count
+        available = _asInt(data['available']) ??
+            _asInt(data['total']) ??
+            _asInt(data['hadithCount']) ??
+            items.length;
       } else if (data is List) {
         // Some API shapes may return the list directly
         items = data;
+        available = items.length;
+      } else if (body is Map<String, dynamic> && body.containsKey('hadiths')) {
+        // Try root level
+        items = body['hadiths'] is List ? body['hadiths'] : [];
+        available =
+            _asInt(body['available']) ?? _asInt(body['total']) ?? items.length;
+      }
+
+      // Fallback: use items length if available is still 0
+      if (available == 0 && items.isNotEmpty) {
+        available = items.length;
       }
 
       final hadiths = items.map((raw) {
         final e = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
+        // Exhaustively extract all available hadith content fields
+        String? arabic = e['arab'] as String?;
+        String? translation = e['id'] as String?;
+
+        // Fallback to alternatives if primary fields are empty
+        if ((arabic == null || arabic.isEmpty) && e['arabic'] != null) {
+          arabic = (e['arabic'] as String?);
+        }
+        if ((arabic == null || arabic.isEmpty) && e['text_arab'] != null) {
+          arabic = (e['text_arab'] as String?);
+        }
+        if ((translation == null || translation.isEmpty) &&
+            e['translation'] != null) {
+          translation = (e['translation'] as String?);
+        }
+        if ((translation == null || translation.isEmpty) &&
+            e['text_id'] != null) {
+          translation = (e['text_id'] as String?);
+        }
+
         return HadithItem(
           number: (e['number'] ?? '').toString(),
-          arab: (e['arab'] as String?) ?? '',
-          id: (e['id'] as String?) ?? '',
+          arab: arabic ?? '',
+          id: translation ?? '',
         );
       }).toList();
 
