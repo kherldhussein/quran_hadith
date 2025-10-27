@@ -57,11 +57,11 @@ jobs:
       - name: Build web (release)
         run: flutter build web --release
 
-      - name: Upload web artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: build/web
+      #      - name: Upload web artifact
+      # uses: actions/upload-artifact@v4
+      # with:
+      # name: web-build
+      # path: build/web
 
   build-desktop:
     name: Build Desktop (${% raw %}{{ matrix.os }}{% endraw %})
