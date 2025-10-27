@@ -233,7 +233,7 @@ class _HadithBookContentState extends State<HadithBookContent> {
           height: 200,
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
             borderRadius: BorderRadius.circular(16),
           ),
         );
@@ -363,7 +363,7 @@ class _HadithCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant
+                                color: theme.colorScheme.surfaceContainerHighest
                                     .withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),

@@ -83,7 +83,8 @@ class AnalyticsDashboard extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: score / 100,
                 strokeWidth: 12,
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
               ),
             ),
@@ -250,7 +251,7 @@ class CompactAnalytics extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
