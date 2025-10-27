@@ -182,10 +182,6 @@ class NativeDesktopService with WindowListener {
     debugPrint('System tray disabled on this platform');
   }
 
-  Future<void> _setupSystemTrayMenu() async {
-    // Not implemented
-  }
-
   // ============ HOTKEYS ============
 
   Future<void> _initializeHotkeys() async {
@@ -253,11 +249,6 @@ class NativeDesktopService with WindowListener {
   }
 
   // ============ WINDOW MANAGEMENT ============
-
-  Future<void> _showWindow() async {
-    await windowManager.show();
-    await windowManager.focus();
-  }
 
   Future<void> _hideWindow() async {
     await windowManager.hide();

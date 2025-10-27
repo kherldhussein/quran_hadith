@@ -34,7 +34,10 @@ class ReciterService {
   Future<void> initializeCurrentReciter() async {
     try {
       await appSP.init();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint(
+          '⚠️ ReciterService: Failed to initialize SharedPreferences: $e');
+    }
     final fromSettings =
         appSP.getString('selectedReciter', defaultValue: '').trim();
     final fromLegacy = SpUtil.getReciter();
@@ -123,7 +126,9 @@ class ReciterService {
     final searchSpace = within ?? _inMemory ?? database.getCachedReciters();
     try {
       return searchSpace.firstWhere((reciter) => reciter.id == id);
-    } catch (_) {
+    } catch (e) {
+      debugPrint(
+          '⚠️ ReciterService: Reciter $id not found in search space: $e');
       return Reciter.fallback.firstWhere(
         (reciter) => reciter.id == id,
         orElse: () => Reciter.fallback.first,
