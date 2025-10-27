@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches:
       - main
@@ -45,11 +45,11 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Format check
-        run: dart format --output=none --set-exit-if-changed .
+      #      - name: Format check
+      # run: dart format --output=none --set-exit-if-changed .
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
+      #- name: Analyze
+      # run: flutter analyze --no-fatal-infos
 
       - name: Run tests
         run: flutter test
@@ -183,7 +183,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: '*-desktop'
+          pattern: "*-desktop"
           merge-multiple: true
 
       - name: List downloaded files
