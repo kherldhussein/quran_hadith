@@ -1,12 +1,12 @@
 name: quran-hadith
 version: 0.1.0
-summary: Qur’ān Hadith
+summary: Qur'ān Hadith
 description: |
-  Qur’ān Hadith is an Online Quran and Hadith application with fashion interface,
+  Qur'ān Hadith is an Online Quran and Hadith application with fashion interface,
   smooth performance and more features to sharpens your focus on what you are reading or listening.
 
 confinement: strict
-base: core18
+base: core22
 grade: stable # must be 'stable' to release into candidate/stable channels
 
 slots:
