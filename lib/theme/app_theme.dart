@@ -188,7 +188,7 @@ ThemeData get theme {
       ),
       backgroundColor: kLight,
     ),
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       brightness: Brightness.light,
       primary: kAccentColor,
       onPrimary: kTextLighter,
@@ -198,10 +198,8 @@ ThemeData get theme {
       onTertiary: kTextLighter,
       surface: kLight,
       onSurface: kTextDark,
-      surfaceVariant: kLightPrimaryColor,
+      surfaceContainerHighest: kLightPrimaryColor,
       onSurfaceVariant: kTextDark,
-      background: kBackgroundLight,
-      onBackground: kTextDarker,
       error: Colors.red,
       onError: kTextLighter,
       outline: kIconDark,
