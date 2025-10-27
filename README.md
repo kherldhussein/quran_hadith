@@ -22,7 +22,7 @@ Prerequisites: Flutter >= 3.3, Dart >= 3.3
 
 1) Clone and install dependencies
 ```bash
-git clone https://github.com/kherld-hussein/quran_hadith.git
+git clone https://github.com/kherldhussein/quran_hadith.git
 cd quran_hadith
 flutter pub get
 ```
@@ -55,6 +55,6 @@ MIT License. See the LICENSE file for details.
 
 ## Contact
 
-- Developer: Kherld Hussein
-- GitHub: https://github.com/kherld-hussein
-- Repository: https://github.com/kherld-hussein/quran_hadith
+- Developer: Khalid Hussein
+- GitHub: https://github.com/kherldhussein
+- Repository: https://github.com/kherldhussein/quran_hadith
