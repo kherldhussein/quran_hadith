@@ -367,30 +367,70 @@ class _HadithCard extends StatelessWidget {
                                     .withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text(
-                                hadith.arab!,
-                                textAlign: TextAlign.right,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  height: 1.8,
-                                  fontFamily: 'Amiri',
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'النص العربي',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    hadith.arab!,
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      height: 2.0,
+                                      fontFamily: 'Amiri',
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 16),
                           ],
 
                           // Translation (id field contains translation)
-                          if ((hadith.id ?? '').isNotEmpty)
-                            Text(
-                              hadith.id!,
-                              style: TextStyle(
-                                fontSize: 15,
-                                height: 1.6,
-                                color: theme.colorScheme.onSurface
-                                    .withOpacity(0.9),
+                          if ((hadith.id ?? '').isNotEmpty) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest
+                                    .withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'الترجمة',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.6),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    hadith.id!,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      height: 1.8,
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.9),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                          ],
 
                           // Show message if both are empty
                           if ((hadith.arab ?? '').isEmpty &&
