@@ -78,10 +78,13 @@ class _HadithBookContentState extends State<HadithBookContent> {
       if (!mounted) return;
 
       debugPrint(
-          'HadithBookContent loaded: ${res.hadiths.length} hadiths, available: ${res.available}');
+          '✅ HadithBookContent loaded page $page: ${res.hadiths.length} hadiths, available: ${res.available}');
       if (res.hadiths.isNotEmpty) {
+        final firstHadith = res.hadiths.first;
         debugPrint(
-            'Sample hadith - arab: "${res.hadiths.first.arab?.substring(0, 50)}", id: "${res.hadiths.first.id?.substring(0, 50)}"');
+            '   First hadith - number: ${firstHadith.number}, arab: "${firstHadith.arab?.substring(0, 50).replaceAll('\n', ' ')}", id: "${firstHadith.id?.substring(0, 50).replaceAll('\n', ' ')}"');
+      } else {
+        debugPrint('   ⚠️  EMPTY response - hadiths list is empty!');
       }
 
       setState(() {
@@ -93,7 +96,7 @@ class _HadithBookContentState extends State<HadithBookContent> {
         }
       });
     } catch (e) {
-      debugPrint('HadithBookContent _loadPage error: $e');
+      debugPrint('❌ HadithBookContent _loadPage error: $e');
     } finally {
       if (mounted) setState(() => _loadingMore = false);
     }
@@ -310,7 +313,8 @@ class _HadithCard extends StatelessWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color:
+                                  theme.colorScheme.primary.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -318,7 +322,7 @@ class _HadithCard extends StatelessWidget {
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 13,
                               ),
                             ),
                           ),
