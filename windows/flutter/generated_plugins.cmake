@@ -8,14 +8,14 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_window
   hotkey_manager_windows
   platform_device_id_windows
-  screen_retriever
+  screen_retriever_windows
   share_plus
-  system_tray
   url_launcher_windows
   window_manager
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  flutter_local_notifications_windows
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
