@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:quran_hadith/database/database_service.dart';
 
@@ -59,7 +60,7 @@ class HadithAPI {
       }
     } catch (e) {
       // Non-fatal: fall back to network
-      print('Hadith books local cache error: $e');
+      debugPrint('⚠️ Hadith books local cache error: $e');
     }
 
     try {
@@ -96,12 +97,12 @@ class HadithAPI {
                     })
                 .toList());
       } catch (e) {
-        print('Failed to persist Hadith books cache: $e');
+        debugPrint('⚠️ Failed to persist Hadith books cache: $e');
       }
 
       return HadithFetchSuccess(fetchedBooks);
     } catch (e) {
-      print('Error fetching Hadith books: $e');
+      debugPrint('❌ Error fetching Hadith books: $e');
       // Stale-if-error: return cached books even if stale
       if (cachedRaw != null && cachedRaw.isNotEmpty) {
         final books = cachedRaw.map((m) {
@@ -161,7 +162,7 @@ class HadithAPI {
         );
       }
     } catch (e) {
-      print('Hadith page local cache error: $e');
+      debugPrint('⚠️ Hadith page local cache error: $e');
     }
 
     try {
@@ -260,12 +261,12 @@ class HadithAPI {
           },
         );
       } catch (e) {
-        print('Failed to persist Hadith page cache: $e');
+        debugPrint('⚠️ Failed to persist Hadith page cache: $e');
       }
 
       return pageObj;
     } catch (e) {
-      print('Error fetching hadiths: $e');
+      debugPrint('❌ Error fetching hadiths: $e');
       // Stale-if-error: return cached page even if stale
       if (cached != null) {
         final items = (cached['hadiths'] as List? ?? [])
