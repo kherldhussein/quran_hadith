@@ -29,7 +29,7 @@ class HadithDetailPage extends StatelessWidget {
             onPressed: () {
               // Favoriting handled by FavoriteManager on previous screen
               Get.snackbar('Saved', 'Hadith saved to favorites',
-                  snackPosition: SnackPosition.BOTTOM);
+                  snackPosition: SnackPosition.bottom);
             },
           )
         ],
@@ -89,7 +89,7 @@ class HadithDetailPage extends StatelessWidget {
                   onPressed: () {
                     // Simple share placeholder
                     Get.snackbar('Share', 'Share hadith',
-                        snackPosition: SnackPosition.BOTTOM);
+                        snackPosition: SnackPosition.bottom);
                   },
                 ),
                 OutlinedButton.icon(
@@ -98,7 +98,7 @@ class HadithDetailPage extends StatelessWidget {
                   onPressed: () {
                     // Copy handled by Clipboard typically
                     Get.snackbar('Copied', 'Hadith copied to clipboard',
-                        snackPosition: SnackPosition.BOTTOM);
+                        snackPosition: SnackPosition.bottom);
                   },
                 ),
               ],
