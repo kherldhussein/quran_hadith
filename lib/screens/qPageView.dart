@@ -510,7 +510,7 @@ class _QPageViewState extends State<QPageView>
     }
   }
 
-  /// Save listening progress to database
+  /// Save listening progress to database with realistic time calculation
   Future<void> _saveListeningProgress(int ayahNumber, int positionMs) async {
     if (widget.suratNo == null) return;
 
@@ -520,14 +520,30 @@ class _QPageViewState extends State<QPageView>
         ayahNumber,
       );
 
-      final listenTime = currentProgress?.totalListenTimeSeconds ?? 0;
+      // Calculate realistic listening time based on current position and previous position
+      int addedListenTime = 0;
+      if (currentProgress != null) {
+        // If we already have progress for this ayah, add the delta
+        final previousPosition = currentProgress.positionMs;
+        addedListenTime = ((positionMs - previousPosition) ~/ 1000).abs();
+
+        // Clamp to reasonable value (0-300 seconds = 0-5 minutes per save)
+        addedListenTime = addedListenTime.clamp(0, 300);
+      } else {
+        // First time listening to this ayah: estimate based on typical ayah length
+        // Most ayahs are 30-90 seconds, so estimate 45 seconds
+        addedListenTime = 45;
+      }
+
+      final previousTotal = currentProgress?.totalListenTimeSeconds ?? 0;
+      final newTotalListenTime = previousTotal + addedListenTime;
 
       final progress = ListeningProgress(
         surahNumber: widget.suratNo!,
         ayahNumber: ayahNumber,
         positionMs: positionMs,
         lastListenedAt: DateTime.now(),
-        totalListenTimeSeconds: listenTime + 5,
+        totalListenTimeSeconds: newTotalListenTime,
         completed: false,
         reciter: ReciterService.instance.currentReciterId.value,
         playbackSpeed: SpUtil.getAudioSpeed(),
@@ -535,9 +551,9 @@ class _QPageViewState extends State<QPageView>
 
       await database.saveListeningProgress(progress);
       debugPrint(
-          'Saved listening progress: Surah ${widget.suratNo}, Ayah $ayahNumber');
+          '⏱️ Listening: Surah ${widget.suratNo}, Ayah $ayahNumber - Added ${addedListenTime}s (Total: ${newTotalListenTime}s)');
     } catch (e) {
-      debugPrint('Error saving listening progress: $e');
+      debugPrint('❌ Error saving listening progress: $e');
     }
   }
 

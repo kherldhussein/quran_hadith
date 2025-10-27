@@ -171,32 +171,70 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     List<ListeningProgress> listeningHistory,
   ) {
     final now = DateTime.now();
+    // Generate data for last 7 days (from 6 days ago to today)
     final weeklyData = List.generate(7, (index) {
-      final date = now.subtract(Duration(days: 6 - index));
+      final date = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: 6 - index));
+
       return {
         'date': date,
         'day': _getDayName(date.weekday),
+        'dayShort': _getDayShort(date),
         'reading': 0,
         'listening': 0,
       };
     });
 
+    // Aggregate reading history by day
     for (final item in readingHistory) {
-      final dayIndex = 6 - now.difference(item.lastReadAt).inDays;
-      if (dayIndex >= 0 && dayIndex < 7) {
-        weeklyData[dayIndex]['reading'] =
-            (weeklyData[dayIndex]['reading'] as int) +
-                (item.totalTimeSpentSeconds ~/ 60);
+      final itemDate = DateTime(
+        item.lastReadAt.year,
+        item.lastReadAt.month,
+        item.lastReadAt.day,
+      );
+
+      // Find matching date in weekly data
+      for (int i = 0; i < weeklyData.length; i++) {
+        final weekDate = weeklyData[i]['date'] as DateTime;
+        if (itemDate.year == weekDate.year &&
+            itemDate.month == weekDate.month &&
+            itemDate.day == weekDate.day) {
+          weeklyData[i]['reading'] = (weeklyData[i]['reading'] as int) +
+              (item.totalTimeSpentSeconds ~/ 60);
+          break;
+        }
       }
     }
 
+    // Aggregate listening history by day
     for (final item in listeningHistory) {
-      final dayIndex = 6 - now.difference(item.lastListenedAt).inDays;
-      if (dayIndex >= 0 && dayIndex < 7) {
-        weeklyData[dayIndex]['listening'] =
-            (weeklyData[dayIndex]['listening'] as int) +
-                (item.totalListenTimeSeconds ~/ 60);
+      final itemDate = DateTime(
+        item.lastListenedAt.year,
+        item.lastListenedAt.month,
+        item.lastListenedAt.day,
+      );
+
+      // Find matching date in weekly data
+      for (int i = 0; i < weeklyData.length; i++) {
+        final weekDate = weeklyData[i]['date'] as DateTime;
+        if (itemDate.year == weekDate.year &&
+            itemDate.month == weekDate.month &&
+            itemDate.day == weekDate.day) {
+          weeklyData[i]['listening'] = (weeklyData[i]['listening'] as int) +
+              (item.totalListenTimeSeconds ~/ 60);
+          break;
+        }
       }
+    }
+
+    debugPrint('📊 Weekly Activity Data:');
+    for (final day in weeklyData) {
+      debugPrint(
+        '  ${day['dayShort']}: Reading ${day['reading']}min, Listening ${day['listening']}min',
+      );
     }
 
     return weeklyData;
@@ -220,6 +258,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   String _getDayName(int weekday) {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days[weekday - 1];
+  }
+
+  String _getDayShort(DateTime date) {
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return dayNames[date.weekday - 1];
   }
 
   @override

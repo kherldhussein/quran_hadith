@@ -11,12 +11,7 @@ import '../layout/adaptive.dart';
 import '../theme/app_theme.dart';
 
 void showAboutDialog() {
-  // Desktop: open as a dedicated page to feel like a separate window
-  if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
-    Get.to(() => const AboutStandalonePage(), routeName: '/about');
-    return;
-  }
-  // Mobile/Web: show as a dialog
+  // Show as a dialog on all platforms
   Get.dialog(
     const AboutDialogSheet(),
     name: 'About QH',
@@ -25,7 +20,6 @@ void showAboutDialog() {
   );
 }
 
-/// todo: Implement native Linux tab - Scroll from the bottom
 class AboutDialogSheet extends StatelessWidget {
   const AboutDialogSheet({super.key});
 
@@ -38,55 +32,14 @@ class AboutDialogSheet extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 820, maxHeight: 680),
-        child: const AboutView(standalone: false),
-      ),
-    );
-  }
-}
-
-/// Desktop standalone page that feels like a separate window of the app
-class AboutStandalonePage extends StatelessWidget {
-  const AboutStandalonePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('About Qur’ān Hadith'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            icon: const FaIcon(FontAwesomeIcons.circleXmark, size: 18),
-            onPressed: () => Navigator.of(context).maybePop(),
-          )
-        ],
-      ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 980),
-          margin: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.canvasColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(context)
-                  .dividerColor
-                  .withAlpha((0.15 * 255).round()),
-            ),
-          ),
-          child: const AboutView(standalone: true),
-        ),
+        child: const AboutView(),
       ),
     );
   }
 }
 
 class AboutView extends StatefulWidget {
-  final bool standalone; // true when shown as a standalone page on desktop
-  const AboutView({super.key, this.standalone = false});
+  const AboutView({super.key});
 
   @override
   AboutViewState createState() => AboutViewState();
@@ -118,8 +71,9 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     try {
       final info = await PackageInfo.fromPlatform();
       if (mounted) setState(() => _info = info);
-    } catch (_) {
-      // ignore
+    } catch (e) {
+      debugPrint('⚠️ Failed to load package info: $e');
+      // Continue without package info
     }
   }
 
@@ -133,27 +87,10 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
         elevation: 0,
         scrolledUnderElevation: 0,
         backgroundColor: Theme.of(context).canvasColor,
-        title: const Text('About Qur’ān Hadith'),
+        title: Text('About Qur\'ān Hadith'),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
-          if (!widget.standalone &&
-              !kIsWeb &&
-              (Platform.isLinux || Platform.isWindows || Platform.isMacOS))
-            Padding(
-              padding: const EdgeInsets.only(right: 4.0),
-              child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Get.to(() => const AboutStandalonePage(),
-                      routeName: '/about');
-                },
-                icon: const FaIcon(
-                    FontAwesomeIcons.upRightAndDownLeftFromCenter,
-                    size: 14),
-                label: const Text('Open window'),
-              ),
-            ),
           IconButton(
             icon: const FaIcon(FontAwesomeIcons.circleXmark),
             tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
@@ -375,7 +312,8 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     if (kIsWeb) return 'Web';
     try {
       return '${Platform.operatingSystem} ${Platform.version.split(' ').first}';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('⚠️ Failed to get platform info: $e');
       return 'Unknown';
     }
   }

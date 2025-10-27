@@ -65,38 +65,42 @@ class _SettingsState extends State<Settings> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final themeState = Provider.of<ThemeState>(context);
+    return Consumer<ThemeState>(
+      builder: (context, themeState, _) {
+        final theme = Theme.of(context);
 
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: theme.appBarTheme.backgroundColor,
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
+        if (_isLoading) {
+          return Scaffold(
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: theme.appBarTheme.backgroundColor,
-      body: Row(
-        children: [
-          // Settings Navigation Sidebar
-          Container(
-            width: 240,
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              border: Border(
-                right: BorderSide(color: theme.dividerColor.withOpacity(0.2)),
+        return Scaffold(
+          backgroundColor: theme.appBarTheme.backgroundColor,
+          body: Row(
+            children: [
+              // Settings Navigation Sidebar
+              Container(
+                width: 240,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  border: Border(
+                    right:
+                        BorderSide(color: theme.dividerColor.withOpacity(0.2)),
+                  ),
+                ),
+                child: _buildSettingsNav(theme),
               ),
-            ),
-            child: _buildSettingsNav(theme),
-          ),
 
-          // Settings Content
-          Expanded(
-            child: _buildSettingsContent(theme, themeState),
+              // Settings Content
+              Expanded(
+                child: _buildSettingsContent(theme, themeState),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -223,9 +227,11 @@ class _SettingsState extends State<Settings> {
               title: 'Dark Mode',
               subtitle: 'Switch to dark theme',
               value: _preferences.isDarkMode,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() => _preferences.isDarkMode = value);
-                themeState.updateTheme();
+                // Sync with both SharedPreferences and Hive database
+                await SpUtil.setThemed(value);
+                themeState.setTheme(value);
                 _savePreferences();
               },
               theme: theme,

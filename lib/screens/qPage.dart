@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
+import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:quran_hadith/widgets/modern_search_dialog.dart';
@@ -16,6 +17,7 @@ import 'package:quran_hadith/database/hive_adapters.dart';
 import '../controller/favorite.dart';
 import '../controller/random_ayah.dart';
 import '../models/surah_model.dart';
+import './qPageView.dart';
 
 class QPage extends StatefulWidget {
   const QPage({super.key});
@@ -33,7 +35,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   String _userName = 'Ahmad';
   String _verseText = 'Loading Ayah of the Day...';
   bool _isLoadingVerse = false;
-  String _sortBy = 'Order';
+  String _sortBy = 'Order'; // 'Order', 'Alphabet', 'Total Ayah', 'Para'
   List<Surah> _allSurahs = [];
 
   // Real-time data
@@ -308,36 +310,40 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final isDesktop = size.width >= 768;
+    return Consumer<ThemeState>(
+      builder: (context, themeState, _) {
+        final theme = Theme.of(context);
+        final size = MediaQuery.of(context).size;
+        final isDesktop = size.width >= 768;
 
-    return Scaffold(
-      backgroundColor: theme.appBarTheme.backgroundColor,
-      body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: _buildMainContent(theme, isDesktop),
-            ),
+        return Scaffold(
+          backgroundColor: theme.appBarTheme.backgroundColor,
+          body: SafeArea(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildMainContent(theme, isDesktop),
+                ),
 
-            // Sidebar (Right Side) - Fixed width
-            Container(
-              width: 320,
-              decoration: BoxDecoration(
-                  color: theme.appBarTheme.backgroundColor,
-                  border: Border(
-                    left: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.1),
-                    ),
-                  )),
-              child: _buildSidebar(theme),
+                // Sidebar (Right Side) - Fixed width
+                Container(
+                  width: 320,
+                  decoration: BoxDecoration(
+                      color: theme.appBarTheme.backgroundColor,
+                      border: Border(
+                        left: BorderSide(
+                          color: theme.dividerColor.withOpacity(0.1),
+                        ),
+                      )),
+                  child: _buildSidebar(theme),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -458,7 +464,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _sortBy,
-                items: ['Order', 'Alphabet'].map((String value) {
+                items: ['Order', 'Alphabet', 'Total Ayah', 'Para']
+                    .map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(
@@ -520,10 +527,17 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       hintText: 'Search by name, translation, or number...',
       onItemSelected: (item) {
         final surah = item.data as Surah;
-        Get.toNamed('/qPageView', arguments: {
-          'suratNo': surah.number,
-          'ayahNo': 1,
-        });
+        Get.to(
+          () => QPageView(
+            ayahList: surah.ayahs,
+            suratName: surah.name,
+            suratEnglishName: surah.englishName,
+            englishMeaning: surah.englishNameTranslation,
+            suratNo: surah.number,
+            isFavorite: false,
+          ),
+          transition: Transition.rightToLeft,
+        );
       },
     );
   }
@@ -1007,21 +1021,61 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   void _navigateToLastRead() {
     if (_lastRead != null) {
-      // Navigate to the surah and ayah
-      Get.toNamed('/qPageView', arguments: {
-        'suratNo': _lastRead!.surahNumber,
-        'ayahNo': _lastRead!.ayahNumber,
-      });
+      _loadSurahForNavigation(_lastRead!.surahNumber, _lastRead!.ayahNumber);
     }
   }
 
   void _navigateToLastListened() {
     if (_lastListened != null) {
-      // Navigate to the surah and ayah
-      Get.toNamed('/qPageView', arguments: {
-        'suratNo': _lastListened!.surahNumber,
-        'ayahNo': _lastListened!.ayahNumber,
-      });
+      _loadSurahForNavigation(
+          _lastListened!.surahNumber, _lastListened!.ayahNumber);
+    }
+  }
+
+  Future<void> _loadSurahForNavigation(int surahNumber, int ayahNumber) async {
+    try {
+      final quranAPI = Provider.of<QuranAPI>(context, listen: false);
+      final surahList = await quranAPI.getSuratAudio();
+
+      if (surahList.surahs == null || surahList.surahs!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load surah data')),
+        );
+        return;
+      }
+
+      // Find the surah by number
+      final surah = surahList.surahs!.firstWhere(
+        (s) => s.number == surahNumber,
+        orElse: () => Surah(),
+      );
+
+      if (surah.number == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Surah not found')),
+        );
+        return;
+      }
+
+      // Navigate to QPageView with the complete surah data
+      Get.to(
+        () => QPageView(
+          ayahList: surah.ayahs,
+          suratName: surah.name,
+          suratEnglishName: surah.englishName,
+          englishMeaning: surah.englishNameTranslation,
+          suratNo: surah.number,
+          isFavorite: false,
+        ),
+        transition: Transition.rightToLeft,
+      );
+    } catch (e) {
+      debugPrint('Error navigating to surah: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error loading surah')),
+        );
+      }
     }
   }
 
@@ -1110,6 +1164,22 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
     // Apply sorting
     if (_sortBy == 'Alphabet') {
       filtered.sort((a, b) => a.englishName!.compareTo(b.englishName!));
+    } else if (_sortBy == 'Total Ayah') {
+      // Sort by number of ayahs in descending order (most ayahs first)
+      filtered.sort(
+          (a, b) => (b.ayahs?.length ?? 0).compareTo(a.ayahs?.length ?? 0));
+    } else if (_sortBy == 'Para') {
+      // Para/Juz is typically in groups of 3-4 surahs
+      // Group surahs into 30 equal parts (30 paras in Quran)
+      // This is a simplified approach - dividing surahs roughly into 30 paras
+      filtered.sort((a, b) {
+        final aPara = ((a.number! - 1) ~/ 4) + 1; // Rough grouping into paras
+        final bPara = ((b.number! - 1) ~/ 4) + 1;
+        if (aPara != bPara) {
+          return aPara.compareTo(bPara);
+        }
+        return a.number!.compareTo(b.number!);
+      });
     } else {
       // Default order (by surah number)
       filtered.sort((a, b) => a.number!.compareTo(b.number!));

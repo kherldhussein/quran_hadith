@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/widgets/hadith_book_content.dart';
 
 /// Full page screen for viewing a specific Hadith book
@@ -33,7 +31,6 @@ class _HadithBookPageState extends State<HadithBookPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hadithAPI = Provider.of<HadithAPI>(context, listen: false);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
