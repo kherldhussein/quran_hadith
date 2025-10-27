@@ -94,7 +94,7 @@ class NativeDesktopService with WindowListener {
       );
 
       // Initialize
-      final InitializationSettings settings = InitializationSettings(
+      const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
         macOS: macOSSettings,
         linux: linuxSettings,
