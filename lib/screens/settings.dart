@@ -614,7 +614,7 @@ class _SettingsState extends State<Settings> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          value: safeValue,
+          initialValue: safeValue,
           items: items,
           onChanged: onChanged,
           decoration: InputDecoration(
