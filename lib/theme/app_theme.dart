@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Application theme
-// 013f2f
-// #209f6f
-// #021a13
-// #06291d
 const kLightSecondaryColor = Color(0xffdae1e7);
 const kDarkSecondaryColor = Color(0xff013f2f);
 const kLightPrimaryColor = Color(0xffdae1e7);
@@ -25,7 +21,7 @@ const kIconDark = Color(0xFF666666);
 const kOrange = Color(0xff021a13);
 const kLight = Color(0xFFFDFDFD);
 const kDark = Color(0xff021a13);
-const kLinkC = Color(0xFF249ffd);
+const kLinkC = Color.fromARGB(255, 3, 148, 68);
 
 const circularIndicator = CircularProgressIndicator(
   valueColor: AlwaysStoppedAnimation<Color>(kDarkSecondaryColor),
@@ -115,7 +111,7 @@ ThemeData get darkTheme {
       onError: kTextLight,
       outline: kIconDark,
       outlineVariant: kDividerDark,
-      inversePrimary: kAccentColor,
+      inversePrimary: Color.fromARGB(255, 18, 201, 131),
       inverseSurface: kLight,
       scrim: kDarkColor,
       shadow: kDarkColor,
@@ -192,7 +188,7 @@ ThemeData get theme {
       brightness: Brightness.light,
       primary: kAccentColor,
       onPrimary: kTextLighter,
-      secondary: kLinkC,
+      secondary: Color.fromARGB(255, 0, 255, 106),
       onSecondary: kTextLighter,
       tertiary: kDarkSecondaryColor,
       onTertiary: kTextLighter,
@@ -204,7 +200,7 @@ ThemeData get theme {
       onError: kTextLighter,
       outline: kIconDark,
       outlineVariant: kDividerLight,
-      inversePrimary: kAccentColor,
+      inversePrimary: Color.fromARGB(255, 16, 197, 128),
       inverseSurface: kDarkPrimaryColor,
       scrim: kDarkColor,
       shadow: kDarkColor,
