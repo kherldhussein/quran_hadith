@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/widgets/hadith_book_content.dart';
 
 /// Full page screen for viewing a specific Hadith book
@@ -20,12 +21,14 @@ class HadithBookPage extends StatefulWidget {
 class _HadithBookPageState extends State<HadithBookPage> {
   bool _showArabic = true;
   String _query = '';
+  int _currentPage = 1;
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Track reading on page load
+    _trackReading();
   }
 
   @override
@@ -50,7 +53,6 @@ class _HadithBookPageState extends State<HadithBookPage> {
         surfaceTintColor: Colors.transparent,
         foregroundColor: theme.colorScheme.onSurface,
         actions: [
-          // Arabic Toggle
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -92,7 +94,6 @@ class _HadithBookPageState extends State<HadithBookPage> {
       ),
       body: Column(
         children: [
-          // Search field
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -145,8 +146,6 @@ class _HadithBookPageState extends State<HadithBookPage> {
               onChanged: (v) => setState(() => _query = v.trim()),
             ),
           ),
-
-          // Hadith list content
           Expanded(
             child: HadithBookContent(
               bookSlug: widget.bookSlug,
@@ -157,5 +156,20 @@ class _HadithBookPageState extends State<HadithBookPage> {
         ],
       ),
     );
+  }
+
+  /// Track hadith reading
+  void _trackReading() {
+    database.trackHadithReading(
+      bookSlug: widget.bookSlug,
+      bookName: widget.bookName ?? widget.bookSlug,
+      page: _currentPage,
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 }
