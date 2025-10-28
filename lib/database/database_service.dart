@@ -12,7 +12,6 @@ class DatabaseService {
   factory DatabaseService() => _instance;
   DatabaseService._internal();
 
-  // Box names
   static const String _cachedSurahsBox = 'cached_surahs';
   static const String _bookmarksBox = 'bookmarks';
   static const String _readingProgressBox = 'reading_progress';
@@ -30,10 +29,8 @@ class DatabaseService {
     if (_isInitialized) return;
 
     try {
-      // Initialize Hive
       await Hive.initFlutter();
 
-      // Register adapters
       Hive.registerAdapter(CachedSurahAdapter());
       Hive.registerAdapter(CachedAyahAdapter());
       Hive.registerAdapter(BookmarkAdapter());
@@ -44,7 +41,6 @@ class DatabaseService {
       Hive.registerAdapter(UserPreferencesAdapter());
       Hive.registerAdapter(ReadingGoalAdapter());
 
-      // Open boxes
       await Future.wait([
         Hive.openBox(_cachedSurahsBox),
         Hive.openBox(_bookmarksBox),
@@ -64,8 +60,6 @@ class DatabaseService {
       rethrow;
     }
   }
-
-  // ============ CACHED SURAHS ============
 
   /// Cache a surah for offline access
   Future<void> cacheSurah(CachedSurah surah) async {
@@ -117,8 +111,6 @@ class DatabaseService {
       return 0;
     }
   }
-
-  // ============ BOOKMARKS ============
 
   /// Add bookmark
   Future<void> addBookmark(Bookmark bookmark) async {
@@ -173,8 +165,6 @@ class DatabaseService {
     await box.clear();
   }
 
-  // ============ READING PROGRESS ============
-
   /// Save reading progress
   Future<void> saveReadingProgress(ReadingProgress progress) async {
     final box = Hive.box(_readingProgressBox);
@@ -212,8 +202,6 @@ class DatabaseService {
     await box.clear();
   }
 
-  // ============ LISTENING PROGRESS ============
-
   /// Save listening progress
   Future<void> saveListeningProgress(ListeningProgress progress) async {
     final box = Hive.box(_listeningProgressBox);
@@ -250,8 +238,6 @@ class DatabaseService {
     final box = Hive.box(_listeningProgressBox);
     await box.clear();
   }
-
-  // ============ STUDY NOTES ============
 
   /// Add study note
   Future<void> addStudyNote(StudyNote note) async {
@@ -297,8 +283,6 @@ class DatabaseService {
     await box.clear();
   }
 
-  // ============ TRANSLATIONS ============
-
   /// Cache translation
   Future<void> cacheTranslation(TranslationData translation) async {
     final box = Hive.box(_translationsBox);
@@ -323,8 +307,6 @@ class DatabaseService {
     await box.clear();
   }
 
-  // ============ USER PREFERENCES ============
-
   /// Save user preferences
   Future<void> savePreferences(UserPreferences preferences) async {
     final box = Hive.box(_preferencesBox);
@@ -337,8 +319,6 @@ class DatabaseService {
     return box.get('user_preferences', defaultValue: UserPreferences());
   }
 
-  // ============ READING GOALS ============
-
   /// Save reading goal
   Future<void> saveReadingGoal(ReadingGoal goal) async {
     final box = Hive.box(_readingGoalsBox);
@@ -350,8 +330,6 @@ class DatabaseService {
     final box = Hive.box(_readingGoalsBox);
     return box.get('current_goal');
   }
-
-  // ============ DATA MANAGEMENT ============
 
   /// Export all data as JSON
   Future<Map<String, dynamic>> exportData() async {
@@ -420,7 +398,6 @@ class DatabaseService {
   /// Import data from JSON
   Future<void> importData(Map<String, dynamic> data) async {
     try {
-      // Import bookmarks
       if (data['bookmarks'] != null) {
         for (final bookmarkData in data['bookmarks']) {
           final bookmark = Bookmark(
@@ -440,7 +417,6 @@ class DatabaseService {
         }
       }
 
-      // Import study notes
       if (data['studyNotes'] != null) {
         for (final noteData in data['studyNotes']) {
           final note = StudyNote(
@@ -496,9 +472,6 @@ class DatabaseService {
     _isInitialized = false;
   }
 
-  // ============ META CACHE (RECITERS ETC) ============
-  // Also used for lightweight caches like Hadith books/pages
-
   Future<void> cacheReciters(List<Reciter> reciters) async {
     final box = Hive.box(_metaBox);
     await box.put(
@@ -534,8 +507,6 @@ class DatabaseService {
     }
     return null;
   }
-
-  // ============ HADITH CACHE (BOOKS + PAGES) ============
 
   Future<void> cacheHadithBooks(
       String languageCode, List<Map<String, dynamic>> books) async {
@@ -591,6 +562,59 @@ class DatabaseService {
     if (value is DateTime) return value;
     if (value is String) return DateTime.tryParse(value);
     return null;
+  }
+
+  /// Track hadith book reading progress
+  Future<void> trackHadithReading({
+    required String bookSlug,
+    required String bookName,
+    required int page,
+  }) async {
+    final box = Hive.box(_bookmarksBox);
+    try {
+      await box.put('last_hadith_read_book', bookSlug);
+      await box.put('last_hadith_read_book_name', bookName);
+      await box.put('last_hadith_read_page', page);
+      await box.put('last_hadith_read_time', DateTime.now().toString());
+    } catch (e) {
+      debugPrint('Error tracking hadith reading: $e');
+    }
+  }
+
+  /// Get last hadith reading progress
+  Map<String, dynamic>? getLastHadithReading() {
+    final box = Hive.box(_bookmarksBox);
+    try {
+      final bookSlug = box.get('last_hadith_read_book');
+      final bookName = box.get('last_hadith_read_book_name');
+      final page = box.get('last_hadith_read_page');
+      final time = box.get('last_hadith_read_time');
+
+      if (bookSlug == null || page == null) return null;
+
+      return {
+        'bookSlug': bookSlug,
+        'bookName': bookName ?? bookSlug,
+        'page': page,
+        'time': time,
+      };
+    } catch (e) {
+      debugPrint('Error getting last hadith reading: $e');
+      return null;
+    }
+  }
+
+  /// Clear hadith reading progress
+  Future<void> clearHadithReading() async {
+    final box = Hive.box(_bookmarksBox);
+    try {
+      await box.delete('last_hadith_read_book');
+      await box.delete('last_hadith_read_book_name');
+      await box.delete('last_hadith_read_page');
+      await box.delete('last_hadith_read_time');
+    } catch (e) {
+      debugPrint('Error clearing hadith reading: $e');
+    }
   }
 
   Box get bookmarksBox => Hive.box(_bookmarksBox);

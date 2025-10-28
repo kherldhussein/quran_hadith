@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-// audio playback handled by controllers; just_audio removed from home screen
 import 'package:quran_hadith/layout/adaptive.dart';
 import 'package:quran_hadith/screens/about.dart' as about;
 import 'package:quran_hadith/screens/favorite.dart';
@@ -58,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingDailyAyah = false;
   ReadingProgress? _lastReadingProgress;
   ListeningProgress? _lastListeningProgress;
+  Map<String, dynamic>? _lastHadithReading;
   bool _dailyAyahReminderEnabled = false;
   bool _fridayReminderEnabled = false;
   late TimeOfDay _dailyAyahTime;
@@ -177,10 +177,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadActivitySummaries() {
     final reading = database.getLastReadingProgress();
     final listening = database.getLastListeningProgress();
+    final hadithReading = database.getLastHadithReading();
     if (!mounted) return;
     setState(() {
       _lastReadingProgress = reading;
       _lastListeningProgress = listening;
+      _lastHadithReading = hadithReading;
     });
   }
 
@@ -348,7 +350,6 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedReciter = reciterId);
 
     final success = await SpUtil.setReciter(reciterId);
-    // Also persist via new settings key and notify listeners
     await appSP.setString('selectedReciter', reciterId);
     ReciterService.instance.setCurrentReciterId(reciterId);
     if (!success) {
@@ -751,6 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final cards = [
           _buildLastReadCard(context),
           _buildLastListenedCard(context),
+          _buildLastReadHadithCard(context),
         ];
         if (constraints.maxWidth < 640) {
           return Column(
@@ -759,6 +761,8 @@ class _HomeScreenState extends State<HomeScreen> {
               cards[0],
               const SizedBox(height: 16),
               cards[1],
+              const SizedBox(height: 16),
+              cards[2],
             ],
           );
         }
@@ -768,6 +772,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(child: cards[0]),
             const SizedBox(width: 16),
             Expanded(child: cards[1]),
+            const SizedBox(width: 16),
+            Expanded(child: cards[2]),
           ],
         );
       },
@@ -810,6 +816,27 @@ class _HomeScreenState extends State<HomeScreen> {
       footer: footer,
       actionLabel: progress != null ? 'Resume listening' : null,
       onTap: progress != null ? _openLastListened : null,
+    );
+  }
+
+  Widget _buildLastReadHadithCard(BuildContext context) {
+    final hadithReading = _lastHadithReading;
+    final subtitle = hadithReading != null
+        ? '${hadithReading['bookName'] ?? 'Hadith Book'} • Page ${hadithReading['page'] ?? '?'}'
+        : 'No hadith reading activity yet';
+    final footer = hadithReading != null
+        ? 'Updated ${_formatRelativeTime(DateTime.parse(hadithReading['time'] as String? ?? DateTime.now().toIso8601String()))}'
+        : 'Start reading hadith to track progress.';
+    return _buildActivityCard(
+      context: context,
+      icon: FontAwesomeIcons.bookOpenReader,
+      title: 'Last Read Hadith',
+      subtitle: subtitle,
+      footer: footer,
+      actionLabel: hadithReading != null ? 'Continue reading' : null,
+      onTap: hadithReading != null
+          ? () => _openLastReadHadith(hadithReading)
+          : null,
     );
   }
 
@@ -915,6 +942,18 @@ class _HomeScreenState extends State<HomeScreen> {
     await _openSurahAt(progress.surahNumber, progress.ayahNumber);
   }
 
+  Future<void> _openLastReadHadith(Map<String, dynamic> hadithReading) async {
+    try {
+      Get.to(() => const HPage());
+    } catch (e) {
+      debugPrint('HomeScreen: Failed to open hadith page - $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the hadith page.')),
+      );
+    }
+  }
+
   Future<void> _openSurahAt(int surahNumber, int ayahNumber) async {
     try {
       final data = await _quranApi.getSuratAudio();
@@ -942,7 +981,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  //eef2f5
   @override
   Widget build(BuildContext context) {
     final isSmall = isDisplayVerySmallDesktop(context);

@@ -1,10 +1,6 @@
-// GENERATED CODE - Manually created Hive TypeAdapters
 
 part of 'hive_adapters.dart';
 
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class CachedSurahAdapter extends TypeAdapter<CachedSurah> {
   @override
