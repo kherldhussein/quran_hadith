@@ -115,18 +115,14 @@ class _ModernSearchDialogState extends State<ModernSearchDialog>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header
                 _buildHeader(theme),
 
-                // Search Bar
                 _buildSearchBar(theme),
 
                 const Divider(height: 1),
 
-                // Results
                 _buildResults(theme),
                 const SizedBox(height: 8),
-                // Subtle keyboard hint footer for better UX
                 _KeyboardHints(),
               ],
             ),
@@ -469,7 +465,6 @@ class SearchableItem {
   });
 }
 
-// Helper function to show the dialog
 Future<void> showModernSearchDialog({
   required BuildContext context,
   required List<SearchableItem> items,
