@@ -116,7 +116,6 @@ class HadithBookTileState extends State<HadithBookTile> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Book Number Circle
                       Container(
                         width: 40,
                         height: 40,
@@ -145,7 +144,6 @@ class HadithBookTileState extends State<HadithBookTile> {
                         ),
                       ),
 
-                      // Favorite Button
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         decoration: BoxDecoration(
