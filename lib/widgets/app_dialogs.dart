@@ -18,7 +18,6 @@ class AppDialogs {
     final String preferred =
         appSP.getString('preferred_exit_action', defaultValue: 'ask');
 
-    // If user chose not to confirm, act on preferred choice
     if (!confirm && preferred != 'ask') {
       return _performExitAction(context, preferred);
     }
@@ -85,7 +84,6 @@ class AppDialogs {
               ),
               FilledButton.tonal(
                 onPressed: () async {
-                  // Persist preference if requested
                   if (dontAskAgain) {
                     await appSP.setBool('confirm_on_exit', false);
                     await appSP.setString('preferred_exit_action', selected);
@@ -108,16 +106,13 @@ class AppDialogs {
   static Future<bool?> _performExitAction(
       BuildContext context, String action) async {
     if (action == 'minimize') {
-      // Attempt minimize to tray (or taskbar fallback)
       await nativeDesktop.minimizeToTray();
       return null;
     }
-    // Exit application
     try {
       await SystemNavigator.pop(animated: true);
       return true;
     } catch (_) {
-      // Fallback if pop is not supported
       SystemNavigator.pop();
       return true;
     }
