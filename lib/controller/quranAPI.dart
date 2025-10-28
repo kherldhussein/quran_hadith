@@ -492,6 +492,24 @@ class QuranAPI {
     }
   }
 
+  /// Fetch word-by-word timing data for recitation highlighting
+  /// Note: al-quran.cloud API does not provide word-level timing data
+  /// This method is kept for future integration if such data becomes available
+  /// For now, return null to disable word highlighting via API
+  Future<SurahList?> fetchWordTimings(int surahNumber,
+      {String? reciterId}) async {
+    try {
+      // al-quran.cloud does not provide word-level timing endpoint
+      // Word highlighting is currently disabled
+      debugPrint(
+          'QuranAPI: Word-level timings not available from al-quran.cloud API');
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching word timings for surah $surahNumber: $e');
+      return null;
+    }
+  }
+
   /// Resolve the active reciter id following this priority:
   /// 1) Provided [overrideId]
   /// 2) Audio settings (appSP 'selectedReciter')
