@@ -32,7 +32,6 @@ class StorageKeys {
 
 /// Enhanced utility class for managing app preferences with better error handling and type safety
 class SpUtil {
-  // Private constructor to prevent instantiation
   SpUtil._();
 
   /// Checks if this is the first app launch
@@ -45,7 +44,6 @@ class SpUtil {
     return appSP.setBool(StorageKeys.firstLaunch, false);
   }
 
-  // ============ FAVORITES ============
   static bool getFavorite() => appSP.getBool(StorageKeys.isFavorite);
 
   static Future<bool> setFavorite(bool value) {
@@ -89,7 +87,6 @@ class SpUtil {
     return getFavorites().contains(item);
   }
 
-  // ============ THEME ============
   static bool getThemed() =>
       appSP.getBool(StorageKeys.isDarkMode, defaultValue: false);
 
@@ -97,7 +94,6 @@ class SpUtil {
     return appSP.setBool(StorageKeys.isDarkMode, value);
   }
 
-  // ============ USER ============
   static String getUser() =>
       appSP.getString(StorageKeys.user, defaultValue: 'Guest');
 
@@ -106,7 +102,6 @@ class SpUtil {
     return appSP.setString(StorageKeys.user, value.trim());
   }
 
-  // ============ LAST READ ============
   static int getLastReadSurah() =>
       appSP.getInt(StorageKeys.lastReadSurah, defaultValue: 1);
   static int getLastReadAyah() =>
@@ -131,7 +126,6 @@ class SpUtil {
     }
   }
 
-  // ============ LAST LISTEN ============
   static int getLastListenSurah() =>
       appSP.getInt(StorageKeys.lastListenSurah, defaultValue: 1);
   static int getLastListenAyah() =>
@@ -160,7 +154,6 @@ class SpUtil {
     }
   }
 
-  // ============ APP SETTINGS ============
   static String getAppLanguage() =>
       appSP.getString(StorageKeys.appLanguage, defaultValue: 'en');
   static Future<bool> setAppLanguage(String language) =>
@@ -181,7 +174,6 @@ class SpUtil {
   static Future<bool> setReciter(String reciter) =>
       appSP.setString(StorageKeys.reciter, reciter);
 
-  // ============ BULK OPERATIONS ============
 
   /// Clears all user data (logout functionality)
   static Future<void> clearUserData() async {
@@ -233,7 +225,6 @@ class SpUtil {
     };
   }
 
-  // ============ DAILY AYAH CACHE ============
 
   static String? getDailyAyahDate() {
     final value = appSP.getString(StorageKeys.dailyAyahDate);
@@ -269,7 +260,6 @@ class SpUtil {
     ]);
   }
 
-  // ============ REMINDER SETTINGS ============
 
   static bool isDailyAyahNotificationEnabled() {
     return appSP.getBool(StorageKeys.dailyAyahEnabled);
@@ -304,7 +294,6 @@ class SpUtil {
     return appSP.setInt(StorageKeys.fridayReminderTimeMinutes, minutes);
   }
 
-  // ============ AUDIO PLAYBACK SETTINGS ============
 
   /// Get auto-play next ayah setting
   static bool getAutoPlayNextAyah() {
