@@ -32,7 +32,6 @@ class Reciter {
       translatedName = translated;
     }
 
-    // Safely extract audio prefix, handling both String and potential Map types
     String? audioPrefix;
     final audioUrlPrefix = json['audio_url_prefix'];
     final audioUrl = json['audio_url'];
@@ -46,7 +45,6 @@ class Reciter {
       audioPrefix = relativePath;
     }
 
-    // Safely extract identifier
     String identifier = '';
     final jsonId = json['identifier'] ?? json['slug'] ?? json['id'];
     if (jsonId is String) {
@@ -61,7 +59,6 @@ class Reciter {
       if (candidate.isNotEmpty) identifier = candidate;
     }
 
-    // Safely extract name
     String name = 'Unknown Reciter';
     final jsonName = json['name'];
     if (jsonName is String) {
@@ -70,7 +67,6 @@ class Reciter {
       name = translatedName;
     }
 
-    // Safely extract other string fields
     String? safeExtract(dynamic value) {
       if (value is String) return value;
       if (value is Map) return null;
