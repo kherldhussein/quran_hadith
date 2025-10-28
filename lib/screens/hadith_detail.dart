@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-// minimal Hadith detail view - no theme import required here
 
 class HadithDetailPage extends StatelessWidget {
   final String bookSlug;
@@ -27,7 +26,6 @@ class HadithDetailPage extends StatelessWidget {
           IconButton(
             icon: const Icon(FontAwesomeIcons.heart),
             onPressed: () {
-              // Favoriting handled by FavoriteManager on previous screen
               Get.snackbar('Saved', 'Hadith saved to favorites',
                   snackPosition: SnackPosition.bottom);
             },
@@ -87,7 +85,6 @@ class HadithDetailPage extends StatelessWidget {
                   icon: const Icon(FontAwesomeIcons.shareNodes),
                   label: const Text('Share'),
                   onPressed: () {
-                    // Simple share placeholder
                     Get.snackbar('Share', 'Share hadith',
                         snackPosition: SnackPosition.bottom);
                   },
@@ -96,7 +93,6 @@ class HadithDetailPage extends StatelessWidget {
                   icon: const Icon(FontAwesomeIcons.copy),
                   label: const Text('Copy'),
                   onPressed: () {
-                    // Copy handled by Clipboard typically
                     Get.snackbar('Copied', 'Hadith copied to clipboard',
                         snackPosition: SnackPosition.bottom);
                   },
