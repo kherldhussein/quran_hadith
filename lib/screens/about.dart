@@ -11,7 +11,6 @@ import '../layout/adaptive.dart';
 import '../theme/app_theme.dart';
 
 void showAboutDialog() {
-  // Show as a dialog on all platforms
   Get.dialog(
     const AboutDialogSheet(),
     name: 'About QH',
@@ -73,7 +72,6 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
       if (mounted) setState(() => _info = info);
     } catch (e) {
       debugPrint('⚠️ Failed to load package info: $e');
-      // Continue without package info
     }
   }
 
@@ -122,7 +120,6 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Header banner
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -183,7 +180,6 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
 
         const SizedBox(height: 16),
 
-        // About text & actions
         Card(
           clipBehavior: Clip.antiAlias,
           child: Padding(
@@ -230,7 +226,6 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
 
         const SizedBox(height: 16),
 
-        // Quick links
         const Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -255,7 +250,6 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
 
         const SizedBox(height: 16),
 
-        // System info
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
