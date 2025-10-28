@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
+import 'package:quran_hadith/services/analytics_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 /// Statistics and analytics dashboard
@@ -16,10 +17,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool _isLoading = true;
   Map<String, dynamic> _stats = {};
   String _timeRange = '7days'; // 7days, 30days, all
+  late DateTime _customStartDate;
+  late DateTime _customEndDate;
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _customEndDate = now;
+    _customStartDate = now.subtract(const Duration(days: 7));
     _loadStatistics();
   }
 
@@ -34,7 +40,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       final lastRead = database.getLastReadingProgress();
       final lastListened = database.getLastListeningProgress();
 
-      // Calculate statistics
       _stats = {
         'totalReadingSessions': readingHistory.length,
         'totalListeningSessions': listeningHistory.length,
@@ -56,6 +61,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         'progressByJuz': _calculateProgressByJuz(readingHistory),
         'lastRead': lastRead,
         'lastListened': lastListened,
+        'listeningTimeByReciter':
+            _calculateListeningTimeByReciter(listeningHistory),
+        'mostListenedSurah': _calculateMostListenedSurah(listeningHistory),
       };
     } catch (e) {
       debugPrint('Error loading statistics: $e');
@@ -166,12 +174,57 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return {'number': mostReadSurah, 'count': maxCount};
   }
 
+  /// C1 Enhancement: Calculate listening time breakdown by reciter
+  Map<String, int> _calculateListeningTimeByReciter(
+    List<ListeningProgress> history,
+  ) {
+    if (history.isEmpty) return {};
+
+    final reciterTime = <String, int>{};
+    for (final item in history) {
+      reciterTime[item.reciter] =
+          (reciterTime[item.reciter] ?? 0) + item.totalListenTimeSeconds;
+    }
+
+    return reciterTime;
+  }
+
+  /// C1 Enhancement: Calculate most listened surah
+  Map<String, dynamic> _calculateMostListenedSurah(
+    List<ListeningProgress> history,
+  ) {
+    if (history.isEmpty) return {'number': 0, 'count': 0, 'time': 0};
+
+    final surahCounts = <int, int>{};
+    final surahTime = <int, int>{};
+
+    for (final item in history) {
+      surahCounts[item.surahNumber] = (surahCounts[item.surahNumber] ?? 0) + 1;
+      surahTime[item.surahNumber] =
+          (surahTime[item.surahNumber] ?? 0) + item.totalListenTimeSeconds;
+    }
+
+    var maxCount = 0;
+    var mostListenedSurah = 0;
+    surahCounts.forEach((surah, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostListenedSurah = surah;
+      }
+    });
+
+    return {
+      'number': mostListenedSurah,
+      'count': maxCount,
+      'time': surahTime[mostListenedSurah] ?? 0,
+    };
+  }
+
   List<Map<String, dynamic>> _calculateWeeklyActivity(
     List<ReadingProgress> readingHistory,
     List<ListeningProgress> listeningHistory,
   ) {
     final now = DateTime.now();
-    // Generate data for last 7 days (from 6 days ago to today)
     final weeklyData = List.generate(7, (index) {
       final date = DateTime(
         now.year,
@@ -188,7 +241,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       };
     });
 
-    // Aggregate reading history by day
     for (final item in readingHistory) {
       final itemDate = DateTime(
         item.lastReadAt.year,
@@ -196,7 +248,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         item.lastReadAt.day,
       );
 
-      // Find matching date in weekly data
       for (int i = 0; i < weeklyData.length; i++) {
         final weekDate = weeklyData[i]['date'] as DateTime;
         if (itemDate.year == weekDate.year &&
@@ -209,7 +260,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       }
     }
 
-    // Aggregate listening history by day
     for (final item in listeningHistory) {
       final itemDate = DateTime(
         item.lastListenedAt.year,
@@ -217,7 +267,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         item.lastListenedAt.day,
       );
 
-      // Find matching date in weekly data
       for (int i = 0; i < weeklyData.length; i++) {
         final weekDate = weeklyData[i]['date'] as DateTime;
         if (itemDate.year == weekDate.year &&
@@ -246,7 +295,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       juzProgress[i] = 0;
     }
 
-    // Simplified: Would need actual surah-to-juz mapping
     for (final item in history) {
       final juz = ((item.surahNumber - 1) ~/ 4) + 1; // Rough approximation
       juzProgress[juz] = (juzProgress[juz] ?? 0) + 1;
@@ -282,11 +330,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         children: [
           _buildHeader(theme),
           const SizedBox(height: 24),
+          _buildGamificationDashboard(theme),
+          const SizedBox(height: 24),
           _buildOverviewCards(theme),
+          const SizedBox(height: 24),
+          _buildCompletionProgress(theme),
+          const SizedBox(height: 24),
+          _buildPlaybackSpeedStats(theme),
           const SizedBox(height: 24),
           _buildLastActivityCards(theme),
           const SizedBox(height: 24),
           _buildWeeklyActivityChart(theme),
+          const SizedBox(height: 24),
+          _buildListeningTimeBreakdown(theme),
+          const SizedBox(height: 24),
+          _buildMostListenedSurah(theme),
           const SizedBox(height: 24),
           _buildDetailedStats(theme),
         ],
@@ -325,20 +383,260 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ),
           ],
         ),
-        DropdownButton<String>(
-          value: _timeRange,
-          items: const [
-            DropdownMenuItem(value: '7days', child: Text('Last 7 days')),
-            DropdownMenuItem(value: '30days', child: Text('Last 30 days')),
-            DropdownMenuItem(value: 'all', child: Text('All time')),
-          ],
-          onChanged: (value) {
-            setState(() => _timeRange = value!);
-            _loadStatistics();
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            setState(() => _timeRange = value);
+            if (value != 'custom') {
+              _loadStatistics();
+            }
           },
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: '7days', child: Text('Last 7 days')),
+            const PopupMenuItem(value: '30days', child: Text('Last 30 days')),
+            const PopupMenuItem(value: 'all', child: Text('All time')),
+            const PopupMenuDivider(),
+            const PopupMenuItem(value: 'custom', child: Text('Custom Range')),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.calendar,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _timeRange == 'custom'
+                      ? '${_customStartDate.toString().split(' ')[0]} to ${_customEndDate.toString().split(' ')[0]}'
+                      : _getTimeRangeLabel(),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
+        if (_timeRange == 'custom') ...[
+          const SizedBox(width: 12),
+          TextButton.icon(
+            icon: const FaIcon(FontAwesomeIcons.penToSquare, size: 14),
+            label: const Text('Edit Range'),
+            onPressed: () => _showDateRangePicker(context, theme),
+          ),
+        ],
       ],
     );
+  }
+
+  String _getTimeRangeLabel() {
+    switch (_timeRange) {
+      case '7days':
+        return 'Last 7 days';
+      case '30days':
+        return 'Last 30 days';
+      case 'all':
+        return 'All time';
+      default:
+        return 'Custom Range';
+    }
+  }
+
+  Widget _buildGamificationDashboard(ThemeData theme) {
+    final level = analyticsService.getUserLevel();
+    final xp = analyticsService.getExperiencePoints();
+    final xpForNext = analyticsService.getExperienceForNextLevel(level);
+    final achievements = analyticsService.getUnlockedAchievements();
+
+    return Card(
+      elevation: 2,
+      color: theme.colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Level and XP Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Level',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.star,
+                          size: 24,
+                          color: Colors.amber,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Level $level',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Experience Points',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$xp / $xpForNext XP',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // XP Progress Bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: (xp / xpForNext).clamp(0.0, 1.0),
+                minHeight: 12,
+                backgroundColor: theme.colorScheme.surfaceVariant,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Achievements Section
+            Text(
+              'Achievements (${achievements.length})',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (achievements.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Keep reading and listening to unlock achievements!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: achievements.entries.map((entry) {
+                  final title = (entry.value as Map)['title'] ?? '';
+                  final emoji =
+                      title.replaceAll(RegExp(r'[^🎯📚🎵🔥📖]'), '').isNotEmpty
+                          ? title.replaceAll(RegExp(r'[^🎯📚🎵🔥📖]'), '')
+                          : '✨';
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            title
+                                .replaceAll(RegExp(r'[🎯📚🎵🔥📖]'), '')
+                                .trim(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDateRangePicker(
+      BuildContext context, ThemeData theme) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(
+        start: _customStartDate,
+        end: _customEndDate,
+      ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: theme.colorScheme.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _timeRange = 'custom';
+      });
+      _loadStatistics();
+    }
   }
 
   Widget _buildOverviewCards(ThemeData theme) {
@@ -587,7 +885,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   String _formatReciterName(String reciter) {
-    // Convert reciter code to readable name
     final reciterNames = {
       'ar.alafasy': 'Mishary Al-Afasy',
       'ar.abdulbasit': 'Abdul Basit',
@@ -679,6 +976,401 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         }).toList(),
                       ),
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// C1 Enhancement: Build listening time breakdown by reciter
+  Widget _buildListeningTimeBreakdown(ThemeData theme) {
+    final listeningByReciter =
+        _stats['listeningTimeByReciter'] as Map<String, int>? ?? {};
+
+    if (listeningByReciter.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.headphones,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Listening Time by Reciter',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ...listeningByReciter.entries.map((entry) {
+              final reciterName = _formatReciterName(entry.key);
+              final duration = _formatDuration(entry.value);
+              final totalTime = _stats['totalListeningTime'] as int? ?? 1;
+              final percentage =
+                  ((entry.value / totalTime) * 100).toStringAsFixed(1);
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          reciterName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '$duration ($percentage%)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: entry.value / totalTime,
+                        minHeight: 8,
+                        backgroundColor: theme
+                            .colorScheme.surfaceContainerHighest
+                            .withOpacity(0.3),
+                        valueColor: AlwaysStoppedAnimation(
+                          theme.colorScheme.primary.withOpacity(0.8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// C1 Enhancement: Build most listened surah card
+  Widget _buildMostListenedSurah(ThemeData theme) {
+    final mostListened = _stats['mostListenedSurah'] as Map<String, dynamic>? ??
+        {'number': 0, 'count': 0, 'time': 0};
+    final surahNumber = mostListened['number'] as int? ?? 0;
+
+    if (surahNumber == 0) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              FaIcon(
+                FontAwesomeIcons.play,
+                color: theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Most Listened Surah',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'No listening history yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final count = mostListened['count'] as int? ?? 0;
+    final time = mostListened['time'] as int? ?? 0;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Most Listened Surah',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Surah $surahNumber',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$count times • ${_formatDuration(time)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+            FaIcon(
+              FontAwesomeIcons.play,
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              size: 60,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletionProgress(ThemeData theme) {
+    final readSurahs = _stats['uniqueSurahsRead'] as int? ?? 0;
+    final listenedSurahs = _stats['uniqueSurahsListened'] as int? ?? 0;
+    const totalSurahs = 114;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.bookmark,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Completion Progress',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Reading Progress',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: readSurahs / totalSurahs,
+                minHeight: 12,
+                backgroundColor:
+                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                valueColor:
+                    AlwaysStoppedAnimation(Colors.blue.withOpacity(0.8)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Read $readSurahs / $totalSurahs Surahs (${(readSurahs / totalSurahs * 100).toStringAsFixed(1)}%)',
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Listening Progress',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: listenedSurahs / totalSurahs,
+                minHeight: 12,
+                backgroundColor:
+                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                valueColor:
+                    AlwaysStoppedAnimation(Colors.green.withOpacity(0.8)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Listened $listenedSurahs / $totalSurahs Surahs (${(listenedSurahs / totalSurahs * 100).toStringAsFixed(1)}%)',
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaybackSpeedStats(ThemeData theme) {
+    final listeningHistory = database.getListeningHistory();
+
+    if (listeningHistory.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final speeds = listeningHistory.map((h) => h.playbackSpeed).toList();
+    final avgSpeed = speeds.reduce((a, b) => a + b) / speeds.length;
+    final maxSpeed = speeds.reduce((a, b) => a > b ? a : b);
+    final minSpeed = speeds.reduce((a, b) => a < b ? a : b);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                FaIcon(
+                  FontAwesomeIcons.faucetDrip,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Playback Speed Statistics',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Average',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      '${avgSpeed.toStringAsFixed(2)}x',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Fastest',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      '${maxSpeed.toStringAsFixed(2)}x',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Slowest',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    Text(
+                      '${minSpeed.toStringAsFixed(2)}x',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
