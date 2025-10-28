@@ -47,8 +47,8 @@ class HadithAPI {
       cachedAt = database.getHadithBooksCachedAt(languageCode);
       if (cachedRaw != null && cachedRaw.isNotEmpty && !_isStale(cachedAt)) {
         final books = cachedRaw.map((m) {
-          // Support both 'id' and 'slug' fields for backward compatibility
-          final bookId = (m['id'] as String?) ?? (m['slug'] as String?) ?? '';
+          // Standardized to use 'id' field as the book identifier
+          final bookId = (m['id'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
             slug: bookId,
@@ -78,8 +78,8 @@ class HadithAPI {
       List<HadithBook> fetchedBooks = list.map((raw) {
         final e = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
         final name = _getLocalizedBookName(e['name'] as String?, languageCode);
-        // API returns 'id' field as the book identifier, not 'slug'
-        final bookId = (e['id'] as String?) ?? (e['slug'] as String?) ?? '';
+        // Standardized: API provides 'id' field as the book identifier
+        final bookId = (e['id'] as String?) ?? '';
         final available = _asInt(e['available']) ?? _asInt(e['total']);
         return HadithBook(name: name, slug: bookId, total: available);
       }).toList();
@@ -106,8 +106,8 @@ class HadithAPI {
       // Stale-if-error: return cached books even if stale
       if (cachedRaw != null && cachedRaw.isNotEmpty) {
         final books = cachedRaw.map((m) {
-          // Support both 'id' and 'slug' fields for backward compatibility
-          final bookId = (m['id'] as String?) ?? (m['slug'] as String?) ?? '';
+          // Standardized to use 'id' field as the book identifier
+          final bookId = (m['id'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
             slug: bookId,
