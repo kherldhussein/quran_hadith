@@ -17,7 +17,6 @@ class AnalyticsDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               children: [
                 const Icon(Icons.analytics, size: 28),
@@ -32,11 +31,9 @@ class AnalyticsDashboard extends StatelessWidget {
             ),
             const Divider(height: 24),
 
-            // Engagement Score
             _buildEngagementScore(context, engagementScore),
             const SizedBox(height: 20),
 
-            // Metrics Grid
             _buildMetricsGrid(context, summary),
           ],
         ),
@@ -116,7 +113,6 @@ class AnalyticsDashboard extends StatelessWidget {
   Widget _buildMetricsGrid(BuildContext context, Map<String, dynamic> summary) {
     return Column(
       children: [
-        // Row 1: Sessions and Time
         Row(
           children: [
             Expanded(
@@ -142,7 +138,6 @@ class AnalyticsDashboard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Row 2: Content Engagement
         Row(
           children: [
             Expanded(
@@ -168,7 +163,6 @@ class AnalyticsDashboard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Row 3: Features and Streak
         Row(
           children: [
             Expanded(
