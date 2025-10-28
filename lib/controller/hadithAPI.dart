@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:quran_hadith/database/database_service.dart';
 
-// Define a sealed class for better state management (Success, Error, Loading)
 sealed class HadithFetchResult {
   const HadithFetchResult();
 }
@@ -23,23 +22,18 @@ class HadithFetchLoading extends HadithFetchResult {
   const HadithFetchLoading();
 }
 
-// In-memory cache for Hadith books
 Map<String, List<HadithBook>> _hadithBooksCache = {};
 
 class HadithAPI {
   static const String base = 'https://api.hadith.gading.dev';
   static const Duration cacheTTL = Duration(hours: 24);
 
-  // Renamed from getBooks to getHadithBooks for clarity and added languageCode
-  // Added languageCode for dynamic fetching (simulated for now)
   Future<HadithFetchResult> getHadithBooks({String languageCode = 'en'}) async {
-    // 1) Check in-memory cache
     if (_hadithBooksCache.containsKey(languageCode) &&
         _hadithBooksCache[languageCode]!.isNotEmpty) {
       return HadithFetchSuccess(_hadithBooksCache[languageCode]!);
     }
 
-    // 2) Try local database cache (fresh)
     List<Map<String, dynamic>>? cachedRaw;
     DateTime? cachedAt;
     try {
@@ -47,7 +41,6 @@ class HadithAPI {
       cachedAt = database.getHadithBooksCachedAt(languageCode);
       if (cachedRaw != null && cachedRaw.isNotEmpty && !_isStale(cachedAt)) {
         final books = cachedRaw.map((m) {
-          // Standardized to use 'id' field as the book identifier
           final bookId = (m['id'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
@@ -59,7 +52,6 @@ class HadithAPI {
         return HadithFetchSuccess(books);
       }
     } catch (e) {
-      // Non-fatal: fall back to network
       debugPrint('⚠️ Hadith books local cache error: $e');
     }
 
@@ -78,13 +70,11 @@ class HadithAPI {
       List<HadithBook> fetchedBooks = list.map((raw) {
         final e = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
         final name = _getLocalizedBookName(e['name'] as String?, languageCode);
-        // Standardized: API provides 'id' field as the book identifier
         final bookId = (e['id'] as String?) ?? '';
         final available = _asInt(e['available']) ?? _asInt(e['total']);
         return HadithBook(name: name, slug: bookId, total: available);
       }).toList();
 
-      // Store in memory and DB cache
       _hadithBooksCache[languageCode] = fetchedBooks;
       try {
         await database.cacheHadithBooks(
@@ -103,10 +93,8 @@ class HadithAPI {
       return HadithFetchSuccess(fetchedBooks);
     } catch (e) {
       debugPrint('❌ Error fetching Hadith books: $e');
-      // Stale-if-error: return cached books even if stale
       if (cachedRaw != null && cachedRaw.isNotEmpty) {
         final books = cachedRaw.map((m) {
-          // Standardized to use 'id' field as the book identifier
           final bookId = (m['id'] as String?) ?? '';
           return HadithBook(
             name: (m['name'] as String?) ?? 'Unknown Book',
@@ -123,12 +111,10 @@ class HadithAPI {
     }
   }
 
-  // Helper to simulate localized book names based on languageCode
   String _getLocalizedBookName(String? originalName, String languageCode) {
     if (originalName == null) return 'Unknown Book';
     switch (languageCode) {
       case 'ar':
-        // This is a simplification; in a real app, you'd fetch actual Arabic names
         if (originalName == 'Sahih Bukhari') return 'صحيح البخاري';
         if (originalName == 'Sahih Muslim') return 'صحيح مسلم';
         return '$originalName (AR)';
@@ -141,7 +127,6 @@ class HadithAPI {
   }
 
   Future<HadithPage> getHadiths({required String book, int page = 1}) async {
-    // 1) Try local database cache first
     Map<String, dynamic>? cached;
     DateTime? cachedAt;
     try {
@@ -166,7 +151,6 @@ class HadithAPI {
     }
 
     try {
-      // API expects range like "1-10" for page 1, "11-20" for page 2, etc.
       final startRange = ((page - 1) * 10) + 1;
       final endRange = page * 10;
       final res = await http
@@ -187,34 +171,28 @@ class HadithAPI {
         final rawItems = data['hadiths'];
         if (rawItems is List) items = rawItems;
         name = data['name'] as String?;
-        // Try multiple fields for available count
         available = _asInt(data['available']) ??
             _asInt(data['total']) ??
             _asInt(data['hadithCount']) ??
             items.length;
       } else if (data is List) {
-        // Some API shapes may return the list directly
         items = data;
         available = items.length;
       } else if (body is Map<String, dynamic> && body.containsKey('hadiths')) {
-        // Try root level
         items = body['hadiths'] is List ? body['hadiths'] : [];
         available =
             _asInt(body['available']) ?? _asInt(body['total']) ?? items.length;
       }
 
-      // Fallback: use items length if available is still 0
       if (available == 0 && items.isNotEmpty) {
         available = items.length;
       }
 
       final hadiths = items.map((raw) {
         final e = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
-        // Exhaustively extract all available hadith content fields
         String? arabic = e['arab'] as String?;
         String? translation = e['id'] as String?;
 
-        // Fallback to alternatives if primary fields are empty
         if ((arabic == null || arabic.isEmpty) && e['arabic'] != null) {
           arabic = (e['arabic'] as String?);
         }
@@ -243,7 +221,6 @@ class HadithAPI {
         available: available,
       );
 
-      // Persist to DB cache for offline use
       try {
         await database.cacheHadithPage(
           book: book,
@@ -267,7 +244,6 @@ class HadithAPI {
       return pageObj;
     } catch (e) {
       debugPrint('❌ Error fetching hadiths: $e');
-      // Stale-if-error: return cached page even if stale
       if (cached != null) {
         final items = (cached['hadiths'] as List? ?? [])
             .map((e) => HadithItem(
@@ -282,7 +258,6 @@ class HadithAPI {
           available: _asInt(cached['available']) ?? items.length,
         );
       }
-      // Return safe empty page instead of throwing to avoid UI crash
       return HadithPage(book: book, hadiths: const [], available: 0);
     }
   }
@@ -338,7 +313,6 @@ class HadithPage {
   HadithPage({this.book, required this.hadiths, this.available = 0});
 }
 
-// Helper: safely convert dynamic to int
 int? _asInt(dynamic v) {
   if (v is int) return v;
   if (v is String) return int.tryParse(v);

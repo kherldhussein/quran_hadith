@@ -9,7 +9,6 @@ class LastReadQ {
     try {
       return await appSP.setListString(savedDataKey, [ayahNo, surahName]);
     } catch (e) {
-      // Log and return false on failure
       print('Failed to save last read: $e');
       return false;
     }

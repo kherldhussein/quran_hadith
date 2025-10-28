@@ -24,8 +24,6 @@ class AudioController extends ChangeNotifier {
   bool _playerAvailable = false;
 
   AudioController() {
-    // Do not create Player synchronously. Initialization may require native
-    // backend (libmpv on Linux). We'll attempt lazy init on first use.
   }
 
   Future<void> _init() async {
@@ -36,7 +34,6 @@ class AudioController extends ChangeNotifier {
       _player = Player();
       _playerAvailable = true;
 
-      // Listen to playback state
       _player!.stream.playing.listen((bool playing) {
         if (_isDisposed) return;
         if (playing) {
@@ -46,7 +43,6 @@ class AudioController extends ChangeNotifier {
         }
       });
 
-      // Listen to buffering state
       _player!.stream.buffering.listen((bool buffering) {
         if (_isDisposed) return;
         if (buffering) {
@@ -54,7 +50,6 @@ class AudioController extends ChangeNotifier {
         }
       });
 
-      // Listen to position changes
       _player!.stream.position.listen((Duration position) {
         if (_isDisposed) return;
         final oldState = progressNotifier.value;
@@ -65,7 +60,6 @@ class AudioController extends ChangeNotifier {
         );
       });
 
-      // Listen to buffer changes
       _player!.stream.buffer.listen((Duration buffer) {
         if (_isDisposed) return;
         final oldState = progressNotifier.value;
@@ -76,7 +70,6 @@ class AudioController extends ChangeNotifier {
         );
       });
 
-      // Listen to duration changes
       _player!.stream.duration.listen((Duration duration) {
         if (_isDisposed) return;
         final oldState = progressNotifier.value;
@@ -87,7 +80,6 @@ class AudioController extends ChangeNotifier {
         );
       });
 
-      // Listen to completion
       _player!.stream.completed.listen((bool completed) {
         if (_isDisposed) return;
         if (completed) {
@@ -97,9 +89,6 @@ class AudioController extends ChangeNotifier {
         }
       });
     } catch (e) {
-      // Player couldn't be created (likely missing native backend). Keep
-      // the controller functional but marked as unavailable. Calls to play
-      // or setAudioSource will no-op or throw a descriptive error.
       debugPrint('AudioController: Player init failed: $e');
       _playerAvailable = false;
     }
@@ -128,7 +117,6 @@ class AudioController extends ChangeNotifier {
     final fileName = _getCacheFileName(url);
     final cachedFile = File('${cacheDir.path}/$fileName');
 
-    // If file exists and is valid, return it
     if (await cachedFile.exists()) {
       final fileSize = await cachedFile.length();
       if (fileSize > 1000) {
@@ -138,13 +126,11 @@ class AudioController extends ChangeNotifier {
       }
     }
 
-    // Download the file
     debugPrint("AudioController: Downloading audio from: $url");
     final response = await http.get(
       Uri.parse(url),
       headers: {
         'User-Agent': 'QuranHadithApp/1.0',
-        'Accept': '*/*',
       },
     ).timeout(const Duration(seconds: 30));
 
@@ -178,17 +164,14 @@ class AudioController extends ChangeNotifier {
       buttonNotifier.value = ButtonState.loading;
       debugPrint("AudioController: Setting audio source: $url");
 
-      // Stop current playback if any
       try {
         await _player!.stop();
       } catch (e) {
         debugPrint("Error stopping player: $e");
       }
 
-      // Download and cache the audio file
       final audioFile = await _downloadAndCacheAudio(url);
 
-      // Play from local file using media_kit
       await _player!.open(Media(audioFile.path));
 
       debugPrint(
@@ -198,7 +181,6 @@ class AudioController extends ChangeNotifier {
       debugPrint("Error setting audio source: $e");
       debugPrint("Stack trace: $stackTrace");
 
-      // Fallback: Try playing directly from URL
       try {
         debugPrint(
             "AudioController: Fallback - trying to play from URL directly...");

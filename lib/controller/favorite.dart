@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
 
-/// Represents a favorite item with additional metadata
+/// Represents a pinned item (important verse for quick reference)
+/// Previously called "Bookmarks" - now clearly "Pins" for important ayahs
 class FavoriteItem {
   final String id;
   final String name;
-  final String type; // 'surah', 'ayah', 'bookmark'
+  final String type; // 'surah', 'ayah', 'pin'
   final DateTime addedAt;
+  final String? note; // Optional note about why this was pinned
   final Map<String, dynamic>? metadata;
 
   FavoriteItem({
@@ -15,6 +17,7 @@ class FavoriteItem {
     required this.name,
     this.type = 'surah',
     DateTime? addedAt,
+    this.note,
     this.metadata,
   }) : addedAt = addedAt ?? DateTime.now();
 
@@ -24,6 +27,7 @@ class FavoriteItem {
       'name': name,
       'type': type,
       'addedAt': addedAt.millisecondsSinceEpoch,
+      'note': note,
       'metadata': metadata,
     };
   }
@@ -34,6 +38,7 @@ class FavoriteItem {
       name: map['name'],
       type: map['type'] ?? 'surah',
       addedAt: DateTime.fromMillisecondsSinceEpoch(map['addedAt']),
+      note: map['note'],
       metadata: map['metadata'],
     );
   }
@@ -42,14 +47,17 @@ class FavoriteItem {
   String toString() => 'FavoriteItem(id: $id, name: $name, type: $type)';
 }
 
-/// Enhanced favorite manager with better state management and error handling
+/// Enhanced favorite/pin manager with better state management and error handling
+/// REDESIGNED: "Bookmarks" -> "Pinned Ayahs" for clearer purpose
+/// - Automatic Last Read: Tracks where you left off reading (one per surah)
+/// - Manual Pins: Mark important verses for quick reference (multiple allowed)
+/// This eliminates ambiguity between "Last Read" and "Bookmarks"
 class FavoriteManager extends ChangeNotifier {
   bool _isFavorite = false;
   List<FavoriteItem> _favorites = [];
   bool _isLoading = false;
   String? _lastError;
 
-  // Getters
   bool get isFavorite => _isFavorite;
   List<FavoriteItem> get favorites => List.unmodifiable(_favorites);
   bool get isLoading => _isLoading;
@@ -60,17 +68,14 @@ class FavoriteManager extends ChangeNotifier {
     _initialize();
   }
 
-  // Initialize favorites from storage
   Future<void> _initialize() async {
     await _loadFavorites();
   }
 
-  // Check if an item is favorited
   bool isFavorited(String itemId) {
     return _favorites.any((item) => item.id == itemId);
   }
 
-  // Get favorite item by ID
   FavoriteItem? getFavorite(String itemId) {
     try {
       return _favorites.firstWhere((item) => item.id == itemId);
@@ -79,7 +84,6 @@ class FavoriteManager extends ChangeNotifier {
     }
   }
 
-  // SIMPLIFIED: Get favorites list (for QPageView compatibility)
   Future<List<FavoriteItem>> getFavorites() async {
     if (_favorites.isEmpty) {
       await _loadFavorites();
@@ -87,7 +91,6 @@ class FavoriteManager extends ChangeNotifier {
     return List<FavoriteItem>.from(_favorites);
   }
 
-  // Load favorites from shared preferences
   Future<void> _loadFavorites() async {
     _isLoading = true;
     _lastError = null;
@@ -100,7 +103,6 @@ class FavoriteManager extends ChangeNotifier {
           final map = Map<String, dynamic>.from(json.decode(str));
           return FavoriteItem.fromMap(map);
         } catch (e) {
-          // Fallback for legacy string format
           return FavoriteItem(id: str, name: str);
         }
       }).toList();
@@ -142,7 +144,6 @@ class FavoriteManager extends ChangeNotifier {
       _favorites.add(newItem);
       _isFavorite = true;
 
-      // Save to storage
       final success = await _saveFavoritesToStorage();
 
       if (!success) {
@@ -183,7 +184,6 @@ class FavoriteManager extends ChangeNotifier {
       final success = await _saveFavoritesToStorage();
 
       if (!success) {
-        // Restore the item if save failed
         await _loadFavorites(); // Reload from storage
         throw Exception('Failed to save changes');
       }
@@ -206,7 +206,6 @@ class FavoriteManager extends ChangeNotifier {
     String type = 'surah',
     Map<String, dynamic>? metadata,
   }) async {
-    // Quick synchronous check first
     if (isFavorited(id)) {
       return await removeFavorite(id);
     } else {
@@ -306,7 +305,6 @@ class FavoriteManager extends ChangeNotifier {
     }).toList();
   }
 
-  // Private method to save favorites to storage
   Future<bool> _saveFavoritesToStorage() async {
     try {
       final favoriteStrings =

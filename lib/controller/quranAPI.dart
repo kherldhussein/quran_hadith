@@ -16,7 +16,6 @@ class QuranAPI {
   late Response response;
   Dio dio = Dio();
   final String _cacheDirName = 'cache';
-  // Per-surah ayah counts (1..114). Used to compute global ayah index
   static const List<int> _ayahCounts = [
     7,
     286,
@@ -167,13 +166,11 @@ class QuranAPI {
     const String url = "https://api.alquran.cloud/v1/quran/quran-uthmani";
     final cacheFile = await _ensureCacheFile('surat_list.json');
 
-    // Check cache first
     if (await cacheFile.exists()) {
       try {
         final cacheAge =
             DateTime.now().difference(await cacheFile.lastModified());
 
-        // Use cache if less than 7 days old
         if (cacheAge.inDays < 7) {
           debugPrint(
               'QuranAPI: Using cached surah list (age: ${cacheAge.inDays} days)');
@@ -185,7 +182,6 @@ class QuranAPI {
       }
     }
 
-    // Fetch from network
     try {
       debugPrint('QuranAPI: Fetching surah list from API...');
       final response =
@@ -199,7 +195,6 @@ class QuranAPI {
       debugPrint('QuranAPI: Network fetch failed: $e');
     }
 
-    // Fallback to cache
     if (await cacheFile.exists()) {
       debugPrint('QuranAPI: Using stale cache as fallback');
       final cached = await cacheFile.readAsString();
@@ -245,18 +240,15 @@ class QuranAPI {
   }
 
   Future<SurahList> getSuratAudio() async {
-    // Make this reciter-aware and use a reciter-specific cache file
     final selectedReciter = await _resolveReciterId(null);
     final cacheFile =
         await _ensureCacheFile('surat_audio_$selectedReciter.json');
 
-    // Check cache first
     if (await cacheFile.exists()) {
       try {
         final cacheAge =
             DateTime.now().difference(await cacheFile.lastModified());
 
-        // Use cache if less than 7 days old
         if (cacheAge.inDays < 7) {
           debugPrint(
               'QuranAPI: Using cached surah audio data (age: ${cacheAge.inDays} days)');
@@ -270,7 +262,6 @@ class QuranAPI {
       }
     }
 
-    // Fetch from network if cache doesn't exist or is expired
     try {
       debugPrint('QuranAPI: Fetching surah audio data from API...');
       final response = await http
@@ -285,10 +276,8 @@ class QuranAPI {
       }
     } catch (e) {
       debugPrint('QuranAPI: Network fetch failed: $e');
-      // Fall through to use cache if available
     }
 
-    // Final fallback to cache even if expired
     if (await cacheFile.exists()) {
       debugPrint('QuranAPI: Using stale cache as fallback');
       final cached = await cacheFile.readAsString();
@@ -317,12 +306,10 @@ class QuranAPI {
           .get("https://api.alquran.cloud/v1/surah/$suratNo/$selected");
 
       if (response.statusCode == 200) {
-        // Parse the response correctly
         final Map<String, dynamic> responseData = response.data is String
             ? json.decode(response.data)
             : response.data;
 
-        // Navigate through the response structure
         final data = responseData['data'];
         if (data != null) {
           final ayahs = data['ayahs'] as List<dynamic>?;
@@ -355,7 +342,6 @@ class QuranAPI {
       {String? reciterId}) async {
     try {
       String selected = await _resolveReciterId(reciterId);
-      // Validate/sanitize reciter id for known CDN/API formats; fallback to default
       final validPattern =
           RegExp(r'^[a-z]{2}\.[a-z0-9]+', caseSensitive: false);
       if (!validPattern.hasMatch(selected)) {
@@ -379,7 +365,6 @@ class QuranAPI {
           }
         }
       }
-      // Fallback: construct URL from islamic.network CDN using global ayah index
       final globalIndex = _globalAyahIndex(suratNo, ayahNo);
       final fallbackUrl =
           'https://cdn.islamic.network/quran/audio/128/$selected/$globalIndex.mp3';
@@ -388,7 +373,6 @@ class QuranAPI {
       return fallbackUrl;
     } catch (e) {
       debugPrint("Error fetching ayah audio URL for $suratNo:$ayahNo: $e");
-      // Final fallback on error
       try {
         String selected = await _resolveReciterId(reciterId);
         final validPattern =
@@ -414,7 +398,6 @@ class QuranAPI {
     final cacheFile =
         await _ensureCacheFile('translation_${surahNumber}_$edition.json');
 
-    // Check cache first - translations don't change, so cache indefinitely
     if (await cacheFile.exists()) {
       try {
         debugPrint('QuranAPI: Using cached translation for Surah $surahNumber');
@@ -425,7 +408,6 @@ class QuranAPI {
       }
     }
 
-    // Fetch from network only if cache doesn't exist
     try {
       debugPrint(
           'QuranAPI: Fetching translation for Surah $surahNumber from API...');
@@ -452,7 +434,6 @@ class QuranAPI {
       final decoded = json.decode(responseBody);
       final data = decoded['data'] as List;
 
-      // data[0] is Arabic, data[1] is translation
       if (data.length >= 2) {
         final translationData = data[1]['ayahs'] as List;
         for (final ayah in translationData) {
@@ -499,8 +480,6 @@ class QuranAPI {
   Future<SurahList?> fetchWordTimings(int surahNumber,
       {String? reciterId}) async {
     try {
-      // al-quran.cloud does not provide word-level timing endpoint
-      // Word highlighting is currently disabled
       debugPrint(
           'QuranAPI: Word-level timings not available from al-quran.cloud API');
       return null;

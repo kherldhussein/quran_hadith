@@ -36,7 +36,6 @@ class Search {
       .replaceAll('\u0613', '') //ARABIC SIGN RADI ALLAHOU ANHU
       .replaceAll('\u0614', '') //ARABIC SIGN TAKHALLUS
 
-  //Remove koranic anotation
       .replaceAll('\u0615', '') //ARABIC SMALL HIGH TAH
       .replaceAll(
       '\u0616', '') //ARABIC SMALL HIGH LIGATURE ALEF WITH LAM WITH YEH
@@ -71,10 +70,8 @@ class Search {
       .replaceAll('\u06EC', '') //ARABIC ROUNDED HIGH STOP WITH FILLED CENTRE
       .replaceAll('\u06ED', '') //ARABIC SMALL LOW MEEM
 
-  //Remove tatweel
       .replaceAll('\u0640', '')
 
-  //Remove tashkeel
       .replaceAll('\u064B', '') //ARABIC FATHATAN
       .replaceAll('\u064C', '') //ARABIC DAMMATAN
       .replaceAll('\u064D', '') //ARABIC KASRATAN

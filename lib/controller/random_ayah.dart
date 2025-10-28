@@ -1,10 +1,8 @@
 import 'dart:math';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-// import 'package:desktop_notifications/desktop_notifications.dart';
 
 class RandomVerseManager {
-  // NotificationsClient? _notifications;
 
   RandomVerseManager() {
     _initializeNotifications();
@@ -22,7 +20,6 @@ class RandomVerseManager {
         final verses = data['data']['surahs'][val]['ayahs'];
         final random = Random().nextInt(verses.length);
         final randomVerse = verses[random];
-        // todo: Modify to return whole Ayah details
         return randomVerse['text'];
       } else {
         throw Exception("Failed to retrieve data from the API.");
@@ -34,32 +31,4 @@ class RandomVerseManager {
 
   Future<void> displayDesktopNotification(String verse) async {}
 
-// Future<void> _onNotificationAction(String? actionKey, String? payload) async {
-//   if (actionKey == 'action_key') {
-//     if (payload == 'action_payload') {
-//       // Perform action specific to the payload
-//       print('Performing action for payload: $payload');
-//
-//       // Example: Open a specific screen or perform a task
-//       if (payload == 'open_screen_a') {
-//         // Open Screen A
-//       } else if (payload == 'open_screen_b') {
-//         // Open Screen B
-//       } else {
-//         // Unknown payload value
-//         print('Unknown payload: $payload');
-//       }
-//     } else {
-//       // Handle other payload values
-//       print('Unknown payload: $payload');
-//     }
-//   } else if (actionKey == 'other_action_key') {
-//     // Handle other actions
-//     print('Performing action for other action key: $actionKey');
-//     // Perform the desired action for this action key
-//   } else {
-//     // Unknown action key
-//     print('Unknown action key: $actionKey');
-//   }
-// }
 }
