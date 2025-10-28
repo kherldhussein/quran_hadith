@@ -87,7 +87,6 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    // zonedSchedule is not supported on Linux and Web
     if (kIsWeb || Platform.isLinux) {
       debugPrint(
           'NotificationService: Scheduled notifications not supported on ${kIsWeb ? 'Web' : 'Linux'}');
@@ -116,7 +115,6 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    // zonedSchedule is not supported on Linux and Web
     if (kIsWeb || Platform.isLinux) {
       debugPrint(
           'NotificationService: Scheduled notifications not supported on ${kIsWeb ? 'Web' : 'Linux'}');
