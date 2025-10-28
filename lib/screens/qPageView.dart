@@ -16,7 +16,9 @@ import '../controller/audio_controller.dart';
 import '../controller/favorite.dart';
 import '../utils/sp_util.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
-import 'package:quran_hadith/services/offline_audio_service.dart';
+import 'package:quran_hadith/services/offline_audio_service.dart' as offline;
+import 'package:quran_hadith/services/native_desktop_service.dart';
+import 'qpage_view_constants.dart';
 
 class QPageView extends StatefulWidget {
   final List<Ayah>? ayahList;
@@ -70,42 +72,127 @@ class _QPageViewState extends State<QPageView>
     _loadTranslations();
     _setupAudioCompletionListener();
     _setupReciterChangeListener();
+    _setupKeyboardShortcuts();
     _checkOfflineStatus();
   }
 
   /// Setup listener for audio completion to enable continuous playback
   void _setupAudioCompletionListener() {
-    // Listen to button state changes to detect when audio completes
     _audioController.buttonNotifier.addListener(_onAudioStateChanged);
   }
 
   /// Listen to reciter changes and restart current ayah with the new voice
   void _setupReciterChangeListener() {
-    _reciterListener = () {
+    _reciterListener = () async {
       if (!mounted) return;
-      if (_currentlyPlayingAyah != null && !_isAudioLoading) {
+
+      if (_currentlyPlayingAyah == null) return;
+      if (_isAudioLoading)
+        return; // Avoid race condition: skip if already loading
+
+      try {
         final ayahNo = _currentlyPlayingAyah!;
         final match = widget.ayahList?.firstWhere(
           (a) => a.number == ayahNo,
           orElse: () => Ayah(),
         );
-        if (match != null && match.number != null) {
-          // Restart playback of the same ayah using the new reciter
-          _playAyahAudio(match);
-        }
+
+        if (match == null || match.number == null) return;
+
+        debugPrint(
+          '🔄 Reciter changed. Restarting playback of Ayah ${match.number} '
+          'with new reciter: ${ReciterService.instance.currentReciterId.value}',
+        );
+
+        _audioController.pause();
+        await Future.delayed(const Duration(
+            milliseconds: 300)); // Brief pause for smooth transition
+
+        if (!mounted || _currentlyPlayingAyah != ayahNo) return;
+
+        await _checkOfflineStatus();
+
+        await _playAyahAudio(match);
+      } catch (e) {
+        debugPrint('⚠️ Error handling reciter change: $e');
       }
     };
     ReciterService.instance.currentReciterId.addListener(_reciterListener!);
   }
 
+  /// Register keyboard shortcuts for playback control
+  void _setupKeyboardShortcuts() {
+    try {
+      final nativeDesktop = NativeDesktopService();
+      nativeDesktop.registerCallbacks(
+        onPlayPause: _handlePlayPauseShortcut,
+        onNext: _handleNextAyahShortcut,
+        onPrevious: _handlePreviousAyahShortcut,
+      );
+      debugPrint(
+          '✅ Keyboard shortcuts registered (Play/Pause, Next, Previous)');
+    } catch (e) {
+      debugPrint('⚠️ Error registering keyboard shortcuts: $e');
+    }
+  }
+
+  /// Handle play/pause keyboard shortcut (Space key)
+  void _handlePlayPauseShortcut() {
+    if (!mounted || _currentlyPlayingAyah == null) return;
+
+    if (_audioController.buttonNotifier.value == ButtonState.playing) {
+      _audioController.pause();
+      debugPrint('⏸️ Pause: Keyboard shortcut (Space)');
+    } else {
+      final currentAyah = widget.ayahList?.firstWhere(
+        (a) => a.number == _currentlyPlayingAyah,
+        orElse: () => Ayah(),
+      );
+      if (currentAyah != null && currentAyah.number != null) {
+        _playAyahAudio(currentAyah);
+        debugPrint('▶️ Play: Keyboard shortcut (Space)');
+      }
+    }
+  }
+
+  /// Handle next ayah keyboard shortcut (Ctrl+Right)
+  void _handleNextAyahShortcut() {
+    if (!mounted || _currentlyPlayingAyah == null || widget.ayahList == null) {
+      return;
+    }
+
+    final currentIndex =
+        widget.ayahList!.indexWhere((a) => a.number == _currentlyPlayingAyah);
+
+    if (currentIndex != -1 && currentIndex < widget.ayahList!.length - 1) {
+      final nextAyah = widget.ayahList![currentIndex + 1];
+      _playAyahAudio(nextAyah);
+      debugPrint('⏭️ Next Ayah: Keyboard shortcut (Ctrl+Right)');
+    }
+  }
+
+  /// Handle previous ayah keyboard shortcut (Ctrl+Left)
+  void _handlePreviousAyahShortcut() {
+    if (!mounted || _currentlyPlayingAyah == null || widget.ayahList == null) {
+      return;
+    }
+
+    final currentIndex =
+        widget.ayahList!.indexWhere((a) => a.number == _currentlyPlayingAyah);
+
+    if (currentIndex > 0) {
+      final previousAyah = widget.ayahList![currentIndex - 1];
+      _playAyahAudio(previousAyah);
+      debugPrint('⏮️ Previous Ayah: Keyboard shortcut (Ctrl+Left)');
+    }
+  }
+
   void _onAudioStateChanged() {
-    // Prevent race conditions by ensuring only one state change is processed at a time
     if (_isProcessingAudioStateChange) {
       debugPrint('⚠️ Audio state change already being processed, skipping...');
       return;
     }
 
-    // Check if audio just finished
     if (_audioController.buttonNotifier.value == ButtonState.paused &&
         !_isAudioLoading) {
       _isProcessingAudioStateChange = true;
@@ -113,13 +200,12 @@ class _QPageViewState extends State<QPageView>
       final repeatMode = SpUtil.getRepeatMode();
       final autoPlayNext = SpUtil.getAutoPlayNextAyah();
 
-      // Handle repeat mode for single ayah
       if (repeatMode == 'ayah' && _currentlyPlayingAyah != null) {
         final match = widget.ayahList?.firstWhere(
             (a) => a.number == _currentlyPlayingAyah,
             orElse: () => Ayah());
         if (match != null && match.number != null) {
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(AnimationTimings.autoScrollDelay, () {
             if (!mounted) return;
             _isProcessingAudioStateChange = false;
             _playAyahAudio(match);
@@ -128,29 +214,25 @@ class _QPageViewState extends State<QPageView>
         }
       }
 
-      // Check if we're in surah playback mode or auto-play is enabled
       if ((_isSurahPlaybackMode || autoPlayNext) &&
           _currentlyPlayingAyah != null) {
         final currentIndex = widget.ayahList!
             .indexWhere((a) => a.number == _currentlyPlayingAyah);
 
         if (currentIndex != -1 && currentIndex < widget.ayahList!.length - 1) {
-          // Play next ayah after a short delay
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(AnimationTimings.autoScrollDelay, () {
             if (!mounted) return;
             _isProcessingAudioStateChange = false;
             _playAyahAudio(widget.ayahList![currentIndex + 1]);
           });
         } else if (repeatMode == 'surah' &&
             currentIndex == widget.ayahList!.length - 1) {
-          // Restart surah from the beginning
-          Future.delayed(const Duration(milliseconds: 500), () {
+          Future.delayed(AnimationTimings.autoScrollDelay, () {
             if (!mounted) return;
             _isProcessingAudioStateChange = false;
             _playAyahAudio(widget.ayahList![0]);
           });
         } else if (_isSurahPlaybackMode) {
-          // Finished playing entire surah
           _isSurahPlaybackMode = false;
           _isProcessingAudioStateChange = false;
           if (mounted) {
@@ -177,14 +259,14 @@ class _QPageViewState extends State<QPageView>
   void _initializeData() async {
     _loadFavoriteStates();
     _loadLastReadPosition();
-    // Audio will be loaded on-demand when user clicks play
   }
 
   /// Check if this surah is downloaded for offline playback
   Future<void> _checkOfflineStatus() async {
     if (widget.suratNo == null || widget.ayahList == null) return;
     final reciterId = ReciterService.instance.currentReciterId.value;
-    final downloaded = await OfflineAudioService.instance.isSurahDownloaded(
+    final downloaded =
+        await offline.OfflineAudioService.instance.isSurahDownloaded(
       reciterId: reciterId,
       surahNumber: widget.suratNo!,
       ayahCount: widget.ayahList!.length,
@@ -216,15 +298,35 @@ class _QPageViewState extends State<QPageView>
       debugPrint(
           'Loaded ${translations.length} translations for Surah ${widget.suratNo}');
     } catch (e) {
-      debugPrint('Error loading translations: $e');
+      debugPrint('❌ Error loading translations: $e');
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Failed to load translations. Using Arabic text only.',
+            maxLines: 2,
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: AnimationTimings.translationErrorSnackBarDuration,
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: Colors.white,
+            onPressed: () {
+              _loadTranslations();
+            },
+          ),
+        ),
+      );
+
       setState(() => _isLoadingTranslations = false);
     }
   }
 
   /// Start tracking reading progress
   void _startProgressTracking() {
-    _progressTrackingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+    _progressTrackingTimer =
+        Timer.periodic(AnimationTimings.progressTrackingInterval, (_) {
       _saveReadingProgress();
     });
   }
@@ -236,8 +338,7 @@ class _QPageViewState extends State<QPageView>
       if (lastProgress != null &&
           lastProgress.surahNumber == widget.suratNo &&
           lastProgress.ayahNumber > 0) {
-        // Scroll to last read ayah after a short delay
-        Future.delayed(const Duration(milliseconds: 500), () {
+        Future.delayed(AnimationTimings.autoScrollDelay, () {
           _scrollToAyah(lastProgress.ayahNumber);
         });
       }
@@ -272,7 +373,6 @@ class _QPageViewState extends State<QPageView>
       await database.saveReadingProgress(progress);
       _sessionStartTime = DateTime.now(); // Reset session timer
 
-      // Also save to SharedPreferences for backward compatibility
       SpUtil.setLastRead(
         surah: widget.suratNo!,
         ayah: _lastVisibleAyah!,
@@ -313,9 +413,9 @@ class _QPageViewState extends State<QPageView>
     try {
       final quranAPI = Provider.of<QuranAPI>(context, listen: false);
 
-      // Prefer local offline file if available
       final reciterId = ReciterService.instance.currentReciterId.value;
-      final localFile = await OfflineAudioService.instance.getLocalAyahFile(
+      final localFile =
+          await offline.OfflineAudioService.instance.getLocalAyahFile(
         reciterId: reciterId,
         surahNumber: widget.suratNo!,
         ayahNumber: ayah.number!,
@@ -337,7 +437,6 @@ class _QPageViewState extends State<QPageView>
             _currentlyPlayingAyah = null;
           });
 
-          // Show error to user
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_audioError!),
@@ -352,19 +451,24 @@ class _QPageViewState extends State<QPageView>
         _audioController.play();
       }
 
-      // Save listening progress to database
       await _saveListeningProgress(ayah.number!, 0);
 
-      // Also save to SharedPreferences for backward compatibility
       SpUtil.setLastListen(
         surah: widget.suratNo!,
         ayah: ayah.number!,
         positionMs: 0,
       );
+
+      if (mounted) {
+        Future.delayed(AnimationTimings.autoScrollDelay, () {
+          if (mounted) {
+            _scrollToAyah(ayah.number!);
+          }
+        });
+      }
     } catch (e) {
       debugPrint("Error playing audio for ayah ${ayah.number}: $e");
 
-      // Provide more specific error messages
       String errorMessage = 'Failed to load audio';
       if (e.toString().contains('invalid parameter')) {
         errorMessage =
@@ -402,11 +506,6 @@ class _QPageViewState extends State<QPageView>
       }
     }
 
-    // Note: Word-level highlighting is disabled as al-quran.cloud API
-    // does not provide word-timing data with millisecond precision.
-    // To implement word highlighting, we would need:
-    // 1. A different API with word-timing support, or
-    // 2. Manual timing data for each recitation
   }
 
   /// Fetch word-by-word timing data for highlighting during recitation
@@ -418,8 +517,6 @@ class _QPageViewState extends State<QPageView>
 
   /// Build Arabic text (plain, without word highlighting)
   Widget _buildArabicTextWithHighlighting(Ayah ayah, ThemeData theme) {
-    // Simple implementation: just display the text without highlighting
-    // Word highlighting feature is disabled due to lack of API support
     return Text(
       ayah.text ?? '',
       textAlign: TextAlign.right,
@@ -444,7 +541,6 @@ class _QPageViewState extends State<QPageView>
       return;
     }
 
-    // Show confirmation dialog with options
     final shouldPlay = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -493,15 +589,12 @@ class _QPageViewState extends State<QPageView>
 
     if (shouldPlay != true) return;
 
-    // Enable surah playback mode
     setState(() {
       _isSurahPlaybackMode = true;
     });
 
-    // Start playing from the first ayah
     await _playAyahAudio(widget.ayahList!.first);
 
-    // Show snackbar with playback info
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -545,7 +638,6 @@ class _QPageViewState extends State<QPageView>
   }
 
   void _scrollToAyah(int ayahNumber) {
-    // Check if auto scroll is enabled in preferences
     if (!database.getPreferences().autoScroll) {
       debugPrint('⏸️ Auto scroll disabled by user');
       return;
@@ -556,7 +648,7 @@ class _QPageViewState extends State<QPageView>
     if (index != -1) {
       _scrollController.scrollToIndex(
         index,
-        duration: const Duration(milliseconds: 500),
+        duration: AnimationTimings.scrollAnimationDuration,
         preferPosition: AutoScrollPosition.middle,
       );
       _lastVisibleAyah = ayahNumber; // Track visible ayah
@@ -574,18 +666,13 @@ class _QPageViewState extends State<QPageView>
         ayahNumber,
       );
 
-      // Calculate realistic listening time based on current position and previous position
       int addedListenTime = 0;
       if (currentProgress != null) {
-        // If we already have progress for this ayah, add the delta
         final previousPosition = currentProgress.positionMs;
         addedListenTime = ((positionMs - previousPosition) ~/ 1000).abs();
 
-        // Clamp to reasonable value (0-300 seconds = 0-5 minutes per save)
         addedListenTime = addedListenTime.clamp(0, 300);
       } else {
-        // First time listening to this ayah: estimate based on typical ayah length
-        // Most ayahs are 30-90 seconds, so estimate 45 seconds
         addedListenTime = 45;
       }
 
@@ -623,7 +710,6 @@ class _QPageViewState extends State<QPageView>
   Widget build(BuildContext context) {
     super.build(context);
 
-    // Guard clause: Return error state if ayahList is null or empty
     if (widget.ayahList == null || widget.ayahList!.isEmpty) {
       final theme = Theme.of(context);
       return Scaffold(
@@ -664,18 +750,14 @@ class _QPageViewState extends State<QPageView>
         backgroundColor: theme.colorScheme.surface,
         body: Column(
           children: [
-            // Custom App Bar
             _buildAppBar(theme, isDesktop),
 
-            // Content Area
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Sidebar - Only on desktop
                   if (isDesktop) _buildSidebar(theme),
 
-                  // Main Content - Verses
                   Expanded(
                     child: _buildVersesList(theme),
                   ),
@@ -685,7 +767,6 @@ class _QPageViewState extends State<QPageView>
           ],
         ),
 
-        // Floating Action Button for Quick Actions
         floatingActionButton: _buildFloatingActionButton(theme),
       ),
     );
@@ -709,7 +790,6 @@ class _QPageViewState extends State<QPageView>
       ),
       child: Row(
         children: [
-          // Back Button
           IconButton(
             icon: const Icon(FontAwesomeIcons.arrowLeft),
             onPressed: () => Get.back(),
@@ -718,7 +798,6 @@ class _QPageViewState extends State<QPageView>
 
           const SizedBox(width: 16),
 
-          // Surah Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -745,7 +824,6 @@ class _QPageViewState extends State<QPageView>
             ),
           ),
 
-          // Offline Download Badge
           if (_isOfflineDownloaded)
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
@@ -780,7 +858,6 @@ class _QPageViewState extends State<QPageView>
               ),
             ),
 
-          // Play Surah Button
           IconButton(
             icon: Icon(
               FontAwesomeIcons.circlePlay,
@@ -791,7 +868,6 @@ class _QPageViewState extends State<QPageView>
             splashRadius: 20,
           ),
 
-          // Settings Menu
           PopupMenuButton<String>(
             icon: Icon(FontAwesomeIcons.gear, color: theme.colorScheme.primary),
             onSelected: (value) => _handleSettingsSelection(value),
@@ -858,7 +934,6 @@ class _QPageViewState extends State<QPageView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Quick Navigation
           Card(
             elevation: 2,
             child: Padding(
@@ -892,7 +967,6 @@ class _QPageViewState extends State<QPageView>
 
           const SizedBox(height: 20),
 
-          // Bookmarks
           Consumer<FavoriteManager>(
             builder: (context, favManager, child) {
               return FutureBuilder<List<String>>(
@@ -901,20 +975,45 @@ class _QPageViewState extends State<QPageView>
                     .then((list) => list.map((f) => f.id).toList()),
                 builder: (context, snapshot) {
                   final favorites = snapshot.data ?? [];
-                  final ayahFavorites = favorites
+                  final pinnedAyahs = favorites
                       .where((id) => id.startsWith('${widget.suratNo}:'))
                       .toList();
 
-                  if (ayahFavorites.isEmpty) {
+                  if (pinnedAyahs.isEmpty) {
                     return Card(
                       elevation: 2,
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
-                          'No bookmarks yet',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface.withOpacity(0.5),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  FontAwesomeIcons.mapPin,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Pinned Ayahs',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Pin important verses to easily find them later',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.6),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -927,34 +1026,75 @@ class _QPageViewState extends State<QPageView>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Bookmarks',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.mapPin,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Pinned Ayahs',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${pinnedAyahs.length}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
-                          ...ayahFavorites.take(5).map((id) {
+                          ...pinnedAyahs.take(5).map((id) {
                             final ayahNum = int.parse(id.split(':')[1]);
                             return ListTile(
                               dense: true,
-                              leading: CircleAvatar(
-                                radius: 12,
-                                backgroundColor: theme.colorScheme.primary,
-                                child: Text(
-                                  ayahNum.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              leading: Icon(
+                                FontAwesomeIcons.mapPin,
+                                size: 14,
+                                color: theme.colorScheme.primary,
                               ),
                               title: Text('Ayah $ayahNum'),
+                              trailing: Icon(
+                                FontAwesomeIcons.chevronRight,
+                                size: 12,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.3),
+                              ),
                               onTap: () => _scrollToAyah(ayahNum),
                             );
                           }),
+                          if (pinnedAyahs.length > 5) ...[
+                            const SizedBox(height: 8),
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Total pinned: ${pinnedAyahs.length} ayahs',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  'View all (${pinnedAyahs.length} total)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -993,11 +1133,14 @@ class _QPageViewState extends State<QPageView>
       ),
       child: NotificationListener<ScrollNotification>(
         onNotification: (scrollNotification) {
-          // Track which ayah is currently visible
-          if (scrollNotification is ScrollUpdateNotification) {
-            final visibleIndex = (_scrollController.offset / 100).round();
-            if (visibleIndex >= 0 && visibleIndex < widget.ayahList!.length) {
-              _lastVisibleAyah = widget.ayahList![visibleIndex].number;
+          if (scrollNotification is ScrollUpdateNotification &&
+              scrollNotification.metrics.axis == Axis.vertical) {
+            final approximateIndex = (_scrollController.offset / 100)
+                .round()
+                .clamp(0, widget.ayahList!.length - 1);
+            if (approximateIndex >= 0 &&
+                approximateIndex < widget.ayahList!.length) {
+              _lastVisibleAyah = widget.ayahList![approximateIndex].number;
             }
           }
           return true;
@@ -1042,11 +1185,9 @@ class _QPageViewState extends State<QPageView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Ayah Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Ayah Number
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1065,17 +1206,19 @@ class _QPageViewState extends State<QPageView>
                     ),
                   ),
 
-                  // Favorite Button
                   IconButton(
                     icon: Icon(
                       _favoriteStates[ayah.number!] ?? false
-                          ? FontAwesomeIcons.solidHeart
-                          : FontAwesomeIcons.heart,
+                          ? FontAwesomeIcons.solidStar
+                          : FontAwesomeIcons.star,
                       color: _favoriteStates[ayah.number!] ?? false
-                          ? theme.colorScheme.secondary
+                          ? theme.colorScheme.primary
                           : theme.colorScheme.onSurface.withOpacity(0.5),
-                      size: 18,
+                      size: 16,
                     ),
+                    tooltip: _favoriteStates[ayah.number!] ?? false
+                        ? 'Important ayah'
+                        : 'Mark as important',
                     onPressed: () => _toggleFavorite(ayah.number!),
                     splashRadius: 16,
                   ),
@@ -1084,12 +1227,10 @@ class _QPageViewState extends State<QPageView>
 
               const SizedBox(height: 16),
 
-              // Arabic Text with Word Highlighting
               _buildArabicTextWithHighlighting(ayah, theme),
 
               const SizedBox(height: 16),
 
-              // Translation (Conditional)
               if (_showTranslation) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -1119,7 +1260,6 @@ class _QPageViewState extends State<QPageView>
                 const SizedBox(height: 16),
               ],
 
-              // Action Buttons
               _buildAyahActions(ayah, theme),
             ],
           ),
@@ -1132,10 +1272,8 @@ class _QPageViewState extends State<QPageView>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        // Play Button
         _buildAudioControl(ayah, theme),
 
-        // Share Button
         IconButton(
           icon: const Icon(FontAwesomeIcons.shareNodes, size: 18),
           onPressed: () => share.showShareDialog(
@@ -1145,7 +1283,6 @@ class _QPageViewState extends State<QPageView>
           tooltip: 'Share',
         ),
 
-        // Copy Button
         IconButton(
           icon: const Icon(FontAwesomeIcons.copy, size: 18),
           onPressed: () {
@@ -1163,7 +1300,6 @@ class _QPageViewState extends State<QPageView>
           tooltip: 'Copy',
         ),
 
-        // Bookmark Button
         IconButton(
           icon: Icon(
             _favoriteStates[ayah.number!] ?? false
@@ -1179,7 +1315,6 @@ class _QPageViewState extends State<QPageView>
   }
 
   Widget _buildAudioControl(Ayah ayah, ThemeData theme) {
-    // Use local audioController instance directly
     return ValueListenableBuilder<ButtonState>(
       valueListenable: _audioController.buttonNotifier,
       builder: (_, value, __) {
@@ -1213,7 +1348,6 @@ class _QPageViewState extends State<QPageView>
               tooltip: 'Pause',
             );
           default:
-            // Default case for when audio is paused or not relevant to this ayah
             return IconButton(
               icon: const Icon(FontAwesomeIcons.play, size: 18),
               color: theme.colorScheme.onSurface.withOpacity(0.5),
@@ -1288,7 +1422,6 @@ class _QPageViewState extends State<QPageView>
                 icon: FontAwesomeIcons.bookOpen,
                 label: 'Study',
                 onTap: () {
-                  // TODO: Implement study mode
                   Get.back();
                 },
                 color: Theme.of(context).colorScheme.tertiary,
@@ -1353,7 +1486,8 @@ class _QPageViewState extends State<QPageView>
     final reciterId = ReciterService.instance.currentReciterId.value;
     final ayahCount = widget.ayahList!.length;
 
-    final already = await OfflineAudioService.instance.isSurahDownloaded(
+    final already =
+        await offline.OfflineAudioService.instance.isSurahDownloaded(
       reciterId: reciterId,
       surahNumber: widget.suratNo!,
       ayahCount: ayahCount,
@@ -1376,7 +1510,7 @@ class _QPageViewState extends State<QPageView>
           if (already)
             TextButton(
               onPressed: () async {
-                await OfflineAudioService.instance.removeSurah(
+                await offline.OfflineAudioService.instance.removeSurah(
                   reciterId: reciterId,
                   surahNumber: widget.suratNo!,
                 );
@@ -1404,7 +1538,7 @@ class _QPageViewState extends State<QPageView>
     }
     if (action != 'download') return;
 
-    final cancelToken = CancelToken();
+    final cancelToken = offline.CancelToken();
     final downloadedVN = ValueNotifier<int>(0);
 
     showDialog(
@@ -1438,7 +1572,7 @@ class _QPageViewState extends State<QPageView>
       ),
     );
 
-    await OfflineAudioService.instance.downloadSurah(
+    await offline.OfflineAudioService.instance.downloadSurah(
       reciterId: reciterId,
       surahNumber: widget.suratNo!,
       ayahCount: ayahCount,
@@ -1491,7 +1625,6 @@ class _QPageViewState extends State<QPageView>
                   ),
                   const SizedBox(height: 16),
 
-                  // Playback Speed
                   Text('Playback speed: ${speed.toStringAsFixed(2)}x'),
                   Slider(
                     value: speed,
@@ -1502,7 +1635,6 @@ class _QPageViewState extends State<QPageView>
                     onChanged: (v) {
                       setState(() => speed = v);
                       SpUtil.setAudioSpeed(v);
-                      // Apply speed to currently playing audio
                       if (_currentlyPlayingAyah != null) {
                         _audioController.setSpeed(v);
                       }
@@ -1511,7 +1643,6 @@ class _QPageViewState extends State<QPageView>
 
                   const Divider(),
 
-                  // Auto-play next ayah
                   SwitchListTile(
                     title: const Text('Auto-play next ayah'),
                     subtitle: const Text(
@@ -1526,7 +1657,6 @@ class _QPageViewState extends State<QPageView>
 
                   const SizedBox(height: 8),
 
-                  // Repeat Mode
                   const Text('Repeat Mode',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
@@ -1618,15 +1748,11 @@ class _QPageViewState extends State<QPageView>
   @override
   void dispose() {
     _progressTrackingTimer?.cancel();
-    // Remove audio completion listener
     _audioController.buttonNotifier.removeListener(_onAudioStateChanged);
     if (_reciterListener != null) {
       ReciterService.instance.currentReciterId
           .removeListener(_reciterListener!);
     }
-    // Save one last time before disposing, but avoid setState calls inside
-    // _saveReadingProgress that could run after dispose. We call it and ignore
-    // any setState inside (the method checks mounted before setState).
     _saveReadingProgress();
     _scrollController.dispose();
     _audioController.dispose(); // Still dispose the local instance
