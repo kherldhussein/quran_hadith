@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-// part 'surah_model.g.dart';
 
 @HiveType(typeId: 0)
 class SurahList extends ChangeNotifier {
