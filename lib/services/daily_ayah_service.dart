@@ -84,7 +84,6 @@ class DailyAyahService {
       debugPrint('DailyAyahService: Failed to fetch daily ayah: $e');
     }
 
-    // fallback to cached
     return SpUtil.getCachedDailyAyah();
   }
 
