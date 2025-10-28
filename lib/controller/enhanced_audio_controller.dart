@@ -14,7 +14,6 @@ class EnhancedAudioController extends ChangeNotifier {
   bool _playerAvailable = false;
   VoidCallback? _reciterListener;
 
-  // Per-surah ayah counts (1..114)
   static const List<int> _ayahCounts = [
     7,
     286,
@@ -145,7 +144,6 @@ class EnhancedAudioController extends ChangeNotifier {
     if (!_isDisposed) notifyListeners();
   }
 
-  // State notifiers
   final progressNotifier = ValueNotifier<ProgressBarState>(
     ProgressBarState(
       current: Duration.zero,
@@ -159,15 +157,12 @@ class EnhancedAudioController extends ChangeNotifier {
   final shuffleNotifier = ValueNotifier<bool>(false);
   final speedNotifier = ValueNotifier<double>(1.0);
 
-  // Playlist management
   List<PlaylistItem> _playlist = [];
   int _currentIndex = 0;
 
-  // Configuration
   bool _continuousPlayback = true;
   String _reciter = 'ar.alafasy';
 
-  // Getters
   List<PlaylistItem> get playlist => List.unmodifiable(_playlist);
   int get currentIndex => _currentIndex;
   PlaylistItem? get currentTrack =>
@@ -178,10 +173,8 @@ class EnhancedAudioController extends ChangeNotifier {
   String get reciter => _reciter;
 
   EnhancedAudioController() {
-    // Start player init in background but don't crash if it fails.
     _init();
 
-    // Listen to global reciter changes and update immediately
     _reciterListener = () async {
       final id = ReciterService.instance.currentReciterId.value;
       if (id.isNotEmpty && id != _reciter) {
@@ -199,15 +192,12 @@ class EnhancedAudioController extends ChangeNotifier {
       _audioPlayer = AudioPlayer();
       _playerAvailable = true;
 
-      // Load saved settings
       await _loadSettings();
 
-      // Player state listener
       _audioPlayer!.playerStateStream.listen((playerState) {
         _handlePlayerStateChange(playerState);
       });
 
-      // Position listener
       _audioPlayer!.positionStream.listen((position) {
         final oldState = progressNotifier.value;
         progressNotifier.value = ProgressBarState(
@@ -216,11 +206,9 @@ class EnhancedAudioController extends ChangeNotifier {
           total: oldState.total,
         );
 
-        // Save progress periodically
         _saveListeningProgress();
       });
 
-      // Buffered position listener
       _audioPlayer!.bufferedPositionStream.listen((bufferedPosition) {
         final oldState = progressNotifier.value;
         progressNotifier.value = ProgressBarState(
@@ -230,7 +218,6 @@ class EnhancedAudioController extends ChangeNotifier {
         );
       });
 
-      // Duration listener
       _audioPlayer!.durationStream.listen((totalDuration) {
         final oldState = progressNotifier.value;
         progressNotifier.value = ProgressBarState(
@@ -240,7 +227,6 @@ class EnhancedAudioController extends ChangeNotifier {
         );
       });
 
-      // Playback event listener for completion
       _audioPlayer!.playbackEventStream.listen((event) {
         if (event.processingState == ProcessingState.completed) {
           _handleTrackCompletion();
@@ -255,7 +241,6 @@ class EnhancedAudioController extends ChangeNotifier {
   Future<void> _loadSettings() async {
     try {
       final prefs = database.getPreferences();
-      // Prefer current in-memory/global reciter if available; fallback to saved prefs
       final global = ReciterService.instance.currentReciterId.value;
       _reciter = (global.isNotEmpty ? global : prefs.reciter);
       await setSpeed(prefs.playbackSpeed);
@@ -282,7 +267,6 @@ class EnhancedAudioController extends ChangeNotifier {
 
   void _handleTrackCompletion() {
     if (_continuousPlayback) {
-      // Handle repeat mode
       switch (repeatModeNotifier.value) {
         case RepeatMode.off:
           if (hasNext()) {
@@ -299,7 +283,6 @@ class EnhancedAudioController extends ChangeNotifier {
           if (hasNext()) {
             next();
           } else {
-            // Restart playlist
             _currentIndex = 0;
             _loadAndPlayCurrent();
           }
@@ -310,7 +293,6 @@ class EnhancedAudioController extends ChangeNotifier {
     }
   }
 
-  // ============ PLAYLIST MANAGEMENT ============
 
   /// Set playlist from ayah list
   Future<void> setPlaylistFromAyahs({
@@ -340,15 +322,12 @@ class EnhancedAudioController extends ChangeNotifier {
     required int surahNumber,
     required String surahName,
   }) async {
-    // Enable continuous playback for surah mode
     _continuousPlayback = true;
 
-    // Set repeat mode to all by default for surah playback
     if (repeatModeNotifier.value == RepeatMode.off) {
       setRepeatMode(RepeatMode.all);
     }
 
-    // Create playlist from all ayahs
     await setPlaylistFromAyahs(
       ayahs: ayahs,
       surahNumber: surahNumber,
@@ -390,7 +369,6 @@ class EnhancedAudioController extends ChangeNotifier {
     final item = _playlist.removeAt(oldIndex);
     _playlist.insert(newIndex, item);
 
-    // Update current index if needed
     if (oldIndex == _currentIndex) {
       _currentIndex = newIndex;
     } else if (oldIndex < _currentIndex && newIndex >= _currentIndex) {
@@ -402,7 +380,6 @@ class EnhancedAudioController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============ PLAYBACK CONTROL ============
 
   /// Load and play current track
   Future<void> _loadAndPlayCurrent() async {
@@ -414,13 +391,10 @@ class EnhancedAudioController extends ChangeNotifier {
     try {
       buttonNotifier.value = AudioButtonState.loading;
 
-      // Build audio URL if not provided
       String audioUrl = track.audioUrl;
       if (audioUrl.isEmpty) {
-        // Compute global ayah index required by CDN
         final globalIndex =
             _globalAyahIndex(track.surahNumber, track.ayahNumber);
-        // High-quality 128 kbps stream; ensure .mp3 extension
         audioUrl =
             'https://cdn.islamic.network/quran/audio/128/$_reciter/$globalIndex.mp3';
       }
@@ -439,7 +413,6 @@ class EnhancedAudioController extends ChangeNotifier {
       try {
         await _audioPlayer!.setUrl(audioUrl);
       } catch (err) {
-        // Retry with AudioSource.uri as a fallback
         debugPrint('setUrl failed, retrying with AudioSource.uri: $err');
         await _audioPlayer!
             .setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
@@ -528,7 +501,6 @@ class EnhancedAudioController extends ChangeNotifier {
     await seek(newPosition < Duration.zero ? Duration.zero : newPosition);
   }
 
-  // ============ PLAYLIST NAVIGATION ============
 
   /// Play next track
   Future<void> next() async {
@@ -546,7 +518,6 @@ class EnhancedAudioController extends ChangeNotifier {
   /// Play previous track
   Future<void> previous() async {
     if (progressNotifier.value.current.inSeconds > 3) {
-      // If more than 3 seconds into track, restart it
       await seek(Duration.zero);
     } else {
       _currentIndex--;
@@ -584,7 +555,6 @@ class EnhancedAudioController extends ChangeNotifier {
     return newIndex;
   }
 
-  // ============ PLAYBACK OPTIONS ============
 
   /// Set playback speed
   Future<void> setSpeed(double speed) async {
@@ -595,7 +565,6 @@ class EnhancedAudioController extends ChangeNotifier {
       await _audioPlayer!.setSpeed(speed);
       speedNotifier.value = speed;
 
-      // Save preference
       final prefs = database.getPreferences();
       prefs.playbackSpeed = speed;
       await database.savePreferences(prefs);
@@ -641,12 +610,10 @@ class EnhancedAudioController extends ChangeNotifier {
   Future<void> setReciter(String reciter) async {
     _reciter = reciter;
 
-    // Save preference
     final prefs = database.getPreferences();
     prefs.reciter = reciter;
     await database.savePreferences(prefs);
 
-    // Reload current track if playing
     if (buttonNotifier.value == AudioButtonState.playing) {
       final currentPosition = progressNotifier.value.current;
       await _loadAndPlayCurrent();
@@ -656,7 +623,6 @@ class EnhancedAudioController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============ PROGRESS TRACKING ============
 
   Future<void> _saveListeningProgress() async {
     if (currentTrack == null) return;
@@ -684,9 +650,6 @@ class EnhancedAudioController extends ChangeNotifier {
     try {
       final lastProgress = database.getLastListeningProgress();
       if (lastProgress != null) {
-        // Find and load the ayah
-        // This would require fetching the surah data
-        // Implementation depends on your data structure
         debugPrint(
             'Resuming from ${lastProgress.surahNumber}:${lastProgress.ayahNumber}');
       }
@@ -695,7 +658,6 @@ class EnhancedAudioController extends ChangeNotifier {
     }
   }
 
-  // ============ AUDIO EFFECTS ============
 
   /// Set volume
   Future<void> setVolume(double volume) async {
@@ -713,7 +675,6 @@ class EnhancedAudioController extends ChangeNotifier {
   /// Get volume
   double get volume => _audioPlayer?.volume ?? 1.0;
 
-  // ============ STREAM GETTERS ============
 
   /// Combined duration state stream
   Stream<DurationState> get durationState =>
@@ -747,7 +708,6 @@ class EnhancedAudioController extends ChangeNotifier {
     shuffleNotifier.dispose();
     speedNotifier.dispose();
     super.dispose();
-    // Reduced log noise
     debugPrint('AudioController disposed');
   }
 
@@ -760,7 +720,6 @@ class EnhancedAudioController extends ChangeNotifier {
   }
 }
 
-// ============ DATA CLASSES ============
 
 class PlaylistItem {
   final int surahNumber;
