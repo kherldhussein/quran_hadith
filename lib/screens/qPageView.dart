@@ -622,6 +622,39 @@ class _QPageViewState extends State<QPageView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Guard clause: Return error state if ayahList is null or empty
+    if (widget.ayahList == null || widget.ayahList!.isEmpty) {
+      final theme = Theme.of(context);
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(widget.suratName ?? 'Surah'),
+          backgroundColor: theme.colorScheme.surface,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                FontAwesomeIcons.bookOpen,
+                size: 64,
+                color: theme.colorScheme.primary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No ayahs available',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final theme = Theme.of(context);
     final isDesktop = isDisplayDesktop(context);
 

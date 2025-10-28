@@ -13,19 +13,21 @@ class HPage extends StatefulWidget {
 }
 
 class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
+  /// Stores the future for fetching hadith books to prevent rebuilds from creating new futures
+  late final Future<HadithFetchResult> _hadithBooksFuture;
+
   @override
   void initState() {
     super.initState();
+    // Initialize the future once in initState to prevent FutureBuilder rebuilds
+    // This ensures the API call is made only once when the screen loads
+    final hadithAPI = Provider.of<HadithAPI>(context, listen: false);
+    _hadithBooksFuture = hadithAPI.getHadithBooks();
   }
 
   @override
   void dispose() {
     super.dispose();
-  }
-
-  Future<void> _fetchRandomHadith() async {
-    final hadithAPI = Provider.of<HadithAPI>(context, listen: false);
-    await hadithAPI.getRandomHadith();
   }
 
   @override
@@ -34,7 +36,6 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
     return Consumer<ThemeState>(
       builder: (context, themeState, _) {
         final theme = Theme.of(context);
-        final hadithAPI = Provider.of<HadithAPI>(context);
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -55,7 +56,7 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
             foregroundColor: theme.colorScheme.onSurface,
           ),
           body: FutureBuilder<HadithFetchResult>(
-            future: hadithAPI.getHadithBooks(),
+            future: _hadithBooksFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
