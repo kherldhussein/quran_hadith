@@ -50,13 +50,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   void _applyFilters() {
     var filtered = List<Bookmark>.from(_bookmarks);
 
-    // Apply category filter
     if (_selectedCategory != null) {
       filtered =
           filtered.where((b) => b.category == _selectedCategory).toList();
     }
 
-    // Apply search filter
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((b) {
@@ -66,7 +64,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       }).toList();
     }
 
-    // Apply sorting
     switch (_sortBy) {
       case 'date':
         filtered.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -94,13 +91,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       backgroundColor: theme.appBarTheme.backgroundColor,
       body: Column(
         children: [
-          // Header with search and filters
           _buildHeader(theme),
 
-          // Category chips
           if (_categories.isNotEmpty) _buildCategoryChips(theme),
 
-          // Bookmarks list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -160,7 +154,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              // Search bar
               Expanded(
                 child: TextField(
                   decoration: InputDecoration(
@@ -181,7 +174,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               ),
               const SizedBox(width: 12),
 
-              // Sort dropdown
               PopupMenuButton<String>(
                 icon:
                     const FaIcon(FontAwesomeIcons.arrowDownWideShort, size: 18),
@@ -242,7 +234,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 ],
               ),
 
-              // View options
               IconButton(
                 icon: const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 18),
                 onPressed: () => _showOptionsMenu(context),
@@ -262,7 +253,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          // All chip
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
@@ -276,7 +266,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             ),
           ),
 
-          // Category chips
           ..._categories.map((category) => Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
@@ -337,7 +326,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           children: [
             Row(
               children: [
-                // Color indicator
                 Container(
                   width: 4,
                   height: 40,
@@ -348,7 +336,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 ),
                 const SizedBox(width: 12),
 
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +359,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   ),
                 ),
 
-                // Actions
                 PopupMenuButton(
                   icon:
                       const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 16),
@@ -417,7 +403,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               ],
             ),
 
-            // Notes preview
             if (bookmark.notes != null && bookmark.notes!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
@@ -432,7 +417,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               ),
             ],
 
-            // Tags and category
             if (bookmark.tags.isNotEmpty || bookmark.category != null) ...[
               const SizedBox(height: 12),
               Wrap(
@@ -613,13 +597,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   void _showAddBookmarkDialog(BuildContext context) {
-    // Implementation for add bookmark dialog
     Get.snackbar('Info', 'Add bookmark from Ayah page');
   }
 
   void _showEditBookmarkDialog(BuildContext context, Bookmark bookmark) {
-    // Implementation for edit bookmark dialog
-    // Similar to add but pre-filled with bookmark data
   }
 
   Future<void> _deleteBookmark(Bookmark bookmark) async {
@@ -651,7 +632,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   void _showOptionsMenu(BuildContext context) {
-    // Show additional options
   }
 
   String _formatDate(DateTime date) {
