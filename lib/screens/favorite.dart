@@ -117,7 +117,6 @@ class _FavoriteState extends State<Favorite>
             ],
           ),
           const Spacer(),
-          // Search Bar
           Container(
             width: 300,
             height: 45,
@@ -223,7 +222,6 @@ class _FavoriteState extends State<Favorite>
 
             var favorites = snapshot.data!;
 
-            // Apply category filter
             if (_selectedCategory != 'All') {
               favorites = favorites.where((fav) {
                 final type = fav['type'] as String;
@@ -233,7 +231,6 @@ class _FavoriteState extends State<Favorite>
               }).toList();
             }
 
-            // Apply search filter
             if (_searchQuery.isNotEmpty) {
               favorites = favorites.where((fav) {
                 final name = (fav['name'] as String).toLowerCase();
@@ -248,7 +245,7 @@ class _FavoriteState extends State<Favorite>
             return GridView.builder(
               padding: const EdgeInsets.all(20),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isDesktop ? 4 : 2,
+                crossAxisCount: isDesktop ? 3 : 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.4,
@@ -422,7 +419,6 @@ class _FavoriteState extends State<Favorite>
           break;
         case 'surah':
         default:
-          // For surah, id stores Arabic name; name stores English.
           final idName = fav['id'] as String?;
           final data = await QuranAPI().getSuratAudio();
           final surah = data.surahs?.firstWhere(
