@@ -11,7 +11,6 @@ class TranslationService extends ChangeNotifier {
 
   final Dio _dio = Dio();
 
-  // Available translations
   static const Map<String, TranslationInfo> availableTranslations = {
     'en.sahih': TranslationInfo(
       identifier: 'en.sahih',
@@ -98,7 +97,6 @@ class TranslationService extends ChangeNotifier {
   String? _error;
   final Map<String, double> _downloadProgress = {};
 
-  // Getters
   List<String> get enabledTranslations =>
       List.unmodifiable(_enabledTranslations);
   bool get isLoading => _isLoading;
@@ -109,7 +107,6 @@ class TranslationService extends ChangeNotifier {
   /// Initialize translation service
   Future<void> initialize() async {
     try {
-      // Load enabled translations from preferences
       final prefs = database.getPreferences();
       _enabledTranslations = prefs.enabledTranslations;
       notifyListeners();
@@ -249,7 +246,6 @@ class TranslationService extends ChangeNotifier {
     if (!_enabledTranslations.contains(identifier)) {
       _enabledTranslations.add(identifier);
 
-      // Fetch if not cached
       if (!isTranslationCached(identifier)) {
         await fetchTranslation(identifier);
       }
@@ -299,8 +295,6 @@ class TranslationService extends ChangeNotifier {
     try {
       final translation = database.getCachedTranslation(identifier);
       if (translation != null) {
-        // Remove from database
-        // Note: Add delete method to database service if needed
         await disableTranslation(identifier);
         notifyListeners();
       }
