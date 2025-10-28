@@ -91,17 +91,66 @@ class Surah {
 
 @HiveType(typeId: 2)
 class Ayah {
-  Ayah({this.text, this.number});
+  Ayah({
+    this.text,
+    this.number,
+    this.words,
+  });
 
   final String? text;
   final int? number;
+  final List<Word>? words; // Word-level timing information for highlighting
 
-  Ayah copyWith({int? number, String? text}) {
-    return Ayah(number: number ?? number, text: text ?? text);
+  Ayah copyWith({int? number, String? text, List<Word>? words}) {
+    return Ayah(
+      number: number ?? this.number,
+      text: text ?? this.text,
+      words: words ?? this.words,
+    );
   }
 
   factory Ayah.fromJSON(Map<String, dynamic> json) {
-    return Ayah(text: json['text'], number: json['numberInSurah']);
+    final words = json['words'] != null
+        ? (json['words'] as List).map((w) => Word.fromJSON(w)).toList()
+        : null;
+
+    return Ayah(
+      text: json['text'],
+      number: json['numberInSurah'],
+      words: words,
+    );
+  }
+}
+
+/// Represents a word in the Quran with timing information for highlighting
+@HiveType(typeId: 7)
+class Word {
+  Word({
+    this.text,
+    this.position,
+    this.duration,
+    this.startTime,
+  });
+
+  @HiveField(0)
+  final String? text; // The actual word
+
+  @HiveField(1)
+  final int? position; // Position in milliseconds from start of ayah
+
+  @HiveField(2)
+  final int? duration; // Duration in milliseconds
+
+  @HiveField(3)
+  final int? startTime; // Start time in milliseconds (absolute)
+
+  factory Word.fromJSON(Map<String, dynamic> json) {
+    return Word(
+      text: json['text'],
+      position: json['position'],
+      duration: json['duration'],
+      startTime: json['startTime'],
+    );
   }
 }
 
