@@ -36,7 +36,6 @@ class ErrorRecoverySuggestion {
 /// - Contextual error information
 /// - Integration ready for services like Sentry or Firebase Crashlytics
 class ErrorService {
-  // Error tracking for analytics
   int _totalErrorsReported = 0;
   final List<String> _errorHistory = [];
   static const int _maxErrorHistorySize = 100;
@@ -58,12 +57,10 @@ class ErrorService {
   }) {
     _totalErrorsReported++;
 
-    // Extract error information
     final errorMessage = _extractErrorMessage(error);
     final errorType = _categorizeError(error);
     final timestamp = DateTime.now().toIso8601String();
 
-    // Build detailed error log
     final logEntry = _buildErrorLog(
       errorMessage,
       errorType,
@@ -73,19 +70,14 @@ class ErrorService {
       timestamp,
     );
 
-    // Add to history for analytics
     _addToErrorHistory(logEntry);
 
-    // Log to console with appropriate emoji indicators
     _logToConsole(logEntry, severity);
 
-    // Attempt recovery if applicable
     if (recoveryAction != null) {
       _attemptRecovery(error, recoveryAction, context);
     }
 
-    // Integration point for Sentry/Firebase (commented out - ready to implement)
-    // _reportToRemoteService(logEntry, severity);
   }
 
   /// Get error recovery suggestions based on error type
@@ -95,7 +87,6 @@ class ErrorService {
   ) {
     final errorString = error.toString().toLowerCase();
 
-    // Network errors
     if (errorString.contains('network') || errorString.contains('socket')) {
       return ErrorRecoverySuggestion(
         message:
@@ -104,7 +95,6 @@ class ErrorService {
       );
     }
 
-    // Timeout errors
     if (errorString.contains('timeout') || errorString.contains('deadline')) {
       return ErrorRecoverySuggestion(
         message: 'Connection timeout. The server took too long to respond.',
@@ -112,7 +102,6 @@ class ErrorService {
       );
     }
 
-    // Storage errors
     if (errorString.contains('storage') || errorString.contains('database')) {
       return ErrorRecoverySuggestion(
         message:
@@ -121,7 +110,6 @@ class ErrorService {
       );
     }
 
-    // Permission errors
     if (errorString.contains('permission') || errorString.contains('denied')) {
       return ErrorRecoverySuggestion(
         message: 'Permission denied. Check app settings and try again.',
@@ -129,7 +117,6 @@ class ErrorService {
       );
     }
 
-    // Generic suggestion
     return ErrorRecoverySuggestion(
       message: 'An unexpected error occurred. Try again or restart the app.',
       actionLabel: 'Retry',
@@ -150,7 +137,6 @@ class ErrorService {
     _errorHistory.clear();
   }
 
-  // ============ PRIVATE HELPERS ============
 
   /// Extract readable error message from various error types
   String _extractErrorMessage(dynamic error) {
@@ -268,20 +254,6 @@ class ErrorService {
 
   /// Integration point for remote error reporting (Sentry, Firebase, etc.)
   /// Uncomment and configure when ready to use
-  /*
-  void _reportToRemoteService(String logEntry, ErrorSeverity severity) {
-    try {
-      // Example: Send to Sentry
-      // await Sentry.captureException(
-      //   error,
-      //   stackTrace: stackTrace,
-      //   level: _mapSeverityToSentryLevel(severity),
-      // );
-    } catch (e) {
-      debugPrint('❌ Failed to report to remote service: $e');
-    }
-  }
-  */
 }
 
 /// A global instance of the [ErrorService].
