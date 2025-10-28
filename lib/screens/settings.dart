@@ -39,7 +39,6 @@ class _SettingsState extends State<Settings> {
       _preferences = database.getPreferences();
       _userNameController = TextEditingController(text: _preferences.userName);
 
-      // Load storage stats
       _storageStats = await database.getStorageStats();
     } catch (e) {
       debugPrint('Error loading preferences: $e');
@@ -80,7 +79,6 @@ class _SettingsState extends State<Settings> {
           backgroundColor: theme.appBarTheme.backgroundColor,
           body: Row(
             children: [
-              // Settings Navigation Sidebar
               Container(
                 width: 240,
                 decoration: BoxDecoration(
@@ -93,7 +91,6 @@ class _SettingsState extends State<Settings> {
                 child: _buildSettingsNav(theme),
               ),
 
-              // Settings Content
               Expanded(
                 child: _buildSettingsContent(theme, themeState),
               ),
@@ -170,7 +167,6 @@ class _SettingsState extends State<Settings> {
       leading: FaIcon(icon, size: 18, color: theme.colorScheme.primary),
       title: Text(title),
       onTap: () {
-        // Navigation logic would go here
       },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
@@ -180,7 +176,6 @@ class _SettingsState extends State<Settings> {
     return ListView(
       padding: const EdgeInsets.all(32),
       children: [
-        // General Settings
         _buildSection(
           title: 'General Settings',
           icon: FontAwesomeIcons.gear,
@@ -217,7 +212,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Appearance Settings
         _buildSection(
           title: 'Appearance',
           icon: FontAwesomeIcons.paintbrush,
@@ -229,7 +223,6 @@ class _SettingsState extends State<Settings> {
               value: _preferences.isDarkMode,
               onChanged: (value) async {
                 setState(() => _preferences.isDarkMode = value);
-                // Sync with both SharedPreferences and Hive database
                 await SpUtil.setThemed(value);
                 themeState.setTheme(value);
                 _savePreferences();
@@ -273,7 +266,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Audio Settings
         _buildSection(
           title: 'Audio Settings',
           icon: FontAwesomeIcons.volumeHigh,
@@ -361,10 +353,8 @@ class _SettingsState extends State<Settings> {
               onChanged: (value) {
                 if (value == null || value.isEmpty) return;
                 setState(() => _preferences.reciter = value);
-                // Persist in both legacy and new storage keys
                 SpUtil.setReciter(value);
                 appSP.setString('selectedReciter', value);
-                // Broadcast to app-wide reciter service so audio updates immediately
                 ReciterService.instance.setCurrentReciterId(value);
                 _savePreferences();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -400,7 +390,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Reading Settings
         _buildSection(
           title: 'Reading Settings',
           icon: FontAwesomeIcons.bookOpen,
@@ -432,7 +421,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Notification Settings
         _buildSection(
           title: 'Notifications',
           icon: FontAwesomeIcons.bell,
@@ -464,7 +452,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Data & Storage
         _buildSection(
           title: 'Data & Storage',
           icon: FontAwesomeIcons.database,
@@ -502,7 +489,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // Keyboard Shortcuts
         _buildSection(
           title: 'Keyboard Shortcuts',
           icon: FontAwesomeIcons.keyboard,
@@ -525,7 +511,6 @@ class _SettingsState extends State<Settings> {
 
         const SizedBox(height: 32),
 
-        // About Section
         _buildSection(
           title: 'About',
           icon: FontAwesomeIcons.circleInfo,
@@ -610,7 +595,6 @@ class _SettingsState extends State<Settings> {
     required Function(T?) onChanged,
     required ThemeData theme,
   }) {
-    // Ensure the value exists in items, otherwise use first item's value
     final itemValues = items.map((item) => item.value).toList();
     final safeValue = itemValues.contains(value) ? value : itemValues.first;
 
