@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/anim/particle_canvas.dart';
 import 'package:quran_hadith/controller/quranAPI.dart';
 import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
+import 'package:quran_hadith/utils/surah_names.dart';
+import 'package:quran_hadith/utils/juz_util.dart';
 import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:quran_hadith/widgets/modern_search_dialog.dart';
-// rxdart removed: no longer used in this file
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 
@@ -28,7 +28,6 @@ class QPage extends StatefulWidget {
 
 class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   // State variables
-  late AudioPlayer _audioPlayer;
   late final RandomVerseManager _verseManager;
 
   // UI state
@@ -57,7 +56,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   void _initializeControllers() {
     _verseManager = RandomVerseManager();
-    _audioPlayer = AudioPlayer();
   }
 
   void _initializeData() {
@@ -327,18 +325,19 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                   child: _buildMainContent(theme, isDesktop),
                 ),
 
-                // Sidebar (Right Side) - Fixed width
-                Container(
-                  width: 320,
-                  decoration: BoxDecoration(
-                      color: theme.appBarTheme.backgroundColor,
-                      border: Border(
-                        left: BorderSide(
-                          color: theme.dividerColor.withOpacity(0.1),
-                        ),
-                      )),
-                  child: _buildSidebar(theme),
-                ),
+                // Sidebar (Right Side) - Only show on desktop
+                if (isDesktop)
+                  Container(
+                    width: 320,
+                    decoration: BoxDecoration(
+                        color: theme.appBarTheme.backgroundColor,
+                        border: Border(
+                          left: BorderSide(
+                            color: theme.dividerColor.withOpacity(0.1),
+                          ),
+                        )),
+                    child: _buildSidebar(theme),
+                  ),
               ],
             ),
           ),
@@ -882,124 +881,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   }
 
   String _getSurahName(int surahNumber) {
-    // Map of surah numbers to names
-    final surahNames = {
-      1: 'Al-Fatihah',
-      2: 'Al-Baqarah',
-      3: 'Ali \'Imran',
-      4: 'An-Nisa',
-      5: 'Al-Ma\'idah',
-      6: 'Al-An\'am',
-      7: 'Al-A\'raf',
-      8: 'Al-Anfal',
-      9: 'At-Tawbah',
-      10: 'Yunus',
-      11: 'Hud',
-      12: 'Yusuf',
-      13: 'Ar-Ra\'d',
-      14: 'Ibrahim',
-      15: 'Al-Hijr',
-      16: 'An-Nahl',
-      17: 'Al-Isra',
-      18: 'Al-Kahf',
-      19: 'Maryam',
-      20: 'Ta-Ha',
-      21: 'Al-Anbiya',
-      22: 'Al-Hajj',
-      23: 'Al-Mu\'minun',
-      24: 'An-Nur',
-      25: 'Al-Furqan',
-      26: 'Ash-Shu\'ara',
-      27: 'An-Naml',
-      28: 'Al-Qasas',
-      29: 'Al-\'Ankabut',
-      30: 'Ar-Rum',
-      31: 'Luqman',
-      32: 'As-Sajdah',
-      33: 'Al-Ahzab',
-      34: 'Saba',
-      35: 'Fatir',
-      36: 'Ya-Sin',
-      37: 'As-Saffat',
-      38: 'Sad',
-      39: 'Az-Zumar',
-      40: 'Ghafir',
-      41: 'Fussilat',
-      42: 'Ash-Shuraa',
-      43: 'Az-Zukhruf',
-      44: 'Ad-Dukhan',
-      45: 'Al-Jathiyah',
-      46: 'Al-Ahqaf',
-      47: 'Muhammad',
-      48: 'Al-Fath',
-      49: 'Al-Hujurat',
-      50: 'Qaf',
-      51: 'Adh-Dhariyat',
-      52: 'At-Tur',
-      53: 'An-Najm',
-      54: 'Al-Qamar',
-      55: 'Ar-Rahman',
-      56: 'Al-Waqi\'ah',
-      57: 'Al-Hadid',
-      58: 'Al-Mujadila',
-      59: 'Al-Hashr',
-      60: 'Al-Mumtahanah',
-      61: 'As-Saff',
-      62: 'Al-Jumu\'ah',
-      63: 'Al-Munafiqun',
-      64: 'At-Taghabun',
-      65: 'At-Talaq',
-      66: 'At-Tahrim',
-      67: 'Al-Mulk',
-      68: 'Al-Qalam',
-      69: 'Al-Haqqah',
-      70: 'Al-Ma\'arij',
-      71: 'Nuh',
-      72: 'Al-Jinn',
-      73: 'Al-Muzzammil',
-      74: 'Al-Muddaththir',
-      75: 'Al-Qiyamah',
-      76: 'Al-Insan',
-      77: 'Al-Mursalat',
-      78: 'An-Naba',
-      79: 'An-Nazi\'at',
-      80: '\'Abasa',
-      81: 'At-Takwir',
-      82: 'Al-Infitar',
-      83: 'Al-Mutaffifin',
-      84: 'Al-Inshiqaq',
-      85: 'Al-Buruj',
-      86: 'At-Tariq',
-      87: 'Al-A\'la',
-      88: 'Al-Ghashiyah',
-      89: 'Al-Fajr',
-      90: 'Al-Balad',
-      91: 'Ash-Shams',
-      92: 'Al-Layl',
-      93: 'Ad-Duhaa',
-      94: 'Ash-Sharh',
-      95: 'At-Tin',
-      96: 'Al-\'Alaq',
-      97: 'Al-Qadr',
-      98: 'Al-Bayyinah',
-      99: 'Az-Zalzalah',
-      100: 'Al-\'Adiyat',
-      101: 'Al-Qari\'ah',
-      102: 'At-Takathur',
-      103: 'Al-\'Asr',
-      104: 'Al-Humazah',
-      105: 'Al-Fil',
-      106: 'Quraysh',
-      107: 'Al-Ma\'un',
-      108: 'Al-Kawthar',
-      109: 'Al-Kafirun',
-      110: 'An-Nasr',
-      111: 'Al-Masad',
-      112: 'Al-Ikhlas',
-      113: 'Al-Falaq',
-      114: 'An-Nas',
-    };
-    return surahNames[surahNumber] ?? 'Surah $surahNumber';
+    // Use centralized surah names utility instead of hardcoded map
+    return SurahNames.getName(surahNumber);
   }
 
   String _formatTimeAgo(DateTime dateTime) {
@@ -1045,22 +928,35 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       }
 
       // Find the surah by number
-      final surah = surahList.surahs!.firstWhere(
-        (s) => s.number == surahNumber,
-        orElse: () => Surah(),
-      );
-
-      if (surah.number == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Surah not found')),
+      Surah? surah;
+      try {
+        surah = surahList.surahs!.firstWhere(
+          (s) => s.number == surahNumber,
         );
+      } catch (e) {
+        // Surah not found in list
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Surah not found')),
+          );
+        }
+        return;
+      }
+
+      // Validate surah data before navigation
+      if (surah.number == null || surah.ayahs == null || surah.ayahs!.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Surah data incomplete')),
+          );
+        }
         return;
       }
 
       // Navigate to QPageView with the complete surah data
       Get.to(
         () => QPageView(
-          ayahList: surah.ayahs,
+          ayahList: surah!.ayahs,
           suratName: surah.name,
           suratEnglishName: surah.englishName,
           englishMeaning: surah.englishNameTranslation,
@@ -1169,15 +1065,15 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       filtered.sort(
           (a, b) => (b.ayahs?.length ?? 0).compareTo(a.ayahs?.length ?? 0));
     } else if (_sortBy == 'Para') {
-      // Para/Juz is typically in groups of 3-4 surahs
-      // Group surahs into 30 equal parts (30 paras in Quran)
-      // This is a simplified approach - dividing surahs roughly into 30 paras
+      // Sort by Juz (Part) using proper Qur'anic division
+      // There are 30 Juz in the Quran, each containing roughly equal portions
       filtered.sort((a, b) {
-        final aPara = ((a.number! - 1) ~/ 4) + 1; // Rough grouping into paras
-        final bPara = ((b.number! - 1) ~/ 4) + 1;
-        if (aPara != bPara) {
-          return aPara.compareTo(bPara);
+        final aJuz = JuzUtil.getJuzForSurah(a.number!);
+        final bJuz = JuzUtil.getJuzForSurah(b.number!);
+        if (aJuz != bJuz) {
+          return aJuz.compareTo(bJuz);
         }
+        // If same Juz, sort by surah number
         return a.number!.compareTo(b.number!);
       });
     } else {
@@ -1265,19 +1161,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
     super.dispose();
   }
-}
-
-class DurationState {
-  final Duration progress;
-  final Duration buffered;
-  final Duration total;
-
-  const DurationState({
-    required this.progress,
-    required this.buffered,
-    required this.total,
-  });
 }

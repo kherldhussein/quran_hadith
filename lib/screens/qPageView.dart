@@ -58,7 +58,7 @@ class _QPageViewState extends State<QPageView>
   Timer? _progressTrackingTimer;
   VoidCallback? _reciterListener;
   bool _isOfflineDownloaded = false;
-
+  bool _isProcessingAudioStateChange = false;
   @override
   void initState() {
     super.initState();
@@ -85,9 +85,11 @@ class _QPageViewState extends State<QPageView>
       if (!mounted) return;
       if (_currentlyPlayingAyah != null && !_isAudioLoading) {
         final ayahNo = _currentlyPlayingAyah!;
-        final match = widget.ayahList!
-            .firstWhere((a) => a.number == ayahNo, orElse: () => Ayah());
-        if (match.number != null) {
+        final match = widget.ayahList?.firstWhere(
+          (a) => a.number == ayahNo,
+          orElse: () => Ayah(),
+        );
+        if (match != null && match.number != null) {
           // Restart playback of the same ayah using the new reciter
           _playAyahAudio(match);
         }
@@ -97,20 +99,29 @@ class _QPageViewState extends State<QPageView>
   }
 
   void _onAudioStateChanged() {
+    // Prevent race conditions by ensuring only one state change is processed at a time
+    if (_isProcessingAudioStateChange) {
+      debugPrint('⚠️ Audio state change already being processed, skipping...');
+      return;
+    }
+
     // Check if audio just finished
     if (_audioController.buttonNotifier.value == ButtonState.paused &&
         !_isAudioLoading) {
+      _isProcessingAudioStateChange = true;
+
       final repeatMode = SpUtil.getRepeatMode();
       final autoPlayNext = SpUtil.getAutoPlayNextAyah();
 
       // Handle repeat mode for single ayah
       if (repeatMode == 'ayah' && _currentlyPlayingAyah != null) {
-        final match = widget.ayahList!.firstWhere(
+        final match = widget.ayahList?.firstWhere(
             (a) => a.number == _currentlyPlayingAyah,
             orElse: () => Ayah());
-        if (match.number != null) {
+        if (match != null && match.number != null) {
           Future.delayed(const Duration(milliseconds: 500), () {
             if (!mounted) return;
+            _isProcessingAudioStateChange = false;
             _playAyahAudio(match);
           });
           return;
@@ -127,6 +138,7 @@ class _QPageViewState extends State<QPageView>
           // Play next ayah after a short delay
           Future.delayed(const Duration(milliseconds: 500), () {
             if (!mounted) return;
+            _isProcessingAudioStateChange = false;
             _playAyahAudio(widget.ayahList![currentIndex + 1]);
           });
         } else if (repeatMode == 'surah' &&
@@ -134,11 +146,13 @@ class _QPageViewState extends State<QPageView>
           // Restart surah from the beginning
           Future.delayed(const Duration(milliseconds: 500), () {
             if (!mounted) return;
+            _isProcessingAudioStateChange = false;
             _playAyahAudio(widget.ayahList![0]);
           });
         } else if (_isSurahPlaybackMode) {
           // Finished playing entire surah
           _isSurahPlaybackMode = false;
+          _isProcessingAudioStateChange = false;
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -151,7 +165,11 @@ class _QPageViewState extends State<QPageView>
               ),
             );
           }
+        } else {
+          _isProcessingAudioStateChange = false;
         }
+      } else {
+        _isProcessingAudioStateChange = false;
       }
     }
   }
@@ -383,6 +401,35 @@ class _QPageViewState extends State<QPageView>
         });
       }
     }
+
+    // Note: Word-level highlighting is disabled as al-quran.cloud API
+    // does not provide word-timing data with millisecond precision.
+    // To implement word highlighting, we would need:
+    // 1. A different API with word-timing support, or
+    // 2. Manual timing data for each recitation
+  }
+
+  /// Fetch word-by-word timing data for highlighting during recitation
+  /// Word-level highlighting disabled: al-quran.cloud API does not provide word-timing data
+  /// To implement word highlighting in the future, we would need:
+  /// 1. An API that provides word-level timing data (startTime, duration for each word)
+  /// 2. Or manually created timing data for each reciter's audio
+  /// For now, we show plain text without word-level highlighting
+
+  /// Build Arabic text (plain, without word highlighting)
+  Widget _buildArabicTextWithHighlighting(Ayah ayah, ThemeData theme) {
+    // Simple implementation: just display the text without highlighting
+    // Word highlighting feature is disabled due to lack of API support
+    return Text(
+      ayah.text ?? '',
+      textAlign: TextAlign.right,
+      style: TextStyle(
+        fontSize: _fontSize,
+        height: 1.8,
+        fontFamily: 'Amiri',
+        color: theme.colorScheme.onSurface,
+      ),
+    );
   }
 
   /// Play the entire surah from the first ayah
@@ -498,6 +545,12 @@ class _QPageViewState extends State<QPageView>
   }
 
   void _scrollToAyah(int ayahNumber) {
+    // Check if auto scroll is enabled in preferences
+    if (!database.getPreferences().autoScroll) {
+      debugPrint('⏸️ Auto scroll disabled by user');
+      return;
+    }
+
     final index =
         widget.ayahList!.indexWhere((ayah) => ayah.number == ayahNumber);
     if (index != -1) {
@@ -507,6 +560,7 @@ class _QPageViewState extends State<QPageView>
         preferPosition: AutoScrollPosition.middle,
       );
       _lastVisibleAyah = ayahNumber; // Track visible ayah
+      debugPrint('📜 Auto scrolled to Ayah $ayahNumber');
     }
   }
 
@@ -997,17 +1051,8 @@ class _QPageViewState extends State<QPageView>
 
               const SizedBox(height: 16),
 
-              // Arabic Text
-              Text(
-                ayah.text ?? '',
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  height: 1.8,
-                  fontFamily: 'Amiri',
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
+              // Arabic Text with Word Highlighting
+              _buildArabicTextWithHighlighting(ayah, theme),
 
               const SizedBox(height: 16),
 

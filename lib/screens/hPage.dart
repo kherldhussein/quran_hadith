@@ -23,6 +23,11 @@ class _HPageState extends State<HPage> with AutomaticKeepAliveClientMixin {
     super.dispose();
   }
 
+  Future<void> _fetchRandomHadith() async {
+    final hadithAPI = Provider.of<HadithAPI>(context, listen: false);
+    await hadithAPI.getRandomHadith();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
