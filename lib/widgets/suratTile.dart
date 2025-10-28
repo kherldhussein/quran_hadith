@@ -119,7 +119,6 @@ class _SuratTileState extends State<SuratTile> {
             splashColor: theme.colorScheme.primary.withOpacity(0.1),
             highlightColor: theme.colorScheme.primary.withOpacity(0.05),
             child: Container(
-              // height: 80,
               padding: const EdgeInsets.only(
                   top: 10, bottom: 12, left: 16, right: 12),
               decoration: BoxDecoration(
@@ -140,7 +139,6 @@ class _SuratTileState extends State<SuratTile> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Surah Number Circle
                       Container(
                         width: 40,
                         height: 40,
@@ -169,7 +167,6 @@ class _SuratTileState extends State<SuratTile> {
                         ),
                       ),
 
-                      // Favorite Button
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         decoration: BoxDecoration(
