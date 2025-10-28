@@ -66,7 +66,6 @@ class RoundCustomButton2 extends StatelessWidget {
         constraints: const BoxConstraints(minWidth: 0),
         width: 80,
         decoration: BoxDecoration(
-          // border: Border.all(color: Color(0xffeef2f5)),
           color: Get.theme.brightness == Brightness.light
               ? kAccentColor
               : kDarkSecondaryColor,
