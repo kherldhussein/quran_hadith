@@ -13,7 +13,6 @@ class QhNav extends StatefulWidget {
 class _QhNavState extends State<QhNav> {
   @override
   Widget build(BuildContext context) {
-    // final isDesktop = isDisplayDesktop(context);
     return Navigator(
       onGenerateRoute: (settings) {
         return MaterialPageRoute<void>(
