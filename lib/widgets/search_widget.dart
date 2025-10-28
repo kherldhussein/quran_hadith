@@ -35,7 +35,6 @@ class SearchWidget extends SearchDelegate<SurahList> {
       ),
       onPressed: () {
         /// Take control back to previous page
-        // this.close(context,context);
       },
     );
   }
@@ -76,7 +75,6 @@ class SearchWidget extends SearchDelegate<SurahList> {
             return const Center(child: Text('Nothing was found'));
           }
           return ListView(
-              // children: snapshot.data,
               );
         });
   }
