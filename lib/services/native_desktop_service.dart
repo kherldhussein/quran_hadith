@@ -14,17 +14,14 @@ class NativeDesktopService with WindowListener {
   factory NativeDesktopService() => _instance;
   NativeDesktopService._internal();
 
-  // Services
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
-  // final AppWindow _appWindow = AppWindow();
 
   bool _isInitialized = false;
   bool _systemTrayEnabled = false;
   bool _notificationsEnabled = false;
   bool _hotkeysEnabled = false;
 
-  // Callbacks
   VoidCallback? _onPlayPauseCallback;
   VoidCallback? _onNextCallback;
   VoidCallback? _onPreviousCallback;
@@ -35,20 +32,15 @@ class NativeDesktopService with WindowListener {
     if (_isInitialized) return;
 
     try {
-      // Load preferences
       final prefs = database.getPreferences();
 
-      // Initialize window manager
       await windowManager.ensureInitialized();
       windowManager.addListener(this);
 
-      // Initialize notifications if enabled
       if (prefs.enableNotifications) {
         await _initializeNotifications();
       }
 
-      // Initialize system tray if enabled
-      // Note: On Linux, this requires ayatana-appindicator3 library
       if (prefs.enableSystemTray) {
         await _initializeSystemTray();
       } else if (Platform.isLinux) {
@@ -56,7 +48,6 @@ class NativeDesktopService with WindowListener {
             'System tray disabled. To enable, install: sudo apt-get install ayatana-appindicator3-0.1');
       }
 
-      // Initialize hotkeys if enabled
       if (prefs.enableGlobalShortcuts) {
         await _initializeHotkeys();
       }
@@ -68,15 +59,12 @@ class NativeDesktopService with WindowListener {
     }
   }
 
-  // ============ NOTIFICATIONS ============
 
   Future<void> _initializeNotifications() async {
     try {
-      // Android settings
       const AndroidInitializationSettings androidSettings =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      // macOS settings
       const DarwinInitializationSettings macOSSettings =
           DarwinInitializationSettings(
         requestAlertPermission: true,
@@ -84,13 +72,11 @@ class NativeDesktopService with WindowListener {
         requestSoundPermission: true,
       );
 
-      // Linux settings
       const LinuxInitializationSettings linuxSettings =
           LinuxInitializationSettings(
         defaultActionName: 'Open notification',
       );
 
-      // Initialize
       const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
         macOS: macOSSettings,
@@ -161,7 +147,6 @@ class NativeDesktopService with WindowListener {
     if (!_notificationsEnabled) return;
 
     try {
-      // Implementation depends on your notification scheduling needs
       debugPrint('Scheduled reminder for $hour:$minute');
     } catch (e) {
       debugPrint('Error scheduling reminder: $e');
@@ -170,26 +155,20 @@ class NativeDesktopService with WindowListener {
 
   void _onNotificationTapped(NotificationResponse response) {
     debugPrint('Notification tapped: ${response.payload}');
-    // Handle notification tap
   }
 
-  // ============ SYSTEM TRAY ============
-  // System tray functionality removed due to Linux dependency issues
 
   Future<void> _initializeSystemTray() async {
-    // System tray disabled - not available on all platforms
     _systemTrayEnabled = false;
     debugPrint('System tray disabled on this platform');
   }
 
-  // ============ HOTKEYS ============
 
   Future<void> _initializeHotkeys() async {
     try {
       debugPrint('Hotkeys initialized');
       await hotKeyManager.unregisterAll();
 
-      // Play/Pause: Space
       await hotKeyManager.register(
         HotKey(
           key: PhysicalKeyboardKey.space,
@@ -198,7 +177,6 @@ class NativeDesktopService with WindowListener {
         keyDownHandler: (hotKey) => _onPlayPauseCallback?.call(),
       );
 
-      // Search: Ctrl+F
       await hotKeyManager.register(
         HotKey(
           key: PhysicalKeyboardKey.keyF,
@@ -208,7 +186,6 @@ class NativeDesktopService with WindowListener {
         keyDownHandler: (hotKey) => _onSearchCallback?.call(),
       );
 
-      // Next: Right Arrow / Ctrl+Right
       await hotKeyManager.register(
         HotKey(
           key: PhysicalKeyboardKey.arrowRight,
@@ -218,7 +195,6 @@ class NativeDesktopService with WindowListener {
         keyDownHandler: (hotKey) => _onNextCallback?.call(),
       );
 
-      // Previous: Left Arrow / Ctrl+Left
       await hotKeyManager.register(
         HotKey(
           key: PhysicalKeyboardKey.arrowLeft,
@@ -248,7 +224,6 @@ class NativeDesktopService with WindowListener {
     _onSearchCallback = onSearch;
   }
 
-  // ============ WINDOW MANAGEMENT ============
 
   Future<void> _hideWindow() async {
     await windowManager.hide();
@@ -262,18 +237,14 @@ class NativeDesktopService with WindowListener {
     }
   }
 
-  // Window listener callbacks
   @override
   void onWindowClose() async {
     final prefs = database.getPreferences();
 
-    // Only minimize to tray if both enabled AND successfully initialized
     if (prefs.enableSystemTray && _systemTrayEnabled) {
-      // Minimize to tray instead of closing - audio continues playing
       debugPrint('Minimizing to tray - audio playback continues in background');
       await _hideWindow();
     } else {
-      // User preference: exit app completely, or system tray not available
       if (prefs.enableSystemTray && !_systemTrayEnabled) {
         debugPrint(
             'System tray requested but not available - exiting normally');
@@ -306,10 +277,8 @@ class NativeDesktopService with WindowListener {
     await windowManager.destroy();
   }
 
-  // ============ FEATURE TOGGLES ============
 
   Future<void> enableSystemTray(bool enable) async {
-    // System tray functionality is disabled
     debugPrint('System tray is not available on this platform');
   }
 
@@ -329,7 +298,6 @@ class NativeDesktopService with WindowListener {
     }
   }
 
-  // ============ CLEANUP ============
 
   Future<void> dispose() async {
     try {
