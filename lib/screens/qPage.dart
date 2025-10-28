@@ -13,6 +13,7 @@ import 'package:quran_hadith/widgets/suratTile.dart';
 import 'package:quran_hadith/widgets/modern_search_dialog.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
+import 'package:quran_hadith/services/native_desktop_service.dart';
 
 import '../controller/favorite.dart';
 import '../controller/random_ayah.dart';
@@ -27,35 +28,45 @@ class QPage extends StatefulWidget {
 }
 
 class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
-  // State variables
   late final RandomVerseManager _verseManager;
 
-  // UI state
   String _userName = 'Ahmad';
   String _verseText = 'Loading Ayah of the Day...';
   bool _isLoadingVerse = false;
   String _sortBy = 'Order'; // 'Order', 'Alphabet', 'Total Ayah', 'Para'
   List<Surah> _allSurahs = [];
 
-  // Real-time data
   ReadingProgress? _lastRead;
   ListeningProgress? _lastListened;
   bool _loadingProgress = true;
-
-  // (was) Streams: removed unused _durationState to avoid keeping streams alive
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    // Defer data initialization to after first frame to avoid lifecycle races
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _initializeData();
+      if (mounted) {
+        _initializeData();
+        _setupKeyboardShortcuts();
+      }
     });
   }
 
   void _initializeControllers() {
     _verseManager = RandomVerseManager();
+  }
+
+  /// Register keyboard shortcuts for qPage (search functionality)
+  void _setupKeyboardShortcuts() {
+    try {
+      final nativeDesktop = NativeDesktopService();
+      nativeDesktop.registerCallbacks(
+        onSearch: _showSearchDialog,
+      );
+      debugPrint('✅ Keyboard shortcuts registered for qPage (Search: Ctrl+F)');
+    } catch (e) {
+      debugPrint('⚠️ Error registering keyboard shortcuts in qPage: $e');
+    }
   }
 
   void _initializeData() {
@@ -142,7 +153,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -207,14 +217,11 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                   ],
                 ),
               ),
-
-              // Content
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Arabic Text Container
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -251,10 +258,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                               ),
                             ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Action Buttons
                     Row(
                       children: [
                         Expanded(
@@ -324,8 +328,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
                   flex: 3,
                   child: _buildMainContent(theme, isDesktop),
                 ),
-
-                // Sidebar (Right Side) - Only show on desktop
                 if (isDesktop)
                   Container(
                     width: 320,
@@ -372,10 +374,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
       ),
       child: Column(
         children: [
-          // Header with Search and Sort
           _buildHeader(theme),
-
-          // Quran Grid
           Expanded(
             child: Consumer<QuranAPI>(
               builder: (context, quranAPI, child) {
@@ -416,7 +415,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
           )),
       child: Row(
         children: [
-          // Search Button
           Expanded(
             child: InkWell(
               onTap: _showSearchDialog,
@@ -450,8 +448,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
             ),
           ),
           const SizedBox(width: 16),
-
-          // Sort Dropdown
           Container(
             height: 45,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -491,7 +487,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
 
   void _showSearchDialog() async {
     if (_allSurahs.isEmpty) {
-      // Fetch surahs if not already loaded
       final quranAPI = Provider.of<QuranAPI>(context, listen: false);
       final surahList = await quranAPI.getSuratAudio();
       _allSurahs = surahList.surahs ?? [];
@@ -542,7 +537,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   }
 
   Widget _buildSurahGrid(List<Surah> surahs, bool isDesktop) {
-    // Adaptive grid based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
     final int crossAxisCount;
 
@@ -621,23 +615,15 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
             ),
           ),
           const SizedBox(height: 32),
-
-          // Last Read Section
           _buildLastReadSection(theme),
           const SizedBox(height: 24),
-
-          // Last Listened Section
           _buildLastListenedSection(theme),
           const SizedBox(height: 32),
-
-          // Divider
           Container(
             height: 1,
             color: theme.dividerColor.withOpacity(0.2),
           ),
           const SizedBox(height: 32),
-
-          // Ayah of the Day
           _buildAyahOfTheDay(theme),
         ],
       ),
@@ -881,7 +867,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   }
 
   String _getSurahName(int surahNumber) {
-    // Use centralized surah names utility instead of hardcoded map
     return SurahNames.getName(surahNumber);
   }
 
@@ -927,14 +912,12 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
         return;
       }
 
-      // Find the surah by number
       Surah? surah;
       try {
         surah = surahList.surahs!.firstWhere(
           (s) => s.number == surahNumber,
         );
       } catch (e) {
-        // Surah not found in list
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Surah not found')),
@@ -943,7 +926,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
         return;
       }
 
-      // Validate surah data before navigation
       if (surah.number == null || surah.ayahs == null || surah.ayahs!.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -953,7 +935,6 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
         return;
       }
 
-      // Navigate to QPageView with the complete surah data
       Get.to(
         () => QPageView(
           ayahList: surah!.ayahs,
@@ -1057,27 +1038,21 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   List<Surah> _filterAndSortSurahs(List<Surah> surahs) {
     List<Surah> filtered = List.from(surahs);
 
-    // Apply sorting
     if (_sortBy == 'Alphabet') {
       filtered.sort((a, b) => a.englishName!.compareTo(b.englishName!));
     } else if (_sortBy == 'Total Ayah') {
-      // Sort by number of ayahs in descending order (most ayahs first)
       filtered.sort(
           (a, b) => (b.ayahs?.length ?? 0).compareTo(a.ayahs?.length ?? 0));
     } else if (_sortBy == 'Para') {
-      // Sort by Juz (Part) using proper Qur'anic division
-      // There are 30 Juz in the Quran, each containing roughly equal portions
       filtered.sort((a, b) {
         final aJuz = JuzUtil.getJuzForSurah(a.number!);
         final bJuz = JuzUtil.getJuzForSurah(b.number!);
         if (aJuz != bJuz) {
           return aJuz.compareTo(bJuz);
         }
-        // If same Juz, sort by surah number
         return a.number!.compareTo(b.number!);
       });
     } else {
-      // Default order (by surah number)
       filtered.sort((a, b) => a.number!.compareTo(b.number!));
     }
 
