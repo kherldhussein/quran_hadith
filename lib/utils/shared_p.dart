@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// debugPrint is already imported via foundation.dart above
 
 /// Custom exceptions for Shared Preferences operations
 class StorageException implements Exception {
@@ -35,16 +34,13 @@ class SharedP {
   static SharedPreferences? _sp;
   static bool _isInitialized = false;
 
-  // Private constructor
   SharedP._internal();
 
-  // Singleton instance
   static final SharedP _instance = SharedP._internal();
 
   /// Get singleton instance
   factory SharedP() => _instance;
 
-  // ============ INITIALIZATION ============
 
   /// Initialize Shared Preferences
   /// Throws [StorageInitializationException] if initialization fails
@@ -55,8 +51,6 @@ class SharedP {
       _sp = await SharedPreferences.getInstance();
       _isInitialized = true;
     } catch (e) {
-      // Do not throw - mark as not initialized and log. Callers will
-      // attempt lazy-initialization and proceed with defaults if needed.
       _isInitialized = false;
       debugPrint('⚠️ Failed to initialize SharedPreferences: $e');
     }
@@ -72,15 +66,12 @@ class SharedP {
       try {
         await init();
       } catch (e) {
-        // Log but don't throw - provide graceful degradation
         debugPrint(
             '⚠️ Warning: Failed to auto-initialize SharedPreferences: $e');
-        // Return without throwing to allow app to continue
       }
     }
   }
 
-  // ============ BASIC GETTERS WITH SAFE DEFAULTS ============
 
   int getInt(String key, {int defaultValue = 0}) {
     try {
@@ -153,7 +144,6 @@ class SharedP {
     }
   }
 
-  // ============ SETTERS WITH ENHANCED ERROR HANDLING ============
 
   Future<bool> setInt(String key, int value) async {
     try {
@@ -230,7 +220,6 @@ class SharedP {
     }
   }
 
-  // ============ ADVANCED OPERATIONS ============
 
   /// Check if a key exists
   bool containsKey(String key) {
@@ -385,7 +374,6 @@ class SharedP {
     }
   }
 
-  // ============ UTILITY METHODS ============
 
   /// Get storage statistics
   Map<String, dynamic> getStorageStats() {
@@ -398,7 +386,6 @@ class SharedP {
         'sizeEstimate': keys.length * 32, // Rough estimate
       };
 
-      // Count by type
       final typeCount = <String, int>{};
       for (final key in keys) {
         final type = _getValueType(key);
@@ -452,7 +439,6 @@ class SharedP {
     }
   }
 
-  // ============ PRIVATE HELPERS ============
 
   String _getValueType(String key) {
     final value = _sp!.get(key);
@@ -465,5 +451,4 @@ class SharedP {
   }
 }
 
-// Global instance
 SharedP appSP = SharedP();
