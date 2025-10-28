@@ -27,7 +27,6 @@ import 'package:quran_hadith/models/reciter_model.dart';
 import 'controller/hadithAPI.dart';
 import 'theme/app_theme.dart';
 
-// FFI typedefs for setlocale
 typedef _NativeSetLocale = ffi.Pointer<ffi.Int8> Function(
     ffi.Int32, ffi.Pointer<ffi.Int8>);
 typedef _DartSetLocale = ffi.Pointer<ffi.Int8> Function(
@@ -37,13 +36,9 @@ typedef _DartSetLocale = ffi.Pointer<ffi.Int8> Function(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Ensure numeric locale is C on POSIX platforms to avoid native library
-  // issues when a non-C locale is present (e.g., libmpv/media backends).
-  // This mirrors the error message: call setlocale(LC_NUMERIC, "C");
   if (!Platform.isWindows) {
     try {
       final dylib = ffi.DynamicLibrary.process();
-      // setlocale: char *setlocale(int category, const char *locale);
       final setlocale =
           dylib.lookupFunction<_NativeSetLocale, _DartSetLocale>('setlocale');
       const int lcNumeric = 4; // common value on POSIX systems
@@ -83,12 +78,10 @@ void main() async {
 
 /// Initialize app dependencies
 Future<void> _initializeApp(ThemeState themeState) async {
-  // Initialize media_kit for audio playback, but don't let it abort app init
   try {
     MediaKit.ensureInitialized();
   } catch (e, s) {
     errorService.reportError('media_kit initialization warning: $e', s);
-    // Continue — we'll run without native media support until dependencies are installed
   }
 
   try {
@@ -97,8 +90,6 @@ Future<void> _initializeApp(ThemeState themeState) async {
     errorService.reportError('Warning: appSP.init() failed: $e', s);
   }
 
-  // Initialize in-memory current reciter from storage so audio uses the
-  // correct voice before any UI interaction.
   try {
     await ReciterService.instance.initializeCurrentReciter();
   } catch (e, s) {
@@ -130,7 +121,25 @@ Future<void> _initializeApp(ThemeState themeState) async {
     errorService.reportError('Warning loading theme: $e', s);
   }
 
-  // Initialize native desktop service for system tray and window management
+  // Initialize analytics service
+  try {
+    // Set default goals if not already set
+    final dailyGoal = analyticsService.getDailyReadingGoal();
+    if (dailyGoal == 0) {
+      analyticsService.setDailyReadingGoal(30); // 30 minutes default
+    }
+
+    final monthlyGoal = analyticsService.getMonthlyListeningGoal();
+    if (monthlyGoal == 0) {
+      analyticsService.setMonthlyListeningGoal(10); // 10 hours default
+    }
+
+    // Perform initial achievement check
+    analyticsService.checkAndUnlockAchievements();
+  } catch (e, s) {
+    errorService.reportError('Warning initializing analytics: $e', s);
+  }
+
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     try {
       await nativeDesktop.initialize();
@@ -156,17 +165,10 @@ void _configureDesktopWindow() {
     win.alignment = Alignment.center;
     win.title = "Qur'an & Hadith";
     win.show();
-
-    // Add window styling
-    // _styleDesktopWindow(win);
   });
 }
 
 /// Style the desktop window
-// void _styleDesktopWindow(AppWindow window) {
-//   // You can add custom window styling here
-//   window.setBrightness(Brightness.light);
-// }
 
 /// Main application widget
 class QuranHadithApp extends StatefulWidget {
@@ -338,7 +340,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
     _sessionStart = DateTime.now();
     _initializeSessionMetrics();
 
-    // Track session start with analytics
     analyticsService.trackSessionStart();
   }
 
@@ -400,13 +401,11 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       final previousState =
           appSP.getString('last_lifecycle_state', defaultValue: 'unknown');
 
-      // Track with analytics service
       analyticsService.trackLifecycleTransition(previousState, stateStr);
 
       appSP.setString('last_lifecycle_state', stateStr);
       appSP.setInt('last_lifecycle_transition', timestamp);
 
-      // Track state transitions for analytics
       final transitionCount =
           appSP.getInt('lifecycle_transitions', defaultValue: 0);
       appSP.setInt('lifecycle_transitions', transitionCount + 1);
@@ -421,23 +420,18 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
     _pauseCount++;
 
     try {
-      // Remember audio state for smart resume
       _wasPlayingBeforePause =
           audioController?.buttonNotifier.value == AudioButtonState.playing;
 
-      // Pause audio to conserve battery and prevent background playback
       audioController?.pause().catchError((e, stack) {
         errorService.reportError(
             'Failed to pause audio on app pause: $e', stack);
       });
 
-      // Save critical app state
       _saveAppState();
 
-      // Track session metrics
       _updateSessionMetrics();
 
-      // Persist audio state for crash recovery
       appSP.setBool('audio_was_playing', _wasPlayingBeforePause);
       appSP.setInt('pause_count', _pauseCount);
     } catch (e, stack) {
@@ -450,20 +444,19 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
     _resumedAt = DateTime.now();
 
     try {
-      // Calculate background duration for smart data refresh
       if (_pausedAt != null) {
         final backgroundDuration = _resumedAt!.difference(_pausedAt!);
         _handleBackgroundDuration(backgroundDuration);
       }
 
-      // Restore app state
       _restoreAppState();
 
-      // Verify data integrity after resume
       _verifyDataIntegrity();
 
-      // Clean up temporary resources
       _cleanupTemporaryResources();
+
+      // Check and unlock achievements on resume
+      analyticsService.checkAndUnlockAchievements();
     } catch (e, stack) {
       errorService.reportError('Error handling app resume: $e', stack);
       _attemptCrashRecovery();
@@ -473,10 +466,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Handle background duration with smart refresh logic
   void _handleBackgroundDuration(Duration duration) {
     try {
-      // Track background duration with analytics service
       analyticsService.trackBackgroundDuration(duration);
 
-      // Log background duration for metrics
       final totalBackgroundSeconds =
           appSP.getInt('total_background_seconds', defaultValue: 0);
       appSP.setInt('total_background_seconds',
@@ -485,7 +476,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       if (duration.inMinutes > _staleDataThresholdMinutes) {
         _refreshStaleData();
       } else if (duration.inSeconds < 30 && _wasPlayingBeforePause) {
-        // Quick resume scenario - optionally restore audio
         _handleQuickResume();
       }
     } catch (e, stack) {
@@ -500,7 +490,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
           appSP.getBool('auto_resume_audio', defaultValue: false);
 
       if (autoResumeAudio && _wasPlayingBeforePause) {
-        // Delay resume to ensure smooth transition
         Future.delayed(const Duration(milliseconds: 500), () {
           audioController?.play().catchError((e, stack) {
             errorService.reportError('Failed to auto-resume audio: $e', stack);
@@ -515,7 +504,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Handle app inactive state (transient interruption)
   void _handleAppInactive() {
     try {
-      // Pause audio but don't save full state (temporary interruption)
       audioController?.pause().catchError((e, stack) {
         errorService.reportError(
             'Failed to pause audio on inactive: $e', stack);
@@ -530,7 +518,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Handle app hidden state
   void _handleAppHidden() {
     try {
-      // Release non-critical resources
       _releaseNonCriticalResources();
 
       appSP.setString('last_hidden_time', DateTime.now().toIso8601String());
@@ -542,25 +529,20 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Handle app detached state (final cleanup)
   void _handleAppDetached() {
     try {
-      // Track session end with analytics
       if (_sessionStart != null) {
         final sessionDuration = DateTime.now().difference(_sessionStart!);
         analyticsService.trackSessionEnd(sessionDuration);
       }
 
-      // Final state save before termination
       _saveAppState();
 
-      // Stop audio completely
       audioController?.stop().catchError((e, stack) {
         errorService.reportError('Failed to stop audio on detach: $e', stack);
       });
 
-      // Mark clean shutdown
       appSP.setBool('clean_shutdown', true);
       appSP.setInt('last_session_end', DateTime.now().millisecondsSinceEpoch);
 
-      // Record session duration
       _updateSessionMetrics();
     } catch (e, stack) {
       errorService.reportError('Error handling app detached: $e', stack);
@@ -572,10 +554,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
     try {
       final now = DateTime.now();
 
-      // Save state timestamp
       appSP.setInt('last_save_time', now.millisecondsSinceEpoch);
 
-      // Save reading progress through database
       database
           .saveReadingProgress(
         database.getLastReadingProgress() ??
@@ -589,7 +569,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         errorService.reportError('Failed to save reading progress: $e', stack);
       });
 
-      // Save listening progress
       database
           .saveListeningProgress(
         database.getLastListeningProgress() ??
@@ -609,14 +588,12 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
             'Failed to save listening progress: $e', stack);
       });
 
-      // Save preferences
       final prefs = database.getPreferences();
       database.savePreferences(prefs).catchError((e, stack) {
         errorService.reportError('Failed to save preferences: $e', stack);
       });
     } catch (e, stack) {
       errorService.reportError('Critical error saving app state: $e', stack);
-      // Mark potential data loss
       appSP.setBool('potential_data_loss', true);
     }
   }
@@ -630,7 +607,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         final lastSave = DateTime.fromMillisecondsSinceEpoch(lastSaveTime);
         final timeSinceSave = DateTime.now().difference(lastSave);
 
-        // Validate state freshness
         if (timeSinceSave.inDays > 7) {
           errorService.reportError(
             'Restored state is ${timeSinceSave.inDays} days old - may be stale',
@@ -639,7 +615,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         }
       }
 
-      // Check for potential data loss from previous session
       final potentialDataLoss =
           appSP.getBool('potential_data_loss', defaultValue: false);
       if (potentialDataLoss) {
@@ -650,7 +625,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         appSP.setBool('potential_data_loss', false);
       }
 
-      // Clear crash recovery flag
       appSP.setBool('clean_shutdown', false);
     } catch (e, stack) {
       errorService.reportError('Error restoring app state: $e', stack);
@@ -660,7 +634,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Refresh stale data after long background period
   void _refreshStaleData() {
     try {
-      // Refresh reciters list
       ReciterService.instance
           .getReciters(forceRefresh: true)
           .catchError((e, stack) {
@@ -668,20 +641,17 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         return <Reciter>[]; // Return empty list on error
       });
 
-      // Invalidate hadith books cache if older than threshold
       final hadithCacheTime =
           appSP.getInt('hadith_books_cache_time', defaultValue: 0);
       if (hadithCacheTime > 0) {
         final cacheAge =
             DateTime.now().millisecondsSinceEpoch - hadithCacheTime;
         if (Duration(milliseconds: cacheAge).inHours > 24) {
-          // Cache will be refreshed on next request due to TTL
           appSP.setInt('hadith_cache_invalidated',
               DateTime.now().millisecondsSinceEpoch);
         }
       }
 
-      // Update last refresh timestamp
       appSP.setInt('last_data_refresh', DateTime.now().millisecondsSinceEpoch);
     } catch (e, stack) {
       errorService.reportError('Error refreshing stale data: $e', stack);
@@ -691,7 +661,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Verify data integrity after app resume
   void _verifyDataIntegrity() {
     try {
-      // Verify critical data structures
       final lastReading = database.getLastReadingProgress();
       final lastListening = database.getLastListeningProgress();
 
@@ -744,7 +713,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
       _crashRecoveryAttempts++;
       appSP.setInt('crash_count', _crashRecoveryAttempts);
 
-      // Reset to safe state
       audioController?.stop();
       _wasPlayingBeforePause = false;
 
@@ -760,7 +728,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Schedule background data refresh
   void _scheduleBackgroundRefresh() {
     try {
-      // Mark for refresh on next network availability
       appSP.setBool('needs_background_refresh', true);
       appSP.setInt('background_refresh_scheduled',
           DateTime.now().millisecondsSinceEpoch);
@@ -773,8 +740,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Release non-critical resources
   void _releaseNonCriticalResources() {
     try {
-      // Clear in-memory caches that can be rebuilt
-      // This helps with memory management during background state
       appSP.setInt('resources_released', DateTime.now().millisecondsSinceEpoch);
     } catch (e, stack) {
       errorService.reportError('Error releasing resources: $e', stack);
@@ -784,10 +749,8 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   /// Clean up temporary resources
   void _cleanupTemporaryResources() {
     try {
-      // Clean up any temporary flags or counters
       appSP.setBool('audio_was_playing', false);
 
-      // Reset pause count if session is fresh
       if (_pauseCount > 10) {
         _pauseCount = 0;
         appSP.setInt('pause_count', 0);
@@ -799,14 +762,54 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
 
   @override
   void didChangeMetrics() {
-    // Handle screen size/orientation changes
-    // Useful for responsive layout adjustments
     super.didChangeMetrics();
+    try {
+      // Get window metrics
+      final view = WidgetsBinding.instance.platformDispatcher.views.first;
+      final physicalSize = view.physicalSize;
+      final devicePixelRatio = view.devicePixelRatio;
+      final logicalSize = physicalSize / devicePixelRatio;
+
+      // Detect orientation change
+      final isLandscape = logicalSize.width > logicalSize.height;
+      final wasLandscape = appSP.getBool('is_landscape', defaultValue: false);
+
+      if (isLandscape != wasLandscape) {
+        appSP.setBool('is_landscape', isLandscape);
+        analyticsService
+            .trackOrientationChange(isLandscape ? 'landscape' : 'portrait');
+      }
+
+      // Detect screen size category changes
+      final screenCategory = _getScreenCategory(logicalSize.width);
+      final previousCategory =
+          appSP.getString('screen_category', defaultValue: 'medium');
+
+      if (screenCategory != previousCategory) {
+        appSP.setString('screen_category', screenCategory);
+        analyticsService.trackScreenSizeChange(
+            previousCategory, screenCategory);
+      }
+
+      // Save current metrics
+      appSP.setDouble('screen_width', logicalSize.width);
+      appSP.setDouble('screen_height', logicalSize.height);
+      appSP.setDouble('pixel_ratio', devicePixelRatio);
+    } catch (e, stack) {
+      errorService.reportError('Error handling metrics change: $e', stack);
+    }
+  }
+
+  /// Determine screen size category
+  String _getScreenCategory(double width) {
+    if (width < 600) return 'small';
+    if (width < 900) return 'medium';
+    if (width < 1200) return 'large';
+    return 'xlarge';
   }
 
   @override
   void didChangeLocales(List<Locale>? locales) {
-    // Handle system locale changes
     if (locales != null && locales.isNotEmpty) {
       debugPrint('System locale changed to: ${locales.first.languageCode}');
     }
@@ -815,7 +818,6 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
 
   @override
   void didChangeAccessibilityFeatures() {
-    // Handle accessibility setting changes
     debugPrint('Accessibility features changed');
     super.didChangeAccessibilityFeatures();
   }
