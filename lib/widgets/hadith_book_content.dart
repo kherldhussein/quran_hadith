@@ -8,7 +8,6 @@ import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:get/get.dart';
 import 'package:quran_hadith/screens/hadith_detail.dart';
 
-// Reusable content widget to display hadiths within a given book
 class HadithBookContent extends StatefulWidget {
   final String bookSlug;
   final bool showArabic;
@@ -44,7 +43,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
   void didUpdateWidget(covariant HadithBookContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.bookSlug != widget.bookSlug) {
-      // Book changed -> reload from page 1
       _reloadFromStart();
     }
   }
@@ -116,7 +114,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // In-book filter
     final filtered = widget.query.isEmpty
         ? _items
         : _items.where((h) {
@@ -131,7 +128,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Header + Meta
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
           child: Row(
@@ -172,7 +168,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
           ),
         ),
 
-        // List
         Expanded(
           child: _initialLoading
               ? _buildLoadingState(theme)
@@ -290,7 +285,6 @@ class _HadithCard extends StatelessWidget {
               ),
               child: InkWell(
                 onTap: () {
-                  // Open hadith detail page
                   Get.to(() => HadithDetailPage(
                         bookSlug: bookSlug,
                         number: hadith.number ?? '-',
@@ -303,7 +297,6 @@ class _HadithCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -349,7 +342,6 @@ class _HadithCard extends StatelessWidget {
                                   'text': hadith.arab ?? '',
                                 },
                               );
-                              // Trigger refresh of favorite state
                               (context as Element).markNeedsBuild();
                             },
                           ),
@@ -358,11 +350,9 @@ class _HadithCard extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Content section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Arabic Text (always show if available, regardless of toggle for better UX)
                           if ((hadith.arab ?? '').isNotEmpty) ...[
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -400,7 +390,6 @@ class _HadithCard extends StatelessWidget {
                             const SizedBox(height: 16),
                           ],
 
-                          // Translation (id field contains translation)
                           if ((hadith.id ?? '').isNotEmpty) ...[
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -436,7 +425,6 @@ class _HadithCard extends StatelessWidget {
                             ),
                           ],
 
-                          // Show message if both are empty
                           if ((hadith.arab ?? '').isEmpty &&
                               (hadith.id ?? '').isEmpty)
                             Text(
@@ -453,7 +441,6 @@ class _HadithCard extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Actions
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
