@@ -19,7 +19,6 @@ class HadithChapter {
   final int? chapterId;
   final int? hadithNumber;
 
-// final String page;
   HadithChapter(
       {this.collection,
       this.chapterEnglish,
