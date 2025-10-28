@@ -125,7 +125,6 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
         return _reciters
             .firstWhere((reciter) => reciter.id == _selectedReciterId);
       } catch (_) {
-        // Fall back to global resolver when the preferred reciter is missing.
       }
     }
     return ReciterService.instance
@@ -729,9 +728,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                                       'selectedReciter',
                                       reciter.id,
                                     );
-                                    // Keep legacy storage in sync
                                     await SpUtil.setReciter(reciter.id);
-                                    // Notify globally so active players update
                                     ReciterService.instance
                                         .setCurrentReciterId(reciter.id);
                                     if (context.mounted) {
@@ -1097,7 +1094,6 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
       _saveSetting('downloadOverWifiOnly', _downloadOverWifiOnly),
     ]);
 
-    // Notify global listeners about reset reciter
     ReciterService.instance.setCurrentReciterId(_selectedReciterId);
 
     if (!mounted) return;
