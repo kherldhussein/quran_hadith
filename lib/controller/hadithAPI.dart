@@ -292,6 +292,29 @@ class HadithAPI {
     final age = DateTime.now().difference(cachedAt);
     return age > cacheTTL;
   }
+
+  Future<HadithItem?> getRandomHadith() async {
+    try {
+      final res = await http.get(Uri.parse('$base/random'));
+      if (res.statusCode != 200) {
+        throw Exception('Failed to load random hadith: ${res.statusCode}');
+      }
+
+      final body = json.decode(res.body);
+      final data = body is Map<String, dynamic> ? body['data'] : null;
+
+      if (data is Map<String, dynamic>) {
+        return HadithItem(
+          id: data['id'] as String?,
+          number: data['number'] as String?,
+          arab: data['arab'] as String?,
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching random hadith: $e');
+    }
+    return null;
+  }
 }
 
 class HadithBook {
