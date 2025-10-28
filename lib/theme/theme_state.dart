@@ -9,9 +9,7 @@ class ThemeState extends ChangeNotifier {
   /// Update theme (toggle) - instantly notifies all listeners
   void updateTheme() {
     _isDarkMode = !_isDarkMode;
-    // Fire notifyListeners BEFORE saving to SharedPreferences for instant UI update
     notifyListeners();
-    // Save asynchronously to not block UI
     SpUtil.setThemed(_isDarkMode).catchError((e) {
       debugPrint('❌ Failed to save theme preference: $e');
       return false;
@@ -22,9 +20,7 @@ class ThemeState extends ChangeNotifier {
   void setTheme(bool isDark) {
     if (_isDarkMode == isDark) return; // No change needed
     _isDarkMode = isDark;
-    // Fire notifyListeners BEFORE saving to SharedPreferences for instant UI update
     notifyListeners();
-    // Save asynchronously to not block UI
     SpUtil.setThemed(_isDarkMode).catchError((e) {
       debugPrint('❌ Failed to save theme preference: $e');
       return false;
