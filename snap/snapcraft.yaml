@@ -18,6 +18,7 @@ slots:
 apps:
   quran-hadith:
     command: quran_hadith
+    extensions: [gnome]
     slots:
       - dbus-quran-hadith
     plugs:
@@ -45,6 +46,8 @@ parts:
       - libblkid-dev
       - liblzma-dev
       - pkg-config
+      - libkeybinder-3.0-dev
     stage-packages:
       - libgtk-3-0
       - libglu1-mesa
+      - libkeybinder-3.0-0
