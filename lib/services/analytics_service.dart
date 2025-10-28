@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/services/error_service.dart';
+import 'package:quran_hadith/database/database_service.dart';
 
 /// Production-ready analytics service for tracking app usage and behavior
 class AnalyticsService {
@@ -10,7 +11,6 @@ class AnalyticsService {
 
   static AnalyticsService get instance => _instance;
 
-  // Analytics keys
   static const String _keyTotalSessions = 'analytics_total_sessions';
   static const String _keyTotalSessionMinutes =
       'analytics_total_session_minutes';
@@ -35,7 +35,6 @@ class AnalyticsService {
       final totalSessions = appSP.getInt(_keyTotalSessions, defaultValue: 0);
       appSP.setInt(_keyTotalSessions, totalSessions + 1);
 
-      // Track consecutive days
       _updateConsecutiveDays();
     } catch (e, stack) {
       errorService.reportError('Error tracking session start: $e', stack);
@@ -74,7 +73,6 @@ class AnalyticsService {
           appSP.getInt(_keyLifecycleTransitions, defaultValue: 0);
       appSP.setInt(_keyLifecycleTransitions, transitions + 1);
 
-      // Track specific transition patterns
       final key = 'analytics_transition_${fromState}_to_$toState';
       final count = appSP.getInt(key, defaultValue: 0);
       appSP.setInt(key, count + 1);
@@ -94,7 +92,6 @@ class AnalyticsService {
       final playCount = appSP.getInt(_keyAudioPlayCount, defaultValue: 0);
       appSP.setInt(_keyAudioPlayCount, playCount + 1);
 
-      // Track per-reciter usage
       final reciterKey = 'analytics_reciter_$reciter';
       final reciterCount = appSP.getInt(reciterKey, defaultValue: 0);
       appSP.setInt(reciterKey, reciterCount + 1);
@@ -119,7 +116,6 @@ class AnalyticsService {
       final surahs = appSP.getInt(_keySurahsRead, defaultValue: 0);
       appSP.setInt(_keySurahsRead, surahs + 1);
 
-      // Track individual surah reads
       final surahKey = 'analytics_surah_${surahNumber}_reads';
       final reads = appSP.getInt(surahKey, defaultValue: 0);
       appSP.setInt(surahKey, reads + 1);
@@ -134,7 +130,6 @@ class AnalyticsService {
       final hadiths = appSP.getInt(_keyHadithsRead, defaultValue: 0);
       appSP.setInt(_keyHadithsRead, hadiths + 1);
 
-      // Track per-book reads
       final bookKey = 'analytics_hadith_book_${bookSlug}_reads';
       final reads = appSP.getInt(bookKey, defaultValue: 0);
       appSP.setInt(bookKey, reads + 1);
@@ -159,7 +154,6 @@ class AnalyticsService {
       final favorites = appSP.getInt(_keyFavoritesAdded, defaultValue: 0);
       appSP.setInt(_keyFavoritesAdded, favorites + 1);
 
-      // Track by type
       final typeKey = 'analytics_favorites_type_$type';
       final typeCount = appSP.getInt(typeKey, defaultValue: 0);
       appSP.setInt(typeKey, typeCount + 1);
@@ -174,7 +168,6 @@ class AnalyticsService {
       final searches = appSP.getInt(_keySearchCount, defaultValue: 0);
       appSP.setInt(_keySearchCount, searches + 1);
 
-      // Track search query length for UX insights
       final lengthKey = 'analytics_search_length_${query.length ~/ 5 * 5}';
       final lengthCount = appSP.getInt(lengthKey, defaultValue: 0);
       appSP.setInt(lengthKey, lengthCount + 1);
@@ -202,20 +195,16 @@ class AnalyticsService {
         final daysDiff = today.difference(lastDay).inDays;
 
         if (daysDiff == 1) {
-          // Consecutive day
           final consecutive =
               appSP.getInt(_keyConsecutiveDays, defaultValue: 0);
           appSP.setInt(_keyConsecutiveDays, consecutive + 1);
         } else if (daysDiff > 1) {
-          // Streak broken
           appSP.setInt(_keyConsecutiveDays, 1);
         }
       } else {
-        // First session
         appSP.setInt(_keyConsecutiveDays, 1);
       }
 
-      // Track total unique days
       final totalDays = appSP.getInt(_keyTotalDaysUsed, defaultValue: 0);
       appSP.setInt(_keyTotalDaysUsed, totalDays + 1);
     } catch (e, stack) {
@@ -256,24 +245,19 @@ class AnalyticsService {
     try {
       final summary = getAnalyticsSummary();
 
-      // Calculate engagement score based on multiple factors
       int score = 0;
 
-      // Factor 1: Consecutive days (max 30 points)
       final consecutiveDays = summary['consecutiveDays'] as int? ?? 0;
       score += (consecutiveDays * 3).clamp(0, 30);
 
-      // Factor 2: Total sessions (max 20 points)
       final totalSessions = summary['totalSessions'] as int? ?? 0;
       score += (totalSessions ~/ 5).clamp(0, 20);
 
-      // Factor 3: Content interaction (max 30 points)
       final surahsRead = summary['surahsRead'] as int? ?? 0;
       final hadithsRead = summary['hadithsRead'] as int? ?? 0;
       final contentScore = ((surahsRead + hadithsRead) ~/ 10).clamp(0, 30);
       score += contentScore;
 
-      // Factor 4: Feature usage (max 20 points)
       final bookmarks = summary['bookmarksCreated'] as int? ?? 0;
       final favorites = summary['favoritesAdded'] as int? ?? 0;
       final searches = summary['searchCount'] as int? ?? 0;
@@ -376,6 +360,219 @@ class AnalyticsService {
     } catch (e, stack) {
       errorService.reportError('Error generating analytics report: $e', stack);
       return 'Error generating report';
+    }
+  }
+
+  /// Goal tracking - Daily reading goal
+  void setDailyReadingGoal(int minutes) {
+    try {
+      appSP.setInt('goal_daily_reading_minutes', minutes);
+    } catch (e, stack) {
+      errorService.reportError('Error setting daily reading goal: $e', stack);
+    }
+  }
+
+  /// Get daily reading goal
+  int getDailyReadingGoal() {
+    try {
+      return appSP.getInt('goal_daily_reading_minutes', defaultValue: 30);
+    } catch (e, stack) {
+      errorService.reportError('Error getting daily reading goal: $e', stack);
+      return 30;
+    }
+  }
+
+  /// Check if today's reading goal is met
+  bool isDailyReadingGoalMet() {
+    try {
+      final history = database.getReadingHistory();
+      final today = DateTime.now();
+
+      final todaysReading = history.where((session) {
+        final sessionDate = DateTime.fromMillisecondsSinceEpoch(
+          session.lastReadAt.millisecondsSinceEpoch,
+        );
+        return sessionDate.year == today.year &&
+            sessionDate.month == today.month &&
+            sessionDate.day == today.day;
+      }).fold<int>(0, (sum, session) => sum + session.totalTimeSpentSeconds);
+
+      final goalMinutes = getDailyReadingGoal();
+      return todaysReading ~/ 60 >= goalMinutes;
+    } catch (e, stack) {
+      errorService.reportError('Error checking daily reading goal: $e', stack);
+      return false;
+    }
+  }
+
+  /// Goal tracking - Monthly listening goal
+  void setMonthlyListeningGoal(int hours) {
+    try {
+      appSP.setInt('goal_monthly_listening_hours', hours);
+    } catch (e, stack) {
+      errorService.reportError(
+          'Error setting monthly listening goal: $e', stack);
+    }
+  }
+
+  /// Get monthly listening goal
+  int getMonthlyListeningGoal() {
+    try {
+      return appSP.getInt('goal_monthly_listening_hours', defaultValue: 10);
+    } catch (e, stack) {
+      errorService.reportError(
+          'Error getting monthly listening goal: $e', stack);
+      return 10;
+    }
+  }
+
+  /// Achievement unlock system
+  void unlockAchievement(
+      String achievementId, String title, String description) {
+    try {
+      final key = 'achievement_$achievementId';
+      if (appSP.getBool(key, defaultValue: false)) {
+        return;
+      }
+
+      appSP.setBool(key, true);
+      appSP.setString('achievement_${achievementId}_title', title);
+      appSP.setString('achievement_${achievementId}_desc', description);
+      appSP.setString('achievement_${achievementId}_date',
+          DateTime.now().toIso8601String());
+
+      if (kDebugMode) {
+        debugPrint('🏆 Achievement Unlocked: $title');
+      }
+    } catch (e, stack) {
+      errorService.reportError('Error unlocking achievement: $e', stack);
+    }
+  }
+
+  /// Get all unlocked achievements
+  Map<String, dynamic> getUnlockedAchievements() {
+    try {
+      final achievements = <String, dynamic>{};
+
+      final readingFifty =
+          appSP.getBool('achievement_read_50_surahs', defaultValue: false);
+      if (readingFifty) {
+        achievements['read_50_surahs'] = {
+          'title': 'Half Way There 📚',
+          'description': 'Read 50 Surahs',
+          'unlockedAt': appSP.getString('achievement_read_50_surahs_date',
+              defaultValue: ''),
+        };
+      }
+
+      final listeningAll =
+          appSP.getBool('achievement_listen_all_surahs', defaultValue: false);
+      if (listeningAll) {
+        achievements['listen_all_surahs'] = {
+          'title': 'Complete Listener 🎵',
+          'description': 'Listen to all 114 Surahs',
+          'unlockedAt': appSP.getString('achievement_listen_all_surahs_date',
+              defaultValue: ''),
+        };
+      }
+
+      final streak7 =
+          appSP.getBool('achievement_streak_7_days', defaultValue: false);
+      if (streak7) {
+        achievements['streak_7_days'] = {
+          'title': 'Week Warrior 🔥',
+          'description': '7 day reading streak',
+          'unlockedAt': appSP.getString('achievement_streak_7_days_date',
+              defaultValue: ''),
+        };
+      }
+
+      final streak30 =
+          appSP.getBool('achievement_streak_30_days', defaultValue: false);
+      if (streak30) {
+        achievements['streak_30_days'] = {
+          'title': 'Monthly Master 📖',
+          'description': '30 day reading streak',
+          'unlockedAt': appSP.getString('achievement_streak_30_days_date',
+              defaultValue: ''),
+        };
+      }
+
+      return achievements;
+    } catch (e, stack) {
+      errorService.reportError('Error getting achievements: $e', stack);
+      return {};
+    }
+  }
+
+  /// Check and unlock achievement based on progress
+  void checkAndUnlockAchievements() {
+    try {
+      final summary = getAnalyticsSummary();
+
+      final uniqueSurahs = (summary['surahsRead'] as int?) ?? 0;
+      if (uniqueSurahs >= 50 &&
+          !appSP.getBool('achievement_read_50_surahs', defaultValue: false)) {
+        unlockAchievement(
+            'read_50_surahs', 'Half Way There 📚', 'Read 50 Surahs');
+      }
+
+      final consecutiveDays = (summary['consecutiveDays'] as int?) ?? 0;
+      if (consecutiveDays >= 7 &&
+          !appSP.getBool('achievement_streak_7_days', defaultValue: false)) {
+        unlockAchievement(
+            'streak_7_days', 'Week Warrior 🔥', '7 day reading streak');
+      }
+
+      if (consecutiveDays >= 30 &&
+          !appSP.getBool('achievement_streak_30_days', defaultValue: false)) {
+        unlockAchievement(
+            'streak_30_days', 'Monthly Master 📖', '30 day reading streak');
+      }
+    } catch (e, stack) {
+      errorService.reportError('Error checking achievements: $e', stack);
+    }
+  }
+
+  /// Get user level based on engagement score
+  int getUserLevel() {
+    try {
+      final score = getUserEngagementScore();
+      return (score ~/ 10) + 1;
+    } catch (e, stack) {
+      errorService.reportError('Error calculating user level: $e', stack);
+      return 1;
+    }
+  }
+
+  /// Get experience points (same as engagement score)
+  int getExperiencePoints() => getUserEngagementScore();
+
+  /// Get experience points needed for next level
+  int getExperienceForNextLevel(int currentLevel) {
+    return (currentLevel * 15).clamp(0, 100);
+  }
+
+  /// Track orientation change
+  void trackOrientationChange(String orientation) {
+    try {
+      appSP.setString('last_orientation', orientation);
+      appSP.setInt('orientation_changes',
+          (appSP.getInt('orientation_changes', defaultValue: 0)) + 1);
+    } catch (e, stack) {
+      errorService.reportError('Error tracking orientation change: $e', stack);
+    }
+  }
+
+  /// Track screen size category change
+  void trackScreenSizeChange(String previousCategory, String newCategory) {
+    try {
+      appSP.setString('previous_screen_category', previousCategory);
+      appSP.setString('current_screen_category', newCategory);
+      appSP.setInt('screen_size_changes',
+          (appSP.getInt('screen_size_changes', defaultValue: 0)) + 1);
+    } catch (e, stack) {
+      errorService.reportError('Error tracking screen size change: $e', stack);
     }
   }
 }
