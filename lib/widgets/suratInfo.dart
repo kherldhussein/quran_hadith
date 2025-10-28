@@ -47,7 +47,6 @@ class SurahInformation extends StatelessWidget {
           AutoSizeText("Ayahs: $ayahs"),
           AutoSizeText("Surah Number: $surahNumber"),
           AutoSizeText("Chapter: $revelationType"),
-          // AutoSizeText("Meaning: ${widget.englishNameTranslation}"),
           SizedBox(height: height * .02),
         ],
       ),
