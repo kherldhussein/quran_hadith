@@ -28,6 +28,7 @@ class StorageKeys {
       'FRIDAY_REMINDER_TIME_MINUTES';
   static const String autoPlayNextAyah = 'AUTO_PLAY_NEXT_AYAH';
   static const String repeatMode = 'REPEAT_MODE';
+  static const String autoScroll = 'AUTO_SCROLL';
 }
 
 /// Enhanced utility class for managing app preferences with better error handling and type safety
@@ -313,5 +314,15 @@ class SpUtil {
   /// Set repeat mode
   static Future<bool> setRepeatMode(String mode) {
     return appSP.setString(StorageKeys.repeatMode, mode);
+  }
+
+  /// Get auto scroll setting
+  static bool getAutoScroll() {
+    return appSP.getBool(StorageKeys.autoScroll, defaultValue: false);
+  }
+
+  /// Set auto scroll
+  static Future<bool> setAutoScroll(bool value) {
+    return appSP.setBool(StorageKeys.autoScroll, value);
   }
 }

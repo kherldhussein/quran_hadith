@@ -1,5 +1,5 @@
 /// Centralized logging utility for consistent error/info/debug messages
-library app_logger;
+library;
 
 import 'package:flutter/foundation.dart';
 
