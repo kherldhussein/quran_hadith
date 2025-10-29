@@ -71,6 +71,7 @@ dependencies:
   # Priority 1: Native Enhancements
   tray_manager: ^0.5.1
   smtc_windows: ^1.1.0
+  flutter_colorpicker: ^1.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
