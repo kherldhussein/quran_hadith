@@ -96,10 +96,10 @@ flutter:
         - asset: assets/fonts/Poppins-Thin.ttf
     - family: OpenDyslexic
       fonts:
-        - asset: assets/fonts/OpenDyslexic-Regular.ttf
-        - asset: assets/fonts/OpenDyslexic-Bold.ttf
-        - asset: assets/fonts/OpenDyslexic-Italic.ttf
-        - asset: assets/fonts/OpenDyslexic-BoldItalic.ttf
+        - asset: assets/fonts/OpenDyslexic-Regular.otf
+        - asset: assets/fonts/OpenDyslexic-Bold.otf
+        - asset: assets/fonts/OpenDyslexic-Italic.otf
+        - asset: assets/fonts/OpenDyslexic-BoldItalic.otf
 
 dependency_overrides:
   win32: ^5.14.0
