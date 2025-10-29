@@ -528,7 +528,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: LinearProgressIndicator(
                 value: (xp / xpForNext).clamp(0.0, 1.0),
                 minHeight: 12,
-                backgroundColor: theme.colorScheme.surfaceVariant,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   theme.colorScheme.primary,
                 ),

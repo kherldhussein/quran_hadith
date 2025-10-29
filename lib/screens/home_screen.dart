@@ -30,8 +30,11 @@ import 'package:quran_hadith/services/notification_service.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
+import 'dart:math' as math;
 
 import '../controller/quranAPI.dart';
+import '../controller/audio_controller.dart';
+import '../widgets/live_audio_player.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,8 +50,9 @@ class _NavRailItem {
   const _NavRailItem(this.icon, this.label);
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+ int _selectedIndex = 0;
   late final List<Widget> _contentScreens;
   late ValueNotifier<bool> _isExtended;
   final qsearch.Search _offlineSearch = qsearch.Search();
@@ -67,6 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late String _selectedReciter;
   List<Reciter> _reciters = List<Reciter>.from(Reciter.fallback);
   bool _loadingReciters = true;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
 
   final DailyAyahService _dailyAyahService = DailyAyahService.instance;
   final QuranAPI _quranApi = QuranAPI();
@@ -102,6 +109,24 @@ class _HomeScreenState extends State<HomeScreen> {
     _dailyAyahReminderEnabled = SpUtil.isDailyAyahNotificationEnabled();
     _fridayReminderEnabled = SpUtil.isFridayReminderEnabled();
 
+    // Animation setup
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+      ),
+    );
+
     _loadReciters();
 
     _offlineSearch.loadSurah().then((_) {
@@ -110,7 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
+      _animationController.forward();
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadReciters({bool forceRefresh = false}) async {
@@ -370,6 +402,675 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+   Widget _buildDashboard(BuildContext context) {
+    final audioController = AudioController();
+
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: Transform.translate(
+            offset: Offset(0, _slideAnimation.value),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeroBanner(context),
+                  const SizedBox(height: 24),
+                  // Live Audio Player - only shows when playing
+                  LiveAudioPlayer(audioController: audioController),
+                  const SizedBox(height: 24),
+                  _buildDailyAyahCard(context),
+                  const SizedBox(height: 24),
+                  _buildActivitySection(context),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+  Widget _buildHeroBanner(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withOpacity(0.9),
+            colorScheme.primaryContainer.withOpacity(0.8),
+            colorScheme.secondary.withOpacity(0.7),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withOpacity(0.4),
+            blurRadius: 32,
+            spreadRadius: 4,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(32),
+      child: Stack(
+        children: [
+          // Background pattern
+          Positioned(
+            right: -50,
+            top: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  // Logo with glow effect
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withOpacity(0.3),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const ImageIcon(AssetImage('assets/images/Logo.png')),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Peace be upon you',
+                          style: textTheme.headlineSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Reignite your spiritual connection',
+                          style: textTheme.titleMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  _buildQuickActionChip(
+                    context,
+                    icon: FontAwesomeIcons.bookOpen,
+                    label: 'Continue reading',
+                    onTap: _openLastRead,
+                  ),
+                  _buildQuickActionChip(
+                    context,
+                    icon: FontAwesomeIcons.play,
+                    label: 'Resume listening',
+                    onTap: _openLastListened,
+                  ),
+                  _buildQuickActionChip(
+                    context,
+                    icon: FontAwesomeIcons.rotateRight,
+                    label: 'Refresh ayah',
+                    onTap: () => _loadDailyAyah(forceRefresh: true),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      child: Material(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FaIcon(icon, size: 14, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyAyahCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surface.withOpacity(0.9),
+            theme.colorScheme.surfaceVariant.withOpacity(0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.15),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+          ),
+        ],
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.secondary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: FaIcon(
+                  FontAwesomeIcons.star,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Ayah of the Day',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                  ),
+                ),
+              ),
+              _buildAnimatedRefreshButton(),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (_loadingDailyAyah && _dailyAyah == null)
+            _buildLoadingShimmer()
+          else if (_dailyAyah != null)
+            _buildDailyAyahContent(context, _dailyAyah!)
+          else
+            _buildErrorState(textTheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedRefreshButton() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: _loadingDailyAyah
+            ? null
+            : LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                ],
+              ),
+      ),
+      child: IconButton(
+        tooltip: 'Refresh ayah',
+        onPressed: _loadingDailyAyah
+            ? null
+            : () => _loadDailyAyah(forceRefresh: true),
+        icon: _loadingDailyAyah
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              )
+            : FaIcon(
+                FontAwesomeIcons.rotateRight,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingShimmer() {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.only(bottom: 12),
+        ),
+        Container(
+          width: double.infinity,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDailyAyahContent(BuildContext context, DailyAyah ayah) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Arabic Text with beautiful styling
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary.withOpacity(0.05),
+                colorScheme.secondary.withOpacity(0.02),
+              ],
+            ),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.1),
+            ),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Text(
+              ayah.arabicText,
+              style: textTheme.headlineSmall?.copyWith(
+                fontFamily: 'Amiri',
+                fontSize: 28,
+                height: 1.8,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // Translation
+        Text(
+          ayah.translation.isNotEmpty
+              ? ayah.translation
+              : 'Translation unavailable.',
+          style: textTheme.bodyLarge?.copyWith(
+            fontSize: 16,
+            height: 1.6,
+            color: colorScheme.onSurface.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // Metadata and Actions
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.primary.withOpacity(0.1),
+                    colorScheme.secondary.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.bookQuran,
+                    size: 14,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${ayah.surahName} • ${ayah.reference}',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            _buildGradientButton(
+              text: 'Open',
+              icon: FontAwesomeIcons.arrowUpRightFromSquare,
+              onPressed: () => _openDailyAyah(ayah),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGradientButton({
+    required String text,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                FaIcon(icon, size: 14, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivitySection(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = [
+          _buildLastReadCard(context),
+          _buildLastListenedCard(context),
+          _buildLastReadHadithCard(context),
+        ];
+        
+        if (constraints.maxWidth < 640) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cards.asMap().entries.map((entry) {
+              return Padding(
+                padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 16),
+                child: entry.value,
+              );
+            }).toList(),
+          );
+        }
+        
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: cards.asMap().entries.map((entry) {
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: entry.key == 0 ? 0 : 16),
+                child: entry.value,
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String footer,
+    String? actionLabel,
+    VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      child: Material(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colorScheme.surface,
+                  colorScheme.surfaceVariant.withOpacity(0.5),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+              border: Border.all(
+                color: colorScheme.outline.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon with gradient background
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colorScheme.primary.withOpacity(0.15),
+                        colorScheme.secondary.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Title
+                Text(
+                  title,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Subtitle
+                Text(
+                  subtitle,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.8),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Footer
+                Text(
+                  footer,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                
+                // Action Button
+                if (actionLabel != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: onTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                actionLabel,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 16,
+                                color: colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
   List<Widget> _buildReciterPopover(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -545,239 +1246,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDashboard(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeroBanner(context),
-          const SizedBox(height: 24),
-          _buildDailyAyahCard(context),
-          const SizedBox(height: 24),
-          _buildActivitySection(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroBanner(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        image: DecorationImage(
-          image: const AssetImage('assets/images/Banner.png'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            Colors.black.withValues(alpha: 0.35),
-            BlendMode.darken,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Peace be upon you',
-            style: textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Reignite your connection today.',
-            style: textTheme.titleMedium?.copyWith(color: Colors.white70),
-          ),
-          const Spacer(),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _buildQuickActionChip(
-                context,
-                icon: FontAwesomeIcons.bookOpen,
-                label: 'Continue reading',
-                onTap: _openLastRead,
-              ),
-              _buildQuickActionChip(
-                context,
-                icon: FontAwesomeIcons.play,
-                label: 'Resume listening',
-                onTap: _openLastListened,
-              ),
-              _buildQuickActionChip(
-                context,
-                icon: FontAwesomeIcons.rotateRight,
-                label: 'Refresh ayah',
-                onTap: () => _loadDailyAyah(forceRefresh: true),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return ActionChip(
-      onPressed: onTap,
-      avatar: FaIcon(icon, size: 14, color: Colors.white),
-      label: Text(label),
-      labelStyle: const TextStyle(color: Colors.white),
-      backgroundColor: Colors.white.withValues(alpha: 0.18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-    );
-  }
-
-  Widget _buildDailyAyahCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Ayah of the Day',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Refresh ayah',
-                onPressed: _loadingDailyAyah
-                    ? null
-                    : () => _loadDailyAyah(forceRefresh: true),
-                icon: _loadingDailyAyah
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(FontAwesomeIcons.rotateRight, size: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_loadingDailyAyah && _dailyAyah == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_dailyAyah != null)
-            _buildDailyAyahContent(context, _dailyAyah!)
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'Unable to load the ayah of the day. Please refresh to try again.',
-                style: textTheme.bodyMedium,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDailyAyahContent(BuildContext context, DailyAyah ayah) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Directionality(
-          textDirection: TextDirection.rtl,
-          child: Text(
-            ayah.arabicText,
-            style: textTheme.headlineSmall?.copyWith(
-              fontFamily: 'Amiri',
-              fontSize: 26,
-              height: 1.6,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          ayah.translation.isNotEmpty
-              ? ayah.translation
-              : 'Translation unavailable.',
-          style: textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Chip(
-              avatar: const FaIcon(FontAwesomeIcons.bookQuran, size: 14),
-              label: Text('${ayah.surahName} • ${ayah.reference}'),
-            ),
-            const SizedBox(width: 12),
-            TextButton.icon(
-              onPressed: () => _openDailyAyah(ayah),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('Open'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivitySection(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cards = [
-          _buildLastReadCard(context),
-          _buildLastListenedCard(context),
-          _buildLastReadHadithCard(context),
-        ];
-        if (constraints.maxWidth < 640) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              cards[0],
-              const SizedBox(height: 16),
-              cards[1],
-              const SizedBox(height: 16),
-              cards[2],
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: cards[0]),
-            const SizedBox(width: 16),
-            Expanded(child: cards[1]),
-            const SizedBox(width: 16),
-            Expanded(child: cards[2]),
-          ],
-        );
-      },
-    );
+  String _formatAudioPosition(int positionMs) {
+    final duration = Duration(milliseconds: positionMs);
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Widget _buildLastReadCard(BuildContext context) {
@@ -838,82 +1311,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ? () => _openLastReadHadith(hadithReading)
           : null,
     );
-  }
-
-  Widget _buildActivityCard({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String footer,
-    String? actionLabel,
-    VoidCallback? onTap,
-  }) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withValues(alpha: 0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor:
-                  theme.colorScheme.primary.withValues(alpha: 0.12),
-              child: FaIcon(icon, color: theme.colorScheme.primary, size: 18),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              footer,
-              style: textTheme.bodySmall?.copyWith(color: mutedColor),
-            ),
-            if (actionLabel != null) ...[
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: onTap,
-                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: Text(actionLabel),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatAudioPosition(int positionMs) {
-    final duration = Duration(milliseconds: positionMs);
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _openDailyAyah(DailyAyah ayah) async {
@@ -991,160 +1388,312 @@ class _HomeScreenState extends State<HomeScreen> {
       _isExtended.value = shouldExtendNav;
     }
 
-    final searchButton = IconButton(
-      tooltip: 'Search',
-      icon: const FaIcon(FontAwesomeIcons.magnifyingGlass),
-      onPressed: () {
-        if (_searchReady) {
-          showSearch(
-            context: context,
-            delegate: QuranSearchDelegate(
-              offlineSearch: _offlineSearch,
-              onSelect: (String surahName, int ayahNo) {
-                _quranApi.getSuratAudio().then((data) {
-                  final surah = data.surahs!.firstWhere(
-                    (e) => e.name == surahName || e.englishName == surahName,
-                    orElse: () => data.surahs!.first,
-                  );
-                  final ayahs = surah.ayahs;
-                  Get.to(() => QPageView(
-                        suratName: surah.name,
-                        suratNo: surah.number,
-                        ayahList: ayahs,
-                        englishMeaning: surah.englishNameTranslation,
-                        suratEnglishName: surah.englishName,
-                      ));
-                });
-              },
-            ),
-          );
-        }
-      },
-    );
+    final searchButton = _buildAnimatedSearchButton(context);
 
     final Widget selectedContent = _selectedIndex == 0
         ? _buildDashboard(context)
         : _contentScreens[_selectedIndex - 1];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: HeaderText(size: isCompact ? 20 : 30),
-        actions: [
-          searchButton,
-          RoundCustomButton(
-            icon: FontAwesomeIcons.headphones,
-            popoverHeight: 300,
-            popoverWidth: 280,
-            children: _buildReciterPopover(context),
-          ),
-          RoundCustomButton(
-            icon: FontAwesomeIcons.bell,
-            popoverHeight: 340,
-            popoverWidth: 280,
-            children: _buildNotificationPopover(context),
-          ),
-          SizedBox(width: isSmall ? 80 : 120),
-          if (!isSmall)
-            RoundCustomButton2(
-              icon: FontAwesomeIcons.a,
-              children: [
-                MItems(
-                    text: 'Donate on Patreon',
-                    pressed: () {
-                      launchUrl(Uri.parse(
-                          'https://www.patreon.com/join/kherld/checkout?ru=undefined'));
-                      Get.back();
-                    }),
-                MItems(
-                    text: 'Bug Report',
-                    pressed: () {
-                      launchUrl(Uri.parse(
-                          'https://github.com/kherld-hussein/quran_hadith/issues/'));
-                      Get.back();
-                    }),
-                MItems(
-                    text: 'Feature Request',
-                    pressed: () {
-                      launchUrl(Uri.parse(
-                          'https://github.com/kherld-hussein/quran_hadith/issues/'));
-                      Get.back();
-                    }),
-                MItems(
-                    text: 'About',
-                    pressed: () {
-                      Get.back();
-                      about.showAboutDialog();
-                    }),
-              ],
-            ),
-        ],
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 15.0, top: 5.0),
-          child: CircleAvatar(
-            radius: 30,
-            backgroundColor: Get.theme.brightness == Brightness.light
-                ? kAccentColor
-                : kDarkSecondaryColor,
-            child: const ImageIcon(AssetImage('assets/images/Logo.png')),
-          ),
-        ),
-      ),
-      body: Row(
-        children: [
-          LayoutBuilder(builder: (context, constraints) {
-            return SingleChildScrollView(
-              clipBehavior: Clip.antiAlias,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _isExtended,
-                    builder: (context, isExtended, child) {
-                      return NavigationRail(
-                        extended: isExtended,
-                        destinations: _navItems
-                            .map((item) => _buildNavDestination(item, isSmall))
-                            .toList(),
-                        selectedIndex: _selectedIndex,
-                        onDestinationSelected: (index) {
-                          setState(() => _selectedIndex = index);
-                        },
-                        labelType: isExtended
-                            ? NavigationRailLabelType.none
-                            : NavigationRailLabelType.all,
-                        trailing: IconButton(
-                          tooltip: 'Exit',
-                          icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
-                          onPressed: () async {
-                            SystemSound.play(SystemSoundType.alert);
-                            await AppDialogs.handleExit(context);
-                          },
-                        ),
-                      );
-                    },
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Scaffold(
+          appBar: _buildFuturisticAppBar(context, isSmall, isCompact, searchButton),
+          body: Row(
+            children: [
+              _buildAnimatedNavigationRail(context, isSmall),
+              Expanded(
+                child: SharedAxisTransitionSwitcher(
+                  child: QhNav(
+                    child: KeyedSubtree(
+                      key: ValueKey(_selectedIndex),
+                      child: selectedContent,
+                    ),
                   ),
                 ),
               ),
-            );
-          }),
-          Expanded(
-            child: SharedAxisTransitionSwitcher(
-              child: QhNav(
-                child: KeyedSubtree(
-                  key: ValueKey(_selectedIndex),
-                  child: selectedContent,
-                ),
-              ),
-            ),
+            ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedSearchButton(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
         ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        tooltip: 'Search',
+        icon: const FaIcon(FontAwesomeIcons.magnifyingGlass),
+        onPressed: () {
+          if (_searchReady) {
+            showSearch(
+              context: context,
+              delegate: QuranSearchDelegate(
+                offlineSearch: _offlineSearch,
+                onSelect: (String surahName, int ayahNo) {
+                  _quranApi.getSuratAudio().then((data) {
+                    final surah = data.surahs!.firstWhere(
+                      (e) => e.name == surahName || e.englishName == surahName,
+                      orElse: () => data.surahs!.first,
+                    );
+                    final ayahs = surah.ayahs;
+                    Get.to(() => QPageView(
+                          suratName: surah.name,
+                          suratNo: surah.number,
+                          ayahList: ayahs,
+                          englishMeaning: surah.englishNameTranslation,
+                          suratEnglishName: surah.englishName,
+                        ));
+                  });
+                },
+              ),
+            );
+          }
+        },
       ),
     );
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  AppBar _buildFuturisticAppBar(BuildContext context, bool isSmall,
+      bool isCompact, Widget searchButton) {
+    final theme = Theme.of(context);
+
+    return AppBar(
+      backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
+      elevation: 0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.topRight,
+            colors: [
+              theme.colorScheme.surface.withOpacity(0.98),
+              theme.colorScheme.surfaceVariant.withOpacity(0.9),
+            ],
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerColor.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+        ),
+      ),
+      title: HeaderText(size: isCompact ? 20 : 30),
+      actions: [
+        searchButton,
+        _buildAnimatedCustomButton(
+          icon: FontAwesomeIcons.headphones,
+          popoverHeight: 300,
+          popoverWidth: 280,
+          children: _buildReciterPopover(context),
+        ),
+        _buildAnimatedCustomButton(
+          icon: FontAwesomeIcons.bell,
+          popoverHeight: 340,
+          popoverWidth: 280,
+          children: _buildNotificationPopover(context),
+        ),
+        SizedBox(width: isSmall ? 80 : 120),
+        if (!isSmall)
+          _buildAnimatedCustomButton2(
+            icon: FontAwesomeIcons.a,
+            children: [
+              MItems(
+                  text: 'Donate on Patreon',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://www.patreon.com/join/kherld/checkout?ru=undefined'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'Bug Report',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'Feature Request',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'About',
+                  pressed: () {
+                    Get.back();
+                    about.showAboutDialog();
+                  }),
+            ],
+          ),
+      ],
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 15.0, top: 5.0),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ImageIcon(
+                const AssetImage('assets/images/Logo.png'),
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedNavigationRail(BuildContext context, bool isSmall) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return SingleChildScrollView(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _isExtended,
+              builder: (context, isExtended, child) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: NavigationRail(
+                    extended: isExtended,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    selectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    selectedLabelTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    unselectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    unselectedLabelTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    destinations: _navItems
+                        .map((item) => _buildNavDestination(item, isSmall))
+                        .toList(),
+                    selectedIndex: _selectedIndex,
+                    onDestinationSelected: (index) {
+                      setState(() => _selectedIndex = index);
+                    },
+                    labelType: isExtended
+                        ? NavigationRailLabelType.none
+                        : NavigationRailLabelType.all,
+                    trailing: IconButton(
+                      tooltip: 'Exit',
+                      icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
+                      onPressed: () async {
+                        SystemSound.play(SystemSoundType.alert);
+                        await AppDialogs.handleExit(context);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildAnimatedCustomButton({
+    required IconData icon,
+    required double popoverHeight,
+    required double popoverWidth,
+    required List<Widget> children,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+        ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RoundCustomButton(
+        icon: icon,
+        popoverHeight: popoverHeight,
+        popoverWidth: popoverWidth,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCustomButton2({
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+        ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RoundCustomButton2(
+        icon: icon,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildErrorState(TextTheme textTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Text(
+        'Unable to load the ayah of the day. Please refresh to try again.',
+        style: textTheme.bodyMedium,
+      ),
+    );
   }
 }
 
@@ -1232,6 +1781,240 @@ class QuranSearchDelegate extends SearchDelegate {
           },
         );
       },
+    );
+  }
+}
+
+extension on _HomeScreenState {
+  AppBar _buildFuturisticAppBar(BuildContext context, bool isSmall,
+      bool isCompact, Widget searchButton) {
+    final theme = Theme.of(context);
+    
+    return AppBar(
+      backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
+      elevation: 0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.topRight,
+            colors: [
+              theme.colorScheme.surface.withOpacity(0.98),
+              theme.colorScheme.surfaceVariant.withOpacity(0.9),
+            ],
+          ),
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerColor.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+        ),
+      ),
+      title: HeaderText(size: isCompact ? 20 : 30),
+      actions: [
+        searchButton,
+        _buildAnimatedCustomButton(
+          icon: FontAwesomeIcons.headphones,
+          popoverHeight: 300,
+          popoverWidth: 280,
+          children: _buildReciterPopover(context),
+        ),
+        _buildAnimatedCustomButton(
+          icon: FontAwesomeIcons.bell,
+          popoverHeight: 340,
+          popoverWidth: 280,
+          children: _buildNotificationPopover(context),
+        ),
+        SizedBox(width: isSmall ? 80 : 120),
+        if (!isSmall)
+          _buildAnimatedCustomButton2(
+            icon: FontAwesomeIcons.a,
+            children: [
+              MItems(
+                  text: 'Donate on Patreon',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://www.patreon.com/join/kherld/checkout?ru=undefined'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'Bug Report',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'Feature Request',
+                  pressed: () {
+                    launchUrl(Uri.parse(
+                        'https://github.com/kherld-hussein/quran_hadith/issues/'));
+                    Get.back();
+                  }),
+              MItems(
+                  text: 'About',
+                  pressed: () {
+                    Get.back();
+                    about.showAboutDialog();
+                  }),
+            ],
+          ),
+      ],
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 15.0, top: 5.0),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ImageIcon(
+                const AssetImage('assets/images/Logo.png'),
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedNavigationRail(BuildContext context, bool isSmall) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return SingleChildScrollView(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _isExtended,
+              builder: (context, isExtended, child) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: NavigationRail(
+                    extended: isExtended,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    selectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    selectedLabelTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    unselectedIconTheme: IconThemeData(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    unselectedLabelTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    destinations: _HomeScreenState._navItems
+                        .map((item) => _buildNavDestination(item, isSmall))
+                        .toList(),
+                    selectedIndex: _selectedIndex,
+                    onDestinationSelected: (index) {
+                      setState(() => _selectedIndex = index);
+                    },
+                    labelType: isExtended
+                        ? NavigationRailLabelType.none
+                        : NavigationRailLabelType.all,
+                    trailing: IconButton(
+                      tooltip: 'Exit',
+                      icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
+                      onPressed: () async {
+                        SystemSound.play(SystemSoundType.alert);
+                        await AppDialogs.handleExit(context);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildAnimatedCustomButton({
+    required IconData icon,
+    required double popoverHeight,
+    required double popoverWidth,
+    required List<Widget> children,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+        ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RoundCustomButton(
+        icon: icon,
+        popoverHeight: popoverHeight,
+        popoverWidth: popoverWidth,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCustomButton2({
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+        ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RoundCustomButton2(
+        icon: icon,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildErrorState(TextTheme textTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Text(
+        'Unable to load the ayah of the day. Please refresh to try again.',
+        style: textTheme.bodyMedium,
+      ),
     );
   }
 }

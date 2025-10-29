@@ -90,7 +90,6 @@ class _SettingsState extends State<Settings> {
                 ),
                 child: _buildSettingsNav(theme),
               ),
-
               Expanded(
                 child: _buildSettingsContent(theme, themeState),
               ),
@@ -166,8 +165,7 @@ class _SettingsState extends State<Settings> {
     return ListTile(
       leading: FaIcon(icon, size: 18, color: theme.colorScheme.primary),
       title: Text(title),
-      onTap: () {
-      },
+      onTap: () {},
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
@@ -209,9 +207,7 @@ class _SettingsState extends State<Settings> {
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Appearance',
           icon: FontAwesomeIcons.paintbrush,
@@ -225,7 +221,7 @@ class _SettingsState extends State<Settings> {
                 setState(() => _preferences.isDarkMode = value);
                 await SpUtil.setThemed(value);
                 themeState.setTheme(value);
-                _savePreferences();
+                await _savePreferences();
               },
               theme: theme,
             ),
@@ -263,9 +259,7 @@ class _SettingsState extends State<Settings> {
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Audio Settings',
           icon: FontAwesomeIcons.volumeHigh,
@@ -350,13 +344,13 @@ class _SettingsState extends State<Settings> {
                 const DropdownMenuItem(
                     value: 'ar.muhammadayyoub', child: Text('Muhammad Ayyoub')),
               ],
-              onChanged: (value) {
+              onChanged: (value) async {
                 if (value == null || value.isEmpty) return;
                 setState(() => _preferences.reciter = value);
-                SpUtil.setReciter(value);
-                appSP.setString('selectedReciter', value);
+                await SpUtil.setReciter(value);
+                await appSP.setString('selectedReciter', value);
                 ReciterService.instance.setCurrentReciterId(value);
-                _savePreferences();
+                await _savePreferences();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Reciter set to $value'),
@@ -379,17 +373,16 @@ class _SettingsState extends State<Settings> {
               onChanged: (value) {
                 setState(() => _preferences.playbackSpeed = value);
               },
-              onChangeEnd: (value) {
-                _savePreferences();
+              onChangeEnd: (value) async {
+                await SpUtil.setAudioSpeed(value);
+                await _savePreferences();
               },
               theme: theme,
               displayValue: '${_preferences.playbackSpeed.toStringAsFixed(2)}x',
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Reading Settings',
           icon: FontAwesomeIcons.bookOpen,
@@ -410,17 +403,16 @@ class _SettingsState extends State<Settings> {
               title: 'Auto Scroll',
               subtitle: 'Automatically scroll during audio playback',
               value: _preferences.autoScroll,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() => _preferences.autoScroll = value);
-                _savePreferences();
+                await SpUtil.setAutoScroll(value);
+                await _savePreferences();
               },
               theme: theme,
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Notifications',
           icon: FontAwesomeIcons.bell,
@@ -449,9 +441,7 @@ class _SettingsState extends State<Settings> {
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Data & Storage',
           icon: FontAwesomeIcons.database,
@@ -486,9 +476,7 @@ class _SettingsState extends State<Settings> {
             ),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'Keyboard Shortcuts',
           icon: FontAwesomeIcons.keyboard,
@@ -498,9 +486,9 @@ class _SettingsState extends State<Settings> {
               title: 'Enable Global Shortcuts',
               subtitle: 'Control app with keyboard shortcuts',
               value: _preferences.enableGlobalShortcuts,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() => _preferences.enableGlobalShortcuts = value);
-                _savePreferences();
+                await _savePreferences();
               },
               theme: theme,
             ),
@@ -508,9 +496,7 @@ class _SettingsState extends State<Settings> {
             _buildShortcutsList(theme),
           ],
         ),
-
         const SizedBox(height: 32),
-
         _buildSection(
           title: 'About',
           icon: FontAwesomeIcons.circleInfo,
@@ -518,7 +504,7 @@ class _SettingsState extends State<Settings> {
           children: [
             const ListTile(
               title: Text('Version'),
-              subtitle: Text('1.0.0'),
+              subtitle: Text('2.0.0'),
             ),
             const ListTile(
               title: Text('Developer'),

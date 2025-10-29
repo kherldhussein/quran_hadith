@@ -21,7 +21,7 @@ class HadithBookPage extends StatefulWidget {
 class _HadithBookPageState extends State<HadithBookPage> {
   bool _showArabic = true;
   String _query = '';
-  int _currentPage = 1;
+  final int _currentPage = 1;
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override

@@ -18,6 +18,7 @@ import '../utils/sp_util.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/services/offline_audio_service.dart' as offline;
 import 'package:quran_hadith/services/native_desktop_service.dart';
+import 'package:quran_hadith/services/playback_state_service.dart';
 import 'qpage_view_constants.dart';
 
 class QPageView extends StatefulWidget {
@@ -58,9 +59,11 @@ class _QPageViewState extends State<QPageView>
   bool _isSurahPlaybackMode = false;
   DateTime? _sessionStartTime;
   Timer? _progressTrackingTimer;
+  Timer? _listeningProgressTimer;
   VoidCallback? _reciterListener;
   bool _isOfflineDownloaded = false;
   bool _isProcessingAudioStateChange = false;
+  DateTime? _currentAyahPlaybackStart;
   @override
   void initState() {
     super.initState();
@@ -87,8 +90,9 @@ class _QPageViewState extends State<QPageView>
       if (!mounted) return;
 
       if (_currentlyPlayingAyah == null) return;
-      if (_isAudioLoading)
+      if (_isAudioLoading) {
         return; // Avoid race condition: skip if already loading
+      }
 
       try {
         final ayahNo = _currentlyPlayingAyah!;
@@ -105,6 +109,7 @@ class _QPageViewState extends State<QPageView>
         );
 
         _audioController.pause();
+        _stopListeningProgressTracking();
         await Future.delayed(const Duration(
             milliseconds: 300)); // Brief pause for smooth transition
 
@@ -142,6 +147,7 @@ class _QPageViewState extends State<QPageView>
 
     if (_audioController.buttonNotifier.value == ButtonState.playing) {
       _audioController.pause();
+      _stopListeningProgressTracking();
       debugPrint('⏸️ Pause: Keyboard shortcut (Space)');
     } else {
       final currentAyah = widget.ayahList?.firstWhere(
@@ -331,6 +337,33 @@ class _QPageViewState extends State<QPageView>
     });
   }
 
+  /// Start tracking listening progress during audio playback
+  void _startListeningProgressTracking() {
+    _listeningProgressTimer?.cancel();
+    _currentAyahPlaybackStart = DateTime.now();
+
+    _listeningProgressTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (_currentlyPlayingAyah != null &&
+          _audioController.buttonNotifier.value == ButtonState.playing) {
+        final currentPosition = _audioController.progressNotifier.value.current;
+        _saveListeningProgress(_currentlyPlayingAyah!, currentPosition.inMilliseconds);
+      }
+    });
+  }
+
+  /// Stop tracking listening progress
+  void _stopListeningProgressTracking() {
+    _listeningProgressTimer?.cancel();
+    _listeningProgressTimer = null;
+
+    // Save final progress when stopping
+    if (_currentlyPlayingAyah != null) {
+      final currentPosition = _audioController.progressNotifier.value.current;
+      _saveListeningProgress(_currentlyPlayingAyah!, currentPosition.inMilliseconds);
+    }
+    _currentAyahPlaybackStart = null;
+  }
+
   /// Load last read position for this surah
   Future<void> _loadLastReadPosition() async {
     try {
@@ -425,6 +458,25 @@ class _QPageViewState extends State<QPageView>
         await _audioController.setLocalSource(localFile.path);
         await _audioController.setSpeed(SpUtil.getAudioSpeed());
         _audioController.play();
+
+        // Update global playback state
+        PlaybackStateService().updatePlayback(
+          surahName: widget.suratName ?? '',
+          surahEnglishName: widget.suratEnglishName ?? '',
+          surahNumber: widget.suratNo ?? 0,
+          ayahNumber: ayah.number ?? 0,
+          reciter: ReciterService.instance.currentReciterId.value,
+        );
+
+        // Update native desktop media controls
+        nativeDesktop.updatePlaybackInfo(
+          surah: widget.suratEnglishName ?? widget.suratName ?? 'Surah',
+          ayah: ayah.number ?? 0,
+          reciter: ReciterService.instance.currentReciterId.value,
+          isPlaying: true,
+          position: Duration.zero,
+          duration: const Duration(seconds: 60),
+        );
       } else {
         final audioUrl = await quranAPI.getAyahAudioUrl(
           widget.suratNo!,
@@ -449,7 +501,29 @@ class _QPageViewState extends State<QPageView>
         await _audioController.setAudioSource(audioUrl);
         await _audioController.setSpeed(SpUtil.getAudioSpeed());
         _audioController.play();
+
+        // Update global playback state
+        PlaybackStateService().updatePlayback(
+          surahName: widget.suratName ?? '',
+          surahEnglishName: widget.suratEnglishName ?? '',
+          surahNumber: widget.suratNo ?? 0,
+          ayahNumber: ayah.number ?? 0,
+          reciter: ReciterService.instance.currentReciterId.value,
+        );
+
+        // Update native desktop media controls
+        nativeDesktop.updatePlaybackInfo(
+          surah: widget.suratEnglishName ?? widget.suratName ?? 'Surah',
+          ayah: ayah.number ?? 0,
+          reciter: ReciterService.instance.currentReciterId.value,
+          isPlaying: true,
+          position: Duration.zero,
+          duration: const Duration(seconds: 60),
+        );
       }
+
+      // Start periodic listening progress tracking
+      _startListeningProgressTracking();
 
       await _saveListeningProgress(ayah.number!, 0);
 
@@ -505,7 +579,6 @@ class _QPageViewState extends State<QPageView>
         });
       }
     }
-
   }
 
   /// Fetch word-by-word timing data for highlighting during recitation
@@ -610,6 +683,7 @@ class _QPageViewState extends State<QPageView>
             onPressed: () {
               setState(() => _isSurahPlaybackMode = false);
               _audioController.pause();
+              _stopListeningProgressTracking();
             },
           ),
         ),
@@ -667,13 +741,23 @@ class _QPageViewState extends State<QPageView>
       );
 
       int addedListenTime = 0;
-      if (currentProgress != null) {
+
+      // Calculate time elapsed since playback started for this ayah
+      if (_currentAyahPlaybackStart != null) {
+        final elapsed = DateTime.now().difference(_currentAyahPlaybackStart!).inSeconds;
+        // Add elapsed time, but cap it at a reasonable limit
+        addedListenTime = elapsed.clamp(0, 300);
+
+        // Reset the start time for next interval
+        _currentAyahPlaybackStart = DateTime.now();
+      } else if (currentProgress != null) {
+        // Fallback: use position difference
         final previousPosition = currentProgress.positionMs;
         addedListenTime = ((positionMs - previousPosition) ~/ 1000).abs();
-
         addedListenTime = addedListenTime.clamp(0, 300);
       } else {
-        addedListenTime = 45;
+        // First time tracking this ayah
+        addedListenTime = 5; // Default 5 seconds for initial save
       }
 
       final previousTotal = currentProgress?.totalListenTimeSeconds ?? 0;
@@ -751,13 +835,11 @@ class _QPageViewState extends State<QPageView>
         body: Column(
           children: [
             _buildAppBar(theme, isDesktop),
-
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (isDesktop) _buildSidebar(theme),
-
                   Expanded(
                     child: _buildVersesList(theme),
                   ),
@@ -766,7 +848,6 @@ class _QPageViewState extends State<QPageView>
             ),
           ],
         ),
-
         floatingActionButton: _buildFloatingActionButton(theme),
       ),
     );
@@ -795,9 +876,7 @@ class _QPageViewState extends State<QPageView>
             onPressed: () => Get.back(),
             splashRadius: 20,
           ),
-
           const SizedBox(width: 16),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,7 +902,6 @@ class _QPageViewState extends State<QPageView>
               ],
             ),
           ),
-
           if (_isOfflineDownloaded)
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
@@ -857,7 +935,6 @@ class _QPageViewState extends State<QPageView>
                 ),
               ),
             ),
-
           IconButton(
             icon: Icon(
               FontAwesomeIcons.circlePlay,
@@ -867,7 +944,6 @@ class _QPageViewState extends State<QPageView>
             tooltip: 'Play Entire Surah',
             splashRadius: 20,
           ),
-
           PopupMenuButton<String>(
             icon: Icon(FontAwesomeIcons.gear, color: theme.colorScheme.primary),
             onSelected: (value) => _handleSettingsSelection(value),
@@ -964,9 +1040,7 @@ class _QPageViewState extends State<QPageView>
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
           Consumer<FavoriteManager>(
             builder: (context, favManager, child) {
               return FutureBuilder<List<String>>(
@@ -1205,7 +1279,6 @@ class _QPageViewState extends State<QPageView>
                       ),
                     ),
                   ),
-
                   IconButton(
                     icon: Icon(
                       _favoriteStates[ayah.number!] ?? false
@@ -1224,13 +1297,9 @@ class _QPageViewState extends State<QPageView>
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
-
               _buildArabicTextWithHighlighting(ayah, theme),
-
               const SizedBox(height: 16),
-
               if (_showTranslation) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -1259,7 +1328,6 @@ class _QPageViewState extends State<QPageView>
                 ),
                 const SizedBox(height: 16),
               ],
-
               _buildAyahActions(ayah, theme),
             ],
           ),
@@ -1273,7 +1341,6 @@ class _QPageViewState extends State<QPageView>
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _buildAudioControl(ayah, theme),
-
         IconButton(
           icon: const Icon(FontAwesomeIcons.shareNodes, size: 18),
           onPressed: () => share.showShareDialog(
@@ -1282,7 +1349,6 @@ class _QPageViewState extends State<QPageView>
           ),
           tooltip: 'Share',
         ),
-
         IconButton(
           icon: const Icon(FontAwesomeIcons.copy, size: 18),
           onPressed: () {
@@ -1299,7 +1365,6 @@ class _QPageViewState extends State<QPageView>
           },
           tooltip: 'Copy',
         ),
-
         IconButton(
           icon: Icon(
             _favoriteStates[ayah.number!] ?? false
@@ -1343,6 +1408,7 @@ class _QPageViewState extends State<QPageView>
               color: theme.colorScheme.primary,
               onPressed: () {
                 _audioController.pause();
+                _stopListeningProgressTracking();
                 setState(() => _currentlyPlayingAyah = null);
               },
               tooltip: 'Pause',
@@ -1624,7 +1690,6 @@ class _QPageViewState extends State<QPageView>
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   Text('Playback speed: ${speed.toStringAsFixed(2)}x'),
                   Slider(
                     value: speed,
@@ -1640,9 +1705,7 @@ class _QPageViewState extends State<QPageView>
                       }
                     },
                   ),
-
                   const Divider(),
-
                   SwitchListTile(
                     title: const Text('Auto-play next ayah'),
                     subtitle: const Text(
@@ -1654,9 +1717,7 @@ class _QPageViewState extends State<QPageView>
                     },
                     contentPadding: EdgeInsets.zero,
                   ),
-
                   const SizedBox(height: 8),
-
                   const Text('Repeat Mode',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
@@ -1695,9 +1756,7 @@ class _QPageViewState extends State<QPageView>
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1748,14 +1807,16 @@ class _QPageViewState extends State<QPageView>
   @override
   void dispose() {
     _progressTrackingTimer?.cancel();
+    _listeningProgressTimer?.cancel();
     _audioController.buttonNotifier.removeListener(_onAudioStateChanged);
     if (_reciterListener != null) {
       ReciterService.instance.currentReciterId
           .removeListener(_reciterListener!);
     }
     _saveReadingProgress();
+    _stopListeningProgressTracking();
     _scrollController.dispose();
-    _audioController.dispose(); // Still dispose the local instance
+    // Don't dispose the singleton AudioController - it persists across navigation
     super.dispose();
   }
 }

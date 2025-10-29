@@ -1,5 +1,5 @@
 /// Constants used in QPageView for maintainability and consistency
-library qpage_view_constants;
+library;
 
 /// Animation and timing constants
 class AnimationTimings {
