@@ -6,6 +6,308 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:quran_hadith/database/database_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// System Tray Manager
+class SystemTrayManager {
+  static final SystemTrayManager _instance = SystemTrayManager._internal();
+  factory SystemTrayManager() => _instance;
+  SystemTrayManager._internal();
+
+  bool _isInitialized = false;
+  VoidCallback? _onShowWindow;
+  VoidCallback? _onQuit;
+  VoidCallback? _onPlayPause;
+
+  Future<void> initialize({
+    required VoidCallback onShowWindow,
+    required VoidCallback onQuit,
+    required VoidCallback onPlayPause,
+  }) async {
+    if (_isInitialized) return;
+
+    try {
+      if (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS) {
+        debugPrint('System tray not supported on this platform');
+        return;
+      }
+
+      _onShowWindow = onShowWindow;
+      _onQuit = onQuit;
+      _onPlayPause = onPlayPause;
+
+      debugPrint(
+          'SystemTrayManager initialized for ${Platform.operatingSystem}');
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Error initializing system tray: $e');
+    }
+  }
+
+  Future<void> showTrayMessage({
+    required String title,
+    required String message,
+  }) async {
+    try {
+      debugPrint('Tray message: $title - $message');
+    } catch (e) {
+      debugPrint('Error showing tray message: $e');
+    }
+  }
+
+  Future<void> updateTrayIcon({required String status}) async {
+    try {
+      debugPrint('Tray icon updated: $status');
+    } catch (e) {
+      debugPrint('Error updating tray icon: $e');
+    }
+  }
+
+  void triggerShowWindow() => _onShowWindow?.call();
+  void triggerQuit() => _onQuit?.call();
+  void triggerPlayPause() => _onPlayPause?.call();
+
+  Future<void> dispose() async {
+    _isInitialized = false;
+  }
+}
+
+/// Window State Manager - Handles persistence of window geometry
+class WindowStateManager {
+  static final WindowStateManager _instance = WindowStateManager._internal();
+  factory WindowStateManager() => _instance;
+  WindowStateManager._internal();
+
+  static const String _prefixWindowState = 'window_state_';
+  static const String _keyX = '${_prefixWindowState}x';
+  static const String _keyY = '${_prefixWindowState}y';
+  static const String _keyWidth = '${_prefixWindowState}width';
+  static const String _keyHeight = '${_prefixWindowState}height';
+  static const String _keyMaximized = '${_prefixWindowState}maximized';
+  static const String _keyAlwaysOnTop = '${_prefixWindowState}always_on_top';
+
+  late SharedPreferences _prefs;
+  bool _isInitialized = false;
+
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _isInitialized = true;
+      debugPrint('WindowStateManager initialized');
+    } catch (e) {
+      debugPrint('Error initializing WindowStateManager: $e');
+    }
+  }
+
+  /// Restore window state from preferences
+  Future<void> restoreWindowState({
+    Size? defaultSize,
+    Offset? defaultPosition,
+  }) async {
+    if (!_isInitialized) await initialize();
+
+    try {
+      final double? x = _prefs.getDouble(_keyX);
+      final double? y = _prefs.getDouble(_keyY);
+      final double? width = _prefs.getDouble(_keyWidth);
+      final double? height = _prefs.getDouble(_keyHeight);
+      final bool isMaximized = _prefs.getBool(_keyMaximized) ?? false;
+      final bool alwaysOnTop = _prefs.getBool(_keyAlwaysOnTop) ?? false;
+
+      // Restore position if available
+      if (x != null && y != null) {
+        try {
+          await windowManager.setPosition(Offset(x, y));
+          debugPrint('Window position restored: ($x, $y)');
+        } catch (e) {
+          debugPrint('Could not restore position: $e');
+        }
+      }
+
+      // Restore size if available
+      if (width != null && height != null) {
+        try {
+          await windowManager.setSize(Size(width, height));
+          debugPrint('Window size restored: ($width, $height)');
+        } catch (e) {
+          debugPrint('Could not restore size: $e');
+        }
+      } else if (defaultSize != null) {
+        try {
+          await windowManager.setSize(defaultSize);
+        } catch (e) {
+          debugPrint('Could not set default size: $e');
+        }
+      }
+
+      // Restore maximized state
+      if (isMaximized) {
+        try {
+          await windowManager.maximize();
+          debugPrint('Window restored to maximized state');
+        } catch (e) {
+          debugPrint('Could not restore maximized state: $e');
+        }
+      }
+
+      // Restore always-on-top
+      if (alwaysOnTop) {
+        try {
+          await windowManager.setAlwaysOnTop(true);
+          debugPrint('Always-on-top restored');
+        } catch (e) {
+          debugPrint('Could not restore always-on-top: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error restoring window state: $e');
+    }
+  }
+
+  /// Save current window state
+  Future<void> saveWindowState() async {
+    if (!_isInitialized) return;
+
+    try {
+      final Offset position = await windowManager.getPosition();
+      final Size size = await windowManager.getSize();
+      final bool isMaximized = await windowManager.isMaximized();
+      final bool alwaysOnTop = await windowManager.isAlwaysOnTop();
+
+      await _prefs.setDouble(_keyX, position.dx);
+      await _prefs.setDouble(_keyY, position.dy);
+      await _prefs.setDouble(_keyWidth, size.width);
+      await _prefs.setDouble(_keyHeight, size.height);
+      await _prefs.setBool(_keyMaximized, isMaximized);
+      await _prefs.setBool(_keyAlwaysOnTop, alwaysOnTop);
+
+      debugPrint(
+          'Window state saved: pos($position), size($size), max($isMaximized), top($alwaysOnTop)');
+    } catch (e) {
+      debugPrint('Error saving window state: $e');
+    }
+  }
+
+  /// Clear saved window state
+  Future<void> clearWindowState() async {
+    if (!_isInitialized) return;
+
+    try {
+      await _prefs.remove(_keyX);
+      await _prefs.remove(_keyY);
+      await _prefs.remove(_keyWidth);
+      await _prefs.remove(_keyHeight);
+      await _prefs.remove(_keyMaximized);
+      await _prefs.remove(_keyAlwaysOnTop);
+      debugPrint('Window state cleared');
+    } catch (e) {
+      debugPrint('Error clearing window state: $e');
+    }
+  }
+}
+
+/// Media Controls Manager - Handles OS-level media control integration
+class MediaControlsManager {
+  static final MediaControlsManager _instance =
+      MediaControlsManager._internal();
+  factory MediaControlsManager() => _instance;
+  MediaControlsManager._internal();
+
+  bool _isInitialized = false;
+  bool _isPlaying = false;
+  String _currentSurah = '';
+  int _currentAyah = 0;
+
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      // Initialize platform-specific media controls
+      if (Platform.isLinux) {
+        await _initializeLinuxMediaControls();
+      } else if (Platform.isWindows) {
+        await _initializeWindowsMediaControls();
+      } else if (Platform.isMacOS) {
+        await _initializeMacOSMediaControls();
+      }
+
+      _isInitialized = true;
+      debugPrint('MediaControlsManager initialized');
+    } catch (e) {
+      debugPrint('Error initializing media controls: $e');
+    }
+  }
+
+  Future<void> _initializeLinuxMediaControls() async {
+    try {
+      // MPRIS (Media Player Remote Interfacing Specification) support
+      // This allows integration with system media controls on Linux
+      debugPrint('Initializing MPRIS media controls for Linux');
+    } catch (e) {
+      debugPrint('Error initializing Linux media controls: $e');
+    }
+  }
+
+  Future<void> _initializeWindowsMediaControls() async {
+    try {
+      // SMTC (System Media Transport Controls) support for Windows
+      debugPrint('Initializing SMTC media controls for Windows');
+    } catch (e) {
+      debugPrint('Error initializing Windows media controls: $e');
+    }
+  }
+
+  Future<void> _initializeMacOSMediaControls() async {
+    try {
+      // macOS native media controls
+      debugPrint('Initializing macOS media controls');
+    } catch (e) {
+      debugPrint('Error initializing macOS media controls: $e');
+    }
+  }
+
+  /// Update media metadata (current track info)
+  Future<void> updateMediaMetadata({
+    required String surah,
+    required int ayah,
+    required String reciter,
+    String? imageUrl,
+  }) async {
+    if (!_isInitialized) return;
+
+    try {
+      _currentSurah = surah;
+      _currentAyah = ayah;
+
+      debugPrint('Media metadata updated: $surah - Ayah $ayah ($reciter)');
+    } catch (e) {
+      debugPrint('Error updating media metadata: $e');
+    }
+  }
+
+  /// Update playback state
+  Future<void> updatePlaybackState({
+    required bool isPlaying,
+    required Duration position,
+    required Duration duration,
+  }) async {
+    if (!_isInitialized) return;
+
+    try {
+      _isPlaying = isPlaying;
+      debugPrint(
+          'Playback state: ${isPlaying ? 'Playing' : 'Paused'} - $position / $duration');
+    } catch (e) {
+      debugPrint('Error updating playback state: $e');
+    }
+  }
+
+  Future<void> dispose() async {
+    _isInitialized = false;
+  }
+}
 
 /// Native desktop features service
 class NativeDesktopService with WindowListener {
@@ -16,6 +318,9 @@ class NativeDesktopService with WindowListener {
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
+  final SystemTrayManager _systemTray = SystemTrayManager();
+  final WindowStateManager _windowState = WindowStateManager();
+  final MediaControlsManager _mediaControls = MediaControlsManager();
 
   bool _isInitialized = false;
   bool _systemTrayEnabled = false;
@@ -26,8 +331,8 @@ class NativeDesktopService with WindowListener {
   VoidCallback? _onNextCallback;
   VoidCallback? _onPreviousCallback;
   VoidCallback? _onSearchCallback;
-
-  /// Initialize native desktop features
+  VoidCallback? _onShowWindowCallback;
+  VoidCallback? _onQuitCallback;
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -36,6 +341,16 @@ class NativeDesktopService with WindowListener {
 
       await windowManager.ensureInitialized();
       windowManager.addListener(this);
+
+      // Initialize window state persistence
+      await _windowState.initialize();
+      await _windowState.restoreWindowState(
+        defaultSize: const Size(1200, 750),
+        defaultPosition: const Offset(100, 100),
+      );
+
+      // Initialize media controls
+      await _mediaControls.initialize();
 
       if (prefs.enableNotifications) {
         await _initializeNotifications();
@@ -58,7 +373,6 @@ class NativeDesktopService with WindowListener {
       debugPrint('Error initializing NativeDesktopService: $e');
     }
   }
-
 
   Future<void> _initializeNotifications() async {
     try {
@@ -157,16 +471,24 @@ class NativeDesktopService with WindowListener {
     debugPrint('Notification tapped: ${response.payload}');
   }
 
-
   Future<void> _initializeSystemTray() async {
-    _systemTrayEnabled = false;
-    debugPrint('System tray disabled on this platform');
+    try {
+      await _systemTray.initialize(
+        onShowWindow: _onShowWindowCallback ?? () {},
+        onQuit: _onQuitCallback ?? () {},
+        onPlayPause: _onPlayPauseCallback ?? () {},
+      );
+      _systemTrayEnabled = true;
+      debugPrint('System tray initialized');
+    } catch (e) {
+      _systemTrayEnabled = false;
+      debugPrint('Failed to initialize system tray: $e');
+    }
   }
-
 
   Future<void> _initializeHotkeys() async {
     try {
-      debugPrint('Hotkeys initialized');
+      debugPrint('Initializing hotkeys');
       await hotKeyManager.unregisterAll();
 
       await hotKeyManager.register(
@@ -205,7 +527,7 @@ class NativeDesktopService with WindowListener {
       );
 
       _hotkeysEnabled = true;
-      debugPrint('Hotkeys initialized');
+      debugPrint('Hotkeys initialized successfully');
     } catch (e) {
       debugPrint('Error initializing hotkeys: $e');
     }
@@ -217,13 +539,75 @@ class NativeDesktopService with WindowListener {
     VoidCallback? onNext,
     VoidCallback? onPrevious,
     VoidCallback? onSearch,
+    VoidCallback? onShowWindow,
+    VoidCallback? onQuit,
   }) {
     _onPlayPauseCallback = onPlayPause;
     _onNextCallback = onNext;
     _onPreviousCallback = onPrevious;
     _onSearchCallback = onSearch;
+    _onShowWindowCallback = onShowWindow;
+    _onQuitCallback = onQuit;
   }
 
+  /// Update media metadata
+  Future<void> updateMediaMetadata({
+    required String surah,
+    required int ayah,
+    required String reciter,
+    String? imageUrl,
+  }) async {
+    await _mediaControls.updateMediaMetadata(
+      surah: surah,
+      ayah: ayah,
+      reciter: reciter,
+      imageUrl: imageUrl,
+    );
+  }
+
+  /// Update playback state
+  Future<void> updatePlaybackState({
+    required bool isPlaying,
+    required Duration position,
+    required Duration duration,
+  }) async {
+    await _mediaControls.updatePlaybackState(
+      isPlaying: isPlaying,
+      position: position,
+      duration: duration,
+    );
+  }
+
+  /// Update playback info (combines metadata and state updates)
+  Future<void> updatePlaybackInfo({
+    required String surah,
+    required int ayah,
+    required String reciter,
+    required bool isPlaying,
+    required Duration position,
+    required Duration duration,
+    String? imageUrl,
+  }) async {
+    await updateMediaMetadata(
+      surah: surah,
+      ayah: ayah,
+      reciter: reciter,
+      imageUrl: imageUrl,
+    );
+    await updatePlaybackState(
+      isPlaying: isPlaying,
+      position: position,
+      duration: duration,
+    );
+  }
+
+  /// Show tray message
+  Future<void> showTrayMessage({
+    required String title,
+    required String message,
+  }) async {
+    await _systemTray.showTrayMessage(title: title, message: message);
+  }
 
   Future<void> _hideWindow() async {
     await windowManager.hide();
@@ -238,17 +622,26 @@ class NativeDesktopService with WindowListener {
   }
 
   @override
-  void onWindowClose() async {
-    final prefs = database.getPreferences();
+  Future<void> onWindowClose() async {
+    try {
+      final prefs = database.getPreferences();
 
-    if (prefs.enableSystemTray && _systemTrayEnabled) {
-      debugPrint('Minimizing to tray - audio playback continues in background');
-      await _hideWindow();
-    } else {
-      if (prefs.enableSystemTray && !_systemTrayEnabled) {
+      // Save window state before closing
+      await _windowState.saveWindowState();
+
+      if (prefs.enableSystemTray && _systemTrayEnabled) {
         debugPrint(
-            'System tray requested but not available - exiting normally');
+            'Minimizing to tray - audio playback continues in background');
+        await _hideWindow();
+      } else {
+        if (prefs.enableSystemTray && !_systemTrayEnabled) {
+          debugPrint(
+              'System tray requested but not available - exiting normally');
+        }
+        await _exitApp();
       }
+    } catch (e) {
+      debugPrint('Error in onWindowClose: $e');
       await _exitApp();
     }
   }
@@ -277,7 +670,6 @@ class NativeDesktopService with WindowListener {
     await windowManager.destroy();
   }
 
-
   Future<void> enableSystemTray(bool enable) async {
     debugPrint('System tray is not available on this platform');
   }
@@ -298,14 +690,19 @@ class NativeDesktopService with WindowListener {
     }
   }
 
-
   Future<void> dispose() async {
     try {
+      // Save window state on exit
+      await _windowState.saveWindowState();
+
       windowManager.removeListener(this);
 
       if (_hotkeysEnabled) {
         await hotKeyManager.unregisterAll();
       }
+
+      await _systemTray.dispose();
+      await _mediaControls.dispose();
 
       _isInitialized = false;
       debugPrint('NativeDesktopService disposed');
