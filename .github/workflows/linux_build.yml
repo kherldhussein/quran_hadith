@@ -158,7 +158,28 @@ jobs:
           fetch-depth: 0
 
       - name: Install git-cliff
-        run: sudo apt-get update && sudo apt-get install -y git-cliff
+        run: |
+          set -euo pipefail
+          temp_dir=$(mktemp -d)
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          url=$(curl -sSfL https://api.github.com/repos/orhun/git-cliff/releases/latest \
+            | jq -r '.assets[] | select(.name | contains("x86_64-unknown-linux-gnu.tar.gz")) | .browser_download_url' \
+            | head -n 1)
+          if [ -z "$url" ] || [ "$url" = "null" ]; then
+            echo "Unable to determine git-cliff release asset" >&2
+            exit 1
+          fi
+          curl -sSL "$url" -o "$temp_dir/git-cliff.tar.gz"
+          tar -xzf "$temp_dir/git-cliff.tar.gz" -C "$temp_dir"
+          binary=$(find "$temp_dir" -type f -name git-cliff -perm -o+x | head -n 1)
+          if [ -z "$binary" ]; then
+            echo "git-cliff binary not found in archive" >&2
+            exit 1
+          fi
+          sudo install -m 0755 "$binary" /usr/local/bin/git-cliff
 
       - name: Generate changelog (git-cliff)
         run: git-cliff --config cliff.toml --tag "${{ github.ref_name }}" --strip all --output RELEASE_NOTES.md
