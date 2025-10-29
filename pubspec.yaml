@@ -5,7 +5,7 @@ publish_to: none
 repository: https://github.com/kherld-hussein/quran_hadith
 version: 2.0.0+1
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: ">=3.3.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
@@ -55,7 +55,7 @@ dependencies:
   file_picker: 10.3.3
   sqflite: ^2.3.0
   flutter_local_notifications: 19.5.0
-  hotkey_manager: ^0.2.0  
+  hotkey_manager: ^0.2.0
   window_manager: 0.5.1
   connectivity_plus: 7.0.0
   share_plus: 12.0.1
@@ -96,10 +96,10 @@ flutter:
         - asset: assets/fonts/Poppins-Thin.ttf
     - family: OpenDyslexic
       fonts:
-        - asset: assets/fonts/opendyslexic/OpenDyslexic-Regular.ttf
-        - asset: assets/fonts/opendyslexic/OpenDyslexic-Bold.ttf
-        - asset: assets/fonts/opendyslexic/OpenDyslexic-Italic.ttf
-        - asset: assets/fonts/opendyslexic/OpenDyslexic-BoldItalic.ttf
+        - asset: assets/fonts/OpenDyslexic-Regular.ttf
+        - asset: assets/fonts/OpenDyslexic-Bold.ttf
+        - asset: assets/fonts/OpenDyslexic-Italic.ttf
+        - asset: assets/fonts/OpenDyslexic-BoldItalic.ttf
 
 dependency_overrides:
   win32: ^5.14.0
