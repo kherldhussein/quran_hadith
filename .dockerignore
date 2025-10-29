@@ -1,0 +1,17 @@
+.dart_tool/
+.git/
+.github/
+.fvm/
+analysis_options.yaml
+android/
+build/
+devtools_options.yaml
+integration_test/
+ios/
+linux/
+macos/
+snap/
+stage/
+test/
+winuwp/
+windows/
