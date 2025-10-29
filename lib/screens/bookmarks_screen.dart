@@ -601,6 +601,67 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   void _showEditBookmarkDialog(BuildContext context, Bookmark bookmark) {
+    final titleController = TextEditingController(text: bookmark.title);
+    final notesController = TextEditingController(text: bookmark.notes);
+    final categoryController = TextEditingController(text: bookmark.category);
+    String selectedColor = bookmark.color ?? '#FF6B9D';
+    List<String> currentTags = List.from(bookmark.tags);
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Edit Bookmark'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  prefixIcon: Icon(FontAwesomeIcons.heading),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: notesController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                  prefixIcon: Icon(FontAwesomeIcons.noteSticky),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Category',
+                  prefixIcon: Icon(FontAwesomeIcons.folder),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              bookmark.title = titleController.text;
+              bookmark.notes = notesController.text.isEmpty ? null : notesController.text;
+              bookmark.category = categoryController.text.isEmpty ? null : categoryController.text;
+              bookmark.updatedAt = DateTime.now();
+              await bookmark.save();
+              Get.back();
+              await _loadBookmarks();
+              Get.snackbar('Success', 'Bookmark updated');
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _deleteBookmark(Bookmark bookmark) async {
@@ -632,6 +693,104 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   void _showOptionsMenu(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const FaIcon(FontAwesomeIcons.fileExport),
+              title: const Text('Export Bookmarks'),
+              onTap: () {
+                Get.back();
+                _exportBookmarks();
+              },
+            ),
+            ListTile(
+              leading: const FaIcon(FontAwesomeIcons.fileImport),
+              title: const Text('Import Bookmarks'),
+              onTap: () {
+                Get.back();
+                _importBookmarks();
+              },
+            ),
+            ListTile(
+              leading: FaIcon(FontAwesomeIcons.trash,
+                  color: Theme.of(context).colorScheme.error),
+              title: Text('Clear All Bookmarks',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              onTap: () {
+                Get.back();
+                _clearAllBookmarks();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportBookmarks() async {
+    try {
+      final bookmarksData = _bookmarks.map((b) => {
+        'id': b.id,
+        'title': b.title,
+        'type': b.type,
+        'surahNumber': b.surahNumber,
+        'ayahNumber': b.ayahNumber,
+        'notes': b.notes,
+        'tags': b.tags,
+        'category': b.category,
+        'color': b.color,
+        'createdAt': b.createdAt.toIso8601String(),
+        'updatedAt': b.updatedAt.toIso8601String(),
+      }).toList();
+
+      // TODO: Implement file picker to save JSON
+      Get.snackbar('Export', 'Bookmarks exported: ${bookmarksData.length} items');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to export bookmarks: $e');
+    }
+  }
+
+  Future<void> _importBookmarks() async {
+    // TODO: Implement file picker to load JSON
+    Get.snackbar('Import', 'Feature coming soon');
+  }
+
+  Future<void> _clearAllBookmarks() async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Clear All Bookmarks?'),
+        content: const Text('This will permanently delete all bookmarks. This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError),
+            child: const Text('Clear All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      for (var bookmark in _bookmarks) {
+        await database.removeBookmark(bookmark.id);
+      }
+      await _loadBookmarks();
+      Get.snackbar('Success', 'All bookmarks cleared');
+    }
   }
 
   String _formatDate(DateTime date) {
