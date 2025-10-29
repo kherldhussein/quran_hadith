@@ -9,6 +9,11 @@ import 'package:path_provider/path_provider.dart';
 /// backend is available (for example when libmpv is not installed on Linux).
 
 class AudioController extends ChangeNotifier {
+  // Singleton pattern
+  static final AudioController _instance = AudioController._internal();
+  factory AudioController() => _instance;
+  AudioController._internal();
+
   late final progressNotifier = ValueNotifier<ProgressBarState>(
     ProgressBarState(
       current: Duration.zero,
@@ -22,9 +27,6 @@ class AudioController extends ChangeNotifier {
   bool _isDisposed = false;
   bool _playerInitAttempted = false;
   bool _playerAvailable = false;
-
-  AudioController() {
-  }
 
   Future<void> _init() async {
     if (_playerInitAttempted) return;
