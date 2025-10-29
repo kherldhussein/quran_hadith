@@ -19,6 +19,9 @@ import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/services/offline_audio_service.dart' as offline;
 import 'package:quran_hadith/services/native_desktop_service.dart';
 import 'package:quran_hadith/services/playback_state_service.dart';
+import 'package:quran_hadith/widgets/quick_jump_dialog.dart';
+import 'package:quran_hadith/widgets/reading_mode_sheet.dart';
+import 'package:quran_hadith/widgets/split_view_pane.dart';
 import 'qpage_view_constants.dart';
 
 class QPageView extends StatefulWidget {
@@ -64,10 +67,16 @@ class _QPageViewState extends State<QPageView>
   bool _isOfflineDownloaded = false;
   bool _isProcessingAudioStateChange = false;
   DateTime? _currentAyahPlaybackStart;
+  bool _isSplitViewEnabled = false;
+  late final AutoScrollController _scrollControllerRight; // For split view right pane
+  bool _isScrollingSyncInProgress = false; // Prevent infinite scroll loop
+
   @override
   void initState() {
     super.initState();
     _scrollController = AutoScrollController();
+    _scrollControllerRight = AutoScrollController();
+    _setupSynchronizedScrolling();
     _audioController = AudioController();
     _sessionStartTime = DateTime.now();
     _initializeData();
@@ -135,10 +144,35 @@ class _QPageViewState extends State<QPageView>
         onPrevious: _handlePreviousAyahShortcut,
       );
       debugPrint(
-          '✅ Keyboard shortcuts registered (Play/Pause, Next, Previous)');
+          '✅ Keyboard shortcuts registered (Play/Pause, Next, Previous, Jump)');
     } catch (e) {
       debugPrint('⚠️ Error registering keyboard shortcuts: $e');
     }
+  }
+
+  /// Show the Quick Jump Dialog for navigating to a specific ayah
+  void _showQuickJumpDialog() {
+    if (widget.ayahList == null || widget.ayahList!.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => QuickJumpDialog(
+        maxAyahNumber: widget.ayahList!.length,
+        onJumpToAyah: (ayahNumber) {
+          _scrollToAyah(ayahNumber);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Jumped to Ayah $ayahNumber'),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        currentAyah: _lastVisibleAyah,
+      ),
+    );
   }
 
   /// Handle play/pause keyboard shortcut (Space key)
@@ -191,6 +225,59 @@ class _QPageViewState extends State<QPageView>
       _playAyahAudio(previousAyah);
       debugPrint('⏮️ Previous Ayah: Keyboard shortcut (Ctrl+Left)');
     }
+  }
+
+  /// Setup synchronized scrolling between left and right panes in split view
+  void _setupSynchronizedScrolling() {
+    // Listen to left controller (Arabic pane) and sync to right
+    _scrollController.addListener(() {
+      if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) return;
+
+      _isScrollingSyncInProgress = true;
+
+      // Calculate the visible item index based on scroll offset
+      final leftOffset = _scrollController.offset;
+
+      // Sync right controller to match left's position
+      if (_scrollControllerRight.hasClients &&
+          _scrollControllerRight.offset != leftOffset) {
+        _scrollControllerRight.jumpTo(
+          leftOffset.clamp(
+            _scrollControllerRight.position.minScrollExtent,
+            _scrollControllerRight.position.maxScrollExtent,
+          ),
+        );
+      }
+
+      _isScrollingSyncInProgress = false;
+    });
+
+    // Listen to right controller (translation pane) and sync to left
+    _scrollControllerRight.addListener(() {
+      if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) return;
+
+      _isScrollingSyncInProgress = true;
+
+      // Calculate the visible item index based on scroll offset
+      final rightOffset = _scrollControllerRight.offset;
+
+      // Sync left controller to match right's position
+      if (_scrollController.hasClients &&
+          _scrollController.offset != rightOffset) {
+        _scrollController.jumpTo(
+          rightOffset.clamp(
+            _scrollController.position.minScrollExtent,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      }
+
+      _isScrollingSyncInProgress = false;
+    });
+
+    debugPrint('✅ Synchronized scrolling setup for split view');
   }
 
   void _onAudioStateChanged() {
@@ -944,6 +1031,29 @@ class _QPageViewState extends State<QPageView>
             tooltip: 'Play Entire Surah',
             splashRadius: 20,
           ),
+          if (isDesktop)
+            IconButton(
+              icon: Icon(
+                _isSplitViewEnabled
+                    ? FontAwesomeIcons.rectangleXmark
+                    : FontAwesomeIcons.tableColumns,
+                color: theme.colorScheme.primary,
+              ),
+              onPressed: () {
+                setState(() => _isSplitViewEnabled = !_isSplitViewEnabled);
+                if (_isSplitViewEnabled) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Split view enabled'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              tooltip: _isSplitViewEnabled ? 'Exit Split View' : 'Enable Split View',
+              splashRadius: 20,
+            ),
           PopupMenuButton<String>(
             icon: Icon(FontAwesomeIcons.gear, color: theme.colorScheme.primary),
             onSelected: (value) => _handleSettingsSelection(value),
@@ -980,6 +1090,16 @@ class _QPageViewState extends State<QPageView>
                     Icon(FontAwesomeIcons.sliders, size: 18),
                     SizedBox(width: 12),
                     Text('Audio Settings'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reading_mode',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.bookOpen, size: 18),
+                    SizedBox(width: 12),
+                    Text('Reading Modes'),
                   ],
                 ),
               ),
@@ -1034,6 +1154,13 @@ class _QPageViewState extends State<QPageView>
                           'Last', widget.ayahList!.length, theme),
                       _buildNavigationChip(
                           'Middle', widget.ayahList!.length ~/ 2, theme),
+                      ActionChip(
+                        avatar: Icon(FontAwesomeIcons.locationArrow, size: 14, color: theme.colorScheme.secondary),
+                        label: const Text('Jump to Ayah'),
+                        onPressed: _showQuickJumpDialog,
+                        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                        labelStyle: TextStyle(color: theme.colorScheme.secondary),
+                      ),
                     ],
                   ),
                 ],
@@ -1192,6 +1319,30 @@ class _QPageViewState extends State<QPageView>
   }
 
   Widget _buildVersesList(ThemeData theme) {
+    // Check if split view is enabled
+    if (_isSplitViewEnabled) {
+      return Container(
+        margin: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.onSurface.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: SplitViewPane(
+          leftChild: _buildArabicOnlyList(theme),
+          rightChild: _buildTranslationOnlyList(theme),
+          initialRatio: 0.5,
+        ),
+      );
+    }
+
+    // Regular single-pane view
     return Container(
       margin: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1233,6 +1384,110 @@ class _QPageViewState extends State<QPageView>
           },
         ),
       ),
+    );
+  }
+
+  // Build Arabic-only list for split view (left pane)
+  Widget _buildArabicOnlyList(ThemeData theme) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(16),
+      itemCount: widget.ayahList!.length,
+      itemBuilder: (context, index) {
+        final ayah = widget.ayahList![index];
+        return AutoScrollTag(
+          key: ValueKey('arabic_$index'),
+          controller: _scrollController,
+          index: index,
+          child: Card(
+            elevation: 0,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    _formatAyahNumber(ayah.number ?? 0),
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    ayah.text ?? '',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      height: 1.8,
+                      fontFamily: 'Amiri',
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Build translation-only list for split view (right pane)
+  Widget _buildTranslationOnlyList(ThemeData theme) {
+    return ListView.builder(
+      controller: _scrollControllerRight,
+      padding: const EdgeInsets.all(16),
+      itemCount: widget.ayahList!.length,
+      itemBuilder: (context, index) {
+        final ayah = widget.ayahList![index];
+        return AutoScrollTag(
+          key: ValueKey('translation_$index'),
+          controller: _scrollControllerRight,
+          index: index,
+          child: Card(
+            elevation: 0,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Ayah ${ayah.number}',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _isLoadingTranslations
+                      ? const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : Text(
+                          _translations[ayah.number] ??
+                              'Translation not available',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.6,
+                            color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1516,12 +1771,26 @@ class _QPageViewState extends State<QPageView>
   }
 
   Widget _buildFloatingActionButton(ThemeData theme) {
-    return FloatingActionButton(
-      onPressed: () => _scrollToAyah(1),
-      backgroundColor: theme.colorScheme.primary,
-      tooltip: 'Scroll to top',
-      child: Icon(FontAwesomeIcons.arrowUp, color: theme.colorScheme.onPrimary),
-    );
+    final isDesktop = isDisplayDesktop(context);
+
+    // On desktop, show scroll to top button
+    // On mobile, show quick jump button for better accessibility
+    if (isDesktop) {
+      return FloatingActionButton(
+        onPressed: () => _scrollToAyah(1),
+        backgroundColor: theme.colorScheme.primary,
+        tooltip: 'Scroll to top',
+        child: Icon(FontAwesomeIcons.arrowUp, color: theme.colorScheme.onPrimary),
+      );
+    } else {
+      return FloatingActionButton.extended(
+        onPressed: _showQuickJumpDialog,
+        backgroundColor: theme.colorScheme.secondary,
+        icon: const Icon(FontAwesomeIcons.locationArrow),
+        label: const Text('Jump'),
+        tooltip: 'Jump to Ayah',
+      );
+    }
   }
 
   void _handleSettingsSelection(String value) {
@@ -1535,6 +1804,9 @@ class _QPageViewState extends State<QPageView>
       case 'audio_settings':
         _showAudioSettingsBottomSheet();
         break;
+      case 'reading_mode':
+        _showReadingModeBottomSheet();
+        break;
       case 'font_small':
         setState(() => _fontSize = 20.0);
         break;
@@ -1545,6 +1817,17 @@ class _QPageViewState extends State<QPageView>
         setState(() => _fontSize = 28.0);
         break;
     }
+  }
+
+  void _showReadingModeBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const ReadingModeSheet(),
+    );
   }
 
   Future<void> _promptDownloadSurah() async {
@@ -1816,6 +2099,7 @@ class _QPageViewState extends State<QPageView>
     _saveReadingProgress();
     _stopListeningProgressTracking();
     _scrollController.dispose();
+    _scrollControllerRight.dispose();
     // Don't dispose the singleton AudioController - it persists across navigation
     super.dispose();
   }

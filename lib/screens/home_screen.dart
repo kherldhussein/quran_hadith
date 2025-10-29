@@ -10,7 +10,6 @@ import 'package:quran_hadith/screens/qPage.dart';
 import 'package:quran_hadith/screens/bookmarks_screen.dart';
 import 'package:quran_hadith/screens/settings.dart';
 import 'package:quran_hadith/screens/statistics_screen.dart';
-import 'package:quran_hadith/theme/app_theme.dart';
 import 'package:quran_hadith/widgets/custom_button.dart';
 import 'package:quran_hadith/widgets/app_dialogs.dart';
 import 'package:quran_hadith/widgets/headerTitle.dart';
@@ -30,7 +29,6 @@ import 'package:quran_hadith/services/notification_service.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/utils/shared_p.dart';
 import 'package:quran_hadith/utils/sp_util.dart';
-import 'dart:math' as math;
 
 import '../controller/quranAPI.dart';
 import '../controller/audio_controller.dart';
