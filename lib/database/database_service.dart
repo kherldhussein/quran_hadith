@@ -76,7 +76,12 @@ class DatabaseService {
   /// Get all cached surahs
   List<CachedSurah> getAllCachedSurahs() {
     final box = Hive.box(_cachedSurahsBox);
-    return box.values.cast<CachedSurah>().toList();
+    try {
+      return box.values.whereType<CachedSurah>().toList();
+    } catch (e) {
+      debugPrint('Error getting cached surahs: $e');
+      return [];
+    }
   }
 
   /// Check if surah is cached
@@ -133,8 +138,15 @@ class DatabaseService {
   /// Get all bookmarks
   List<Bookmark> getAllBookmarks() {
     final box = Hive.box(_bookmarksBox);
-    return box.values.cast<Bookmark>().toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    try {
+      return box.values
+          .whereType<Bookmark>()
+          .toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    } catch (e) {
+      debugPrint('Error getting bookmarks: $e');
+      return [];
+    }
   }
 
   /// Get bookmarks by category
@@ -183,17 +195,28 @@ class DatabaseService {
     final box = Hive.box(_readingProgressBox);
     if (box.isEmpty) return null;
 
-    final progresses = box.values.cast<ReadingProgress>().toList();
-    progresses.sort((a, b) => b.lastReadAt.compareTo(a.lastReadAt));
-    return progresses.first;
+    try {
+      final progresses = box.values.whereType<ReadingProgress>().toList();
+      if (progresses.isEmpty) return null;
+      progresses.sort((a, b) => b.lastReadAt.compareTo(a.lastReadAt));
+      return progresses.first;
+    } catch (e) {
+      debugPrint('Error getting last reading progress: $e');
+      return null;
+    }
   }
 
   /// Get reading history
   List<ReadingProgress> getReadingHistory({int limit = 50}) {
     final box = Hive.box(_readingProgressBox);
-    final progresses = box.values.cast<ReadingProgress>().toList();
-    progresses.sort((a, b) => b.lastReadAt.compareTo(a.lastReadAt));
-    return progresses.take(limit).toList();
+    try {
+      final progresses = box.values.whereType<ReadingProgress>().toList();
+      progresses.sort((a, b) => b.lastReadAt.compareTo(a.lastReadAt));
+      return progresses.take(limit).toList();
+    } catch (e) {
+      debugPrint('Error getting reading history: $e');
+      return [];
+    }
   }
 
   /// Clear reading progress
@@ -220,17 +243,28 @@ class DatabaseService {
     final box = Hive.box(_listeningProgressBox);
     if (box.isEmpty) return null;
 
-    final progresses = box.values.cast<ListeningProgress>().toList();
-    progresses.sort((a, b) => b.lastListenedAt.compareTo(a.lastListenedAt));
-    return progresses.first;
+    try {
+      final progresses = box.values.whereType<ListeningProgress>().toList();
+      if (progresses.isEmpty) return null;
+      progresses.sort((a, b) => b.lastListenedAt.compareTo(a.lastListenedAt));
+      return progresses.first;
+    } catch (e) {
+      debugPrint('Error getting last listening progress: $e');
+      return null;
+    }
   }
 
   /// Get listening history
   List<ListeningProgress> getListeningHistory({int limit = 50}) {
     final box = Hive.box(_listeningProgressBox);
-    final progresses = box.values.cast<ListeningProgress>().toList();
-    progresses.sort((a, b) => b.lastListenedAt.compareTo(a.lastListenedAt));
-    return progresses.take(limit).toList();
+    try {
+      final progresses = box.values.whereType<ListeningProgress>().toList();
+      progresses.sort((a, b) => b.lastListenedAt.compareTo(a.lastListenedAt));
+      return progresses.take(limit).toList();
+    } catch (e) {
+      debugPrint('Error getting listening history: $e');
+      return [];
+    }
   }
 
   /// Clear listening progress
@@ -254,18 +288,30 @@ class DatabaseService {
   /// Get study notes for ayah
   List<StudyNote> getStudyNotesForAyah(int surahNumber, int ayahNumber) {
     final box = Hive.box(_studyNotesBox);
-    return box.values
-        .cast<StudyNote>()
-        .where((note) =>
-            note.surahNumber == surahNumber && note.ayahNumber == ayahNumber)
-        .toList();
+    try {
+      return box.values
+          .whereType<StudyNote>()
+          .where((note) =>
+              note.surahNumber == surahNumber && note.ayahNumber == ayahNumber)
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting study notes for ayah: $e');
+      return [];
+    }
   }
 
   /// Get all study notes
   List<StudyNote> getAllStudyNotes() {
     final box = Hive.box(_studyNotesBox);
-    return box.values.cast<StudyNote>().toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    try {
+      return box.values
+          .whereType<StudyNote>()
+          .toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    } catch (e) {
+      debugPrint('Error getting study notes: $e');
+      return [];
+    }
   }
 
   /// Search study notes
@@ -298,7 +344,12 @@ class DatabaseService {
   /// Get all cached translations
   List<TranslationData> getAllCachedTranslations() {
     final box = Hive.box(_translationsBox);
-    return box.values.cast<TranslationData>().toList();
+    try {
+      return box.values.whereType<TranslationData>().toList();
+    } catch (e) {
+      debugPrint('Error getting cached translations: $e');
+      return [];
+    }
   }
 
   /// Clear translations
@@ -316,7 +367,16 @@ class DatabaseService {
   /// Get user preferences
   UserPreferences getPreferences() {
     final box = Hive.box(_preferencesBox);
-    return box.get('user_preferences', defaultValue: UserPreferences());
+    try {
+      final prefs = box.get('user_preferences');
+      if (prefs is UserPreferences) {
+        return prefs;
+      }
+      return UserPreferences();
+    } catch (e) {
+      debugPrint('Error getting preferences: $e');
+      return UserPreferences();
+    }
   }
 
   /// Save reading goal
