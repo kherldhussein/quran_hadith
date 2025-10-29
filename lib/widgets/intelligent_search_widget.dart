@@ -129,8 +129,10 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _buildModeChip(SearchMode.text, 'Text', FontAwesomeIcons.magnifyingGlass),
-          _buildModeChip(SearchMode.fuzzy, 'Fuzzy', FontAwesomeIcons.wandMagicSparkles),
+          _buildModeChip(
+              SearchMode.text, 'Text', FontAwesomeIcons.magnifyingGlass),
+          _buildModeChip(
+              SearchMode.fuzzy, 'Fuzzy', FontAwesomeIcons.wandMagicSparkles),
           _buildModeChip(SearchMode.root, 'Root', FontAwesomeIcons.seedling),
           _buildModeChip(SearchMode.topic, 'Topic', FontAwesomeIcons.tags),
           _buildModeChip(
@@ -230,7 +232,8 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
               ),
             ),
             ..._suggestions.map((query) => ListTile(
-                  leading: const FaIcon(FontAwesomeIcons.clockRotateLeft, size: 16),
+                  leading:
+                      const FaIcon(FontAwesomeIcons.clockRotateLeft, size: 16),
                   title: Text(query),
                   trailing: IconButton(
                     icon: const FaIcon(FontAwesomeIcons.star, size: 14),
@@ -299,7 +302,7 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         title: Text(
-          result.ayah.verse,
+          result.ayah.text,
           style: const TextStyle(
             fontFamily: 'Amiri',
             fontSize: 20,
@@ -315,7 +318,7 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
               children: [
                 Chip(
                   label: Text(
-                    result.ayah.surahName,
+                    result.ayah.surah!,
                     style: const TextStyle(fontSize: 12),
                   ),
                   avatar: const FaIcon(FontAwesomeIcons.bookQuran, size: 12),
@@ -325,7 +328,7 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
                 const SizedBox(width: 8),
                 Chip(
                   label: Text(
-                    'Ayah ${result.ayah.ayahNumber}',
+                    'Ayah ${result.ayah.num}',
                     style: const TextStyle(fontSize: 12),
                   ),
                   avatar: const FaIcon(FontAwesomeIcons.hashtag, size: 12),
@@ -336,8 +339,7 @@ class _IntelligentSearchWidgetState extends State<IntelligentSearchWidget> {
                     result.matchType.toUpperCase(),
                     style: const TextStyle(fontSize: 11),
                   ),
-                  backgroundColor:
-                      _getMatchTypeColor(result.matchType, theme),
+                  backgroundColor: _getMatchTypeColor(result.matchType, theme),
                 ),
               ],
             ),

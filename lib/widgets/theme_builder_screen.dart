@@ -41,7 +41,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.editingTheme == null ? 'Create Theme' : 'Edit Theme'),
+        title:
+            Text(widget.editingTheme == null ? 'Create Theme' : 'Edit Theme'),
         actions: [
           IconButton(
             icon: const FaIcon(FontAwesomeIcons.floppyDisk),
@@ -111,7 +112,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
             const SizedBox(height: 12),
             SwitchListTile(
               title: const Text('Dark Theme'),
-              subtitle: const Text('Use dark colors for low-light environments'),
+              subtitle:
+                  const Text('Use dark colors for low-light environments'),
               value: _theme.isDark,
               onChanged: (value) {
                 setState(() {
@@ -145,7 +147,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
             _buildColorPicker('Accent Color', _theme.accentColor, (color) {
               setState(() => _theme = _theme.copyWith(accentColor: color));
             }),
-            _buildColorPicker('Background Color', _theme.backgroundColor, (color) {
+            _buildColorPicker('Background Color', _theme.backgroundColor,
+                (color) {
               setState(() => _theme = _theme.copyWith(backgroundColor: color));
             }),
             _buildColorPicker('Card Color', _theme.cardColor, (color) {
@@ -163,7 +166,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
     );
   }
 
-  Widget _buildColorPicker(String label, Color currentColor, ValueChanged<Color> onColorChanged) {
+  Widget _buildColorPicker(
+      String label, Color currentColor, ValueChanged<Color> onColorChanged) {
     return ListTile(
       title: Text(label),
       trailing: GestureDetector(
@@ -181,7 +185,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
     );
   }
 
-  void _showColorPicker(String label, Color currentColor, ValueChanged<Color> onColorChanged) {
+  void _showColorPicker(
+      String label, Color currentColor, ValueChanged<Color> onColorChanged) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -217,7 +222,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildColorPicker('Arabic Text Color', _theme.arabicTextColor, (color) {
+            _buildColorPicker('Arabic Text Color', _theme.arabicTextColor,
+                (color) {
               setState(() => _theme = _theme.copyWith(arabicTextColor: color));
             }),
             const SizedBox(height: 12),
@@ -232,7 +238,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
                   divisions: 32,
                   label: '${_theme.arabicFontSize.toInt()}',
                   onChanged: (value) {
-                    setState(() => _theme = _theme.copyWith(arabicFontSize: value));
+                    setState(
+                        () => _theme = _theme.copyWith(arabicFontSize: value));
                   },
                 ),
               ),
@@ -276,13 +283,16 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
               ),
               items: const [
                 DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
-                DropdownMenuItem(value: 'OpenDyslexic', child: Text('OpenDyslexic')),
+                DropdownMenuItem(
+                    value: 'OpenDyslexic', child: Text('OpenDyslexic')),
                 DropdownMenuItem(value: 'Lato', child: Text('Lato')),
-                DropdownMenuItem(value: 'Merriweather', child: Text('Merriweather')),
+                DropdownMenuItem(
+                    value: 'Merriweather', child: Text('Merriweather')),
               ],
               onChanged: (value) {
                 if (value != null) {
-                  setState(() => _theme = _theme.copyWith(bodyFontFamily: value));
+                  setState(
+                      () => _theme = _theme.copyWith(bodyFontFamily: value));
                 }
               },
             ),
@@ -295,13 +305,16 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
               ),
               items: const [
                 DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
-                DropdownMenuItem(value: 'OpenDyslexic', child: Text('OpenDyslexic')),
+                DropdownMenuItem(
+                    value: 'OpenDyslexic', child: Text('OpenDyslexic')),
                 DropdownMenuItem(value: 'Lato', child: Text('Lato')),
-                DropdownMenuItem(value: 'Merriweather', child: Text('Merriweather')),
+                DropdownMenuItem(
+                    value: 'Merriweather', child: Text('Merriweather')),
               ],
               onChanged: (value) {
                 if (value != null) {
-                  setState(() => _theme = _theme.copyWith(headingFontFamily: value));
+                  setState(
+                      () => _theme = _theme.copyWith(headingFontFamily: value));
                 }
               },
             ),
@@ -336,7 +349,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
                   divisions: 24,
                   label: '${_theme.borderRadius.toInt()}',
                   onChanged: (value) {
-                    setState(() => _theme = _theme.copyWith(borderRadius: value));
+                    setState(
+                        () => _theme = _theme.copyWith(borderRadius: value));
                   },
                 ),
               ),
@@ -416,8 +430,10 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
   }
 
   Widget _buildGradientColorButton(int index) {
-    final colors = _theme.gradientColors ?? [_theme.backgroundColor, _theme.backgroundColor];
-    final color = index < colors.length ? colors[index] : _theme.backgroundColor;
+    final colors = _theme.gradientColors ??
+        [_theme.backgroundColor, _theme.backgroundColor];
+    final color =
+        index < colors.length ? colors[index] : _theme.backgroundColor;
 
     return GestureDetector(
       onTap: () {
@@ -442,7 +458,8 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
           border: Border.all(color: Colors.grey),
         ),
         child: Center(
-          child: Text('${index + 1}', style: const TextStyle(color: Colors.white)),
+          child:
+              Text('${index + 1}', style: const TextStyle(color: Colors.white)),
         ),
       ),
     );
@@ -546,7 +563,7 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
     Get.snackbar(
       'Exported',
       'Theme JSON copied to clipboard',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.bottom,
     );
   }
 }
