@@ -32,6 +32,7 @@ class Surah {
     this.revelationType,
     this.readVerseCount = 0,
     this.englishNameTranslation,
+    this.numberOfAyahs, // Add numberOfAyahs to the constructor
   });
 
   @HiveField(0)
@@ -49,6 +50,8 @@ class Surah {
   final String? revelationType;
   @HiveField(6)
   final String? englishNameTranslation;
+  @HiveField(7)
+  final int? numberOfAyahs; // Add numberOfAyahs field
 
   Surah copyWith({
     int? number,
@@ -59,6 +62,7 @@ class Surah {
     String? englishName,
     String? revelationType,
     String? englishNameTranslation,
+    int? numberOfAyahs, // Add numberOfAyahs to copyWith
   }) {
     return Surah(
       ayahs: ayahs ?? this.ayahs,
@@ -69,6 +73,7 @@ class Surah {
       revelationType: revelationType ?? this.revelationType,
       englishNameTranslation:
           englishNameTranslation ?? this.englishNameTranslation,
+      numberOfAyahs: numberOfAyahs ?? this.numberOfAyahs, // Update numberOfAyahs
     );
   }
 
@@ -84,6 +89,7 @@ class Surah {
       englishName: json['englishName'],
       revelationType: json['revelationType'],
       englishNameTranslation: json['englishNameTranslation'],
+      numberOfAyahs: json['numberOfAyahs'], // Assuming 'numberOfAyahs' might come from JSON as well
     );
   }
 }
