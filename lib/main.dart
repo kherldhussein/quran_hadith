@@ -84,6 +84,9 @@ Future<void> _initializeApp(ThemeState themeState) async {
     errorService.reportError('media_kit initialization warning: $e', s);
   }
 
+  // Note: SMTC for Windows is initialized lazily when MediaControlsManager creates it
+  // No need for explicit initialization here
+
   try {
     await appSP.init();
   } catch (e, s) {

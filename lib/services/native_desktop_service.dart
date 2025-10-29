@@ -7,9 +7,10 @@ import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tray_manager/tray_manager.dart';
 
 /// System Tray Manager
-class SystemTrayManager {
+class SystemTrayManager with TrayListener {
   static final SystemTrayManager _instance = SystemTrayManager._internal();
   factory SystemTrayManager() => _instance;
   SystemTrayManager._internal();
@@ -18,11 +19,15 @@ class SystemTrayManager {
   VoidCallback? _onShowWindow;
   VoidCallback? _onQuit;
   VoidCallback? _onPlayPause;
+  VoidCallback? _onNextAyah;
+  VoidCallback? _onPreviousAyah;
 
   Future<void> initialize({
     required VoidCallback onShowWindow,
     required VoidCallback onQuit,
     required VoidCallback onPlayPause,
+    VoidCallback? onNextAyah,
+    VoidCallback? onPreviousAyah,
   }) async {
     if (_isInitialized) return;
 
@@ -35,20 +40,116 @@ class SystemTrayManager {
       _onShowWindow = onShowWindow;
       _onQuit = onQuit;
       _onPlayPause = onPlayPause;
+      _onNextAyah = onNextAyah;
+      _onPreviousAyah = onPreviousAyah;
 
+      // Add tray listener
+      trayManager.addListener(this);
+
+      // Set tray icon
+      await trayManager.setIcon(
+        Platform.isWindows
+            ? 'assets/images/Logo.png'
+            : 'assets/images/Logo.png',
+      );
+
+      // Set tray tooltip
+      await trayManager.setToolTip('Quran & Hadith');
+
+      // Build and set context menu
+      await _updateContextMenu(isPlaying: false);
+
+      _isInitialized = true;
       debugPrint(
           'SystemTrayManager initialized for ${Platform.operatingSystem}');
-      _isInitialized = true;
     } catch (e) {
       debugPrint('Error initializing system tray: $e');
+      _isInitialized = false;
     }
+  }
+
+  Future<void> _updateContextMenu({required bool isPlaying}) async {
+    try {
+      final Menu menu = Menu(
+        items: [
+          MenuItem(
+            key: 'show_window',
+            label: 'Show Window',
+          ),
+          MenuItem.separator(),
+          MenuItem(
+            key: 'play_pause',
+            label: isPlaying ? 'Pause' : 'Play',
+          ),
+          MenuItem(
+            key: 'next',
+            label: 'Next Ayah',
+          ),
+          MenuItem(
+            key: 'previous',
+            label: 'Previous Ayah',
+          ),
+          MenuItem.separator(),
+          MenuItem(
+            key: 'quit',
+            label: 'Quit',
+          ),
+        ],
+      );
+
+      await trayManager.setContextMenu(menu);
+    } catch (e) {
+      debugPrint('Error updating context menu: $e');
+    }
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    debugPrint('Tray icon clicked');
+    _onShowWindow?.call();
+  }
+
+  @override
+  void onTrayIconRightMouseDown() {
+    debugPrint('Tray icon right-clicked');
+    trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    debugPrint('Tray menu item clicked: ${menuItem.key}');
+    switch (menuItem.key) {
+      case 'show_window':
+        _onShowWindow?.call();
+        break;
+      case 'play_pause':
+        _onPlayPause?.call();
+        break;
+      case 'next':
+        _onNextAyah?.call();
+        break;
+      case 'previous':
+        _onPreviousAyah?.call();
+        break;
+      case 'quit':
+        _onQuit?.call();
+        break;
+    }
+  }
+
+  Future<void> updatePlaybackState({required bool isPlaying}) async {
+    if (!_isInitialized) return;
+    await _updateContextMenu(isPlaying: isPlaying);
   }
 
   Future<void> showTrayMessage({
     required String title,
     required String message,
   }) async {
+    if (!_isInitialized) return;
+
     try {
+      await trayManager.setToolTip('$title\n$message');
       debugPrint('Tray message: $title - $message');
     } catch (e) {
       debugPrint('Error showing tray message: $e');
@@ -56,7 +157,10 @@ class SystemTrayManager {
   }
 
   Future<void> updateTrayIcon({required String status}) async {
+    if (!_isInitialized) return;
+
     try {
+      await trayManager.setToolTip('Quran & Hadith - $status');
       debugPrint('Tray icon updated: $status');
     } catch (e) {
       debugPrint('Error updating tray icon: $e');
@@ -68,6 +172,14 @@ class SystemTrayManager {
   void triggerPlayPause() => _onPlayPause?.call();
 
   Future<void> dispose() async {
+    if (_isInitialized) {
+      try {
+        trayManager.removeListener(this);
+        await trayManager.destroy();
+      } catch (e) {
+        debugPrint('Error disposing tray manager: $e');
+      }
+    }
     _isInitialized = false;
   }
 }
@@ -216,14 +328,33 @@ class MediaControlsManager {
   MediaControlsManager._internal();
 
   bool _isInitialized = false;
-  bool _isPlaying = false;
-  String _currentSurah = '';
-  int _currentAyah = 0;
 
-  Future<void> initialize() async {
+  // Note: SMTC implementation is temporarily disabled due to API compatibility issues
+  // dynamic _smtc; // Windows SMTC placeholder
+
+  // Callbacks for media control button presses
+  VoidCallback? _onPlayCallback;
+  VoidCallback? _onPauseCallback;
+  VoidCallback? _onNextCallback;
+  VoidCallback? _onPreviousCallback;
+  VoidCallback? _onStopCallback;
+
+  Future<void> initialize({
+    VoidCallback? onPlay,
+    VoidCallback? onPause,
+    VoidCallback? onNext,
+    VoidCallback? onPrevious,
+    VoidCallback? onStop,
+  }) async {
     if (_isInitialized) return;
 
     try {
+      _onPlayCallback = onPlay;
+      _onPauseCallback = onPause;
+      _onNextCallback = onNext;
+      _onPreviousCallback = onPrevious;
+      _onStopCallback = onStop;
+
       // Initialize platform-specific media controls
       if (Platform.isLinux) {
         await _initializeLinuxMediaControls();
@@ -244,7 +375,11 @@ class MediaControlsManager {
     try {
       // MPRIS (Media Player Remote Interfacing Specification) support
       // This allows integration with system media controls on Linux
-      debugPrint('Initializing MPRIS media controls for Linux');
+      // Note: This would require a separate MPRIS implementation package
+      // For now, we're using debug prints as placeholders
+      debugPrint('MPRIS media controls for Linux - placeholder implementation');
+      debugPrint(
+          'To fully implement: Consider using dbus package or audio_service');
     } catch (e) {
       debugPrint('Error initializing Linux media controls: $e');
     }
@@ -253,7 +388,15 @@ class MediaControlsManager {
   Future<void> _initializeWindowsMediaControls() async {
     try {
       // SMTC (System Media Transport Controls) support for Windows
-      debugPrint('Initializing SMTC media controls for Windows');
+      // Note: Full implementation temporarily disabled due to API compatibility
+      // The smtc_windows package is available in pubspec.yaml for future implementation
+      debugPrint('SMTC media controls for Windows - placeholder implementation');
+      debugPrint('To fully implement: Verify smtc_windows package API compatibility');
+
+      // TODO: Implement SMTC when package API is verified
+      // Example usage pattern (needs API verification):
+      // _smtc = SMTCWindows(...);
+      // _smtc?.buttonPressStream.listen(...);
     } catch (e) {
       debugPrint('Error initializing Windows media controls: $e');
     }
@@ -262,7 +405,9 @@ class MediaControlsManager {
   Future<void> _initializeMacOSMediaControls() async {
     try {
       // macOS native media controls
-      debugPrint('Initializing macOS media controls');
+      // Would require MPNowPlayingInfoCenter integration
+      debugPrint('macOS media controls - placeholder implementation');
+      debugPrint('To fully implement: Use audio_service or platform channels');
     } catch (e) {
       debugPrint('Error initializing macOS media controls: $e');
     }
@@ -278,9 +423,7 @@ class MediaControlsManager {
     if (!_isInitialized) return;
 
     try {
-      _currentSurah = surah;
-      _currentAyah = ayah;
-
+      // TODO: Update Windows SMTC metadata when implementation is complete
       debugPrint('Media metadata updated: $surah - Ayah $ayah ($reciter)');
     } catch (e) {
       debugPrint('Error updating media metadata: $e');
@@ -296,7 +439,7 @@ class MediaControlsManager {
     if (!_isInitialized) return;
 
     try {
-      _isPlaying = isPlaying;
+      // TODO: Update Windows SMTC playback status when implementation is complete
       debugPrint(
           'Playback state: ${isPlaying ? 'Playing' : 'Paused'} - $position / $duration');
     } catch (e) {
@@ -305,6 +448,11 @@ class MediaControlsManager {
   }
 
   Future<void> dispose() async {
+    try {
+      // TODO: Dispose SMTC when implementation is complete
+    } catch (e) {
+      debugPrint('Error disposing media controls: $e');
+    }
     _isInitialized = false;
   }
 }
@@ -349,8 +497,14 @@ class NativeDesktopService with WindowListener {
         defaultPosition: const Offset(100, 100),
       );
 
-      // Initialize media controls
-      await _mediaControls.initialize();
+      // Initialize media controls with callbacks
+      await _mediaControls.initialize(
+        onPlay: _onPlayPauseCallback,
+        onPause: _onPlayPauseCallback,
+        onNext: _onNextCallback,
+        onPrevious: _onPreviousCallback,
+        onStop: _onPlayPauseCallback,
+      );
 
       if (prefs.enableNotifications) {
         await _initializeNotifications();
@@ -474,9 +628,11 @@ class NativeDesktopService with WindowListener {
   Future<void> _initializeSystemTray() async {
     try {
       await _systemTray.initialize(
-        onShowWindow: _onShowWindowCallback ?? () {},
-        onQuit: _onQuitCallback ?? () {},
+        onShowWindow: _onShowWindowCallback ?? () => windowManager.show(),
+        onQuit: _onQuitCallback ?? () => _exitApp(),
         onPlayPause: _onPlayPauseCallback ?? () {},
+        onNextAyah: _onNextCallback,
+        onPreviousAyah: _onPreviousCallback,
       );
       _systemTrayEnabled = true;
       debugPrint('System tray initialized');
@@ -599,6 +755,14 @@ class NativeDesktopService with WindowListener {
       position: position,
       duration: duration,
     );
+
+    // Update tray playback state
+    if (_systemTrayEnabled) {
+      await _systemTray.updatePlaybackState(isPlaying: isPlaying);
+      await _systemTray.updateTrayIcon(
+        status: isPlaying ? 'Playing: $surah - Ayah $ayah' : 'Paused',
+      );
+    }
   }
 
   /// Show tray message
