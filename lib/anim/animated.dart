@@ -56,7 +56,7 @@ class _AnimatorState extends State<Animator>
 Timer? timer;
 Duration duration = const Duration();
 
-wait() {
+Duration wait() {
   if (timer == null || !timer!.isActive) {
     timer = Timer(const Duration(microseconds: 120), () {
       duration = const Duration();

@@ -71,7 +71,7 @@ class _ParticleCanvasState extends State<ParticleCanvas>
     super.initState();
   }
 
-  addDots() {
+  void addDots() {
     for (var i = 0; i < totalDots; i++) {
       dots.add(Offset(random.nextDouble() * widget.width!,
           random.nextDouble() * widget.height!));
@@ -80,7 +80,7 @@ class _ParticleCanvasState extends State<ParticleCanvas>
     }
   }
 
-  drawLines() {
+  void drawLines() {
     lines = [];
     var distanceToDrawLine = 0.0;
     for (var i = 0; i < dots.length; i++) {
@@ -94,9 +94,9 @@ class _ParticleCanvasState extends State<ParticleCanvas>
     }
   }
 
-  aMinusBSquare(a, b) => pow((a - b), 2);
+  num aMinusBSquare(a, b) => pow((a - b), 2);
 
-  onHover(dx, dy) {
+  void onHover(dx, dy) {
     mouseController.reset();
     double? mdx, mdy;
     var stopDistance = 60.0;
