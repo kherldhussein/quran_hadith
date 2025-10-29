@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart' as rx;
-import 'package:quran_hadith/models/surah_model.dart';
+import 'package:quran_hadith/models/surah_model.dart'; // Import Surah model
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
@@ -171,6 +171,54 @@ class EnhancedAudioController extends ChangeNotifier {
           : null;
   bool get continuousPlayback => _continuousPlayback;
   String get reciter => _reciter;
+
+  // --- Start of newly added getters and methods for AudioNativeDesktopBridge --- 
+
+  /// Returns true if the audio player is currently playing.
+  bool get isPlaying => buttonNotifier.value == AudioButtonState.playing;
+
+  /// Returns the current Surah object based on the current track.
+  Surah? get currentSurah {
+    final track = currentTrack;
+    if (track == null) return null;
+    // Assuming surahName in PlaylistItem is the English name or suitable for display
+    return Surah(
+      number: track.surahNumber,
+      name: track.surahName,
+      englishName: track.surahName, 
+      // Populate other fields as necessary if used elsewhere, 
+      // otherwise defaults or empty strings are fine for this context.
+      englishNameTranslation: '',
+      revelationType: '',
+      numberOfAyahs: (track.surahNumber > 0 && track.surahNumber <= _ayahCounts.length)
+          ? _ayahCounts[track.surahNumber - 1]
+          : 0, // Ensure a default value if _ayahCounts is not applicable
+    );
+  }
+
+  /// Returns the current Ayah number.
+  int? get currentAyah => currentTrack?.ayahNumber;
+
+  /// Returns the name of the current reciter.
+  String get currentReciterName => _reciter; 
+
+  /// Returns the total duration of the current audio track.
+  Duration get duration => progressNotifier.value.total;
+
+  /// Returns the current playback position of the audio track.
+  Duration get position => progressNotifier.value.current;
+
+  /// Plays the next ayah in the playlist.
+  void nextAyah() {
+    next();
+  }
+
+  /// Plays the previous ayah in the playlist.
+  void previousAyah() {
+    previous();
+  }
+
+  // --- End of newly added getters and methods --- 
 
   EnhancedAudioController() {
     _init();

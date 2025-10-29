@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:quran_hadith/database/database_service.dart';
+import 'package:quran_hadith/services/error_service.dart';
 
 sealed class HadithFetchResult {
   const HadithFetchResult();
@@ -51,8 +52,8 @@ class HadithAPI {
         _hadithBooksCache[languageCode] = books;
         return HadithFetchSuccess(books);
       }
-    } catch (e) {
-      debugPrint('⚠️ Hadith books local cache error: $e');
+    } catch (e, s) {
+      errorService.reportError('Hadith books local cache error: $e', s);
     }
 
     try {
@@ -86,13 +87,13 @@ class HadithAPI {
                       'available': b.total
                     })
                 .toList());
-      } catch (e) {
-        debugPrint('⚠️ Failed to persist Hadith books cache: $e');
+      } catch (e, s) {
+        errorService.reportError('Failed to persist Hadith books cache: $e', s);
       }
 
       return HadithFetchSuccess(fetchedBooks);
-    } catch (e) {
-      debugPrint('❌ Error fetching Hadith books: $e');
+    } catch (e, s) {
+      errorService.reportError('Error fetching Hadith books: $e', s);
       if (cachedRaw != null && cachedRaw.isNotEmpty) {
         final books = cachedRaw.map((m) {
           final bookId = (m['id'] as String?) ?? '';
@@ -146,8 +147,8 @@ class HadithAPI {
           available: _asInt(cached['available']) ?? 0,
         );
       }
-    } catch (e) {
-      debugPrint('⚠️ Hadith page local cache error: $e');
+    } catch (e, s) {
+      errorService.reportError('Hadith page local cache error: $e', s);
     }
 
     try {
@@ -237,13 +238,13 @@ class HadithAPI {
                 .toList(),
           },
         );
-      } catch (e) {
-        debugPrint('⚠️ Failed to persist Hadith page cache: $e');
+      } catch (e, s) {
+        errorService.reportError('Failed to persist Hadith page cache: $e', s);
       }
 
       return pageObj;
-    } catch (e) {
-      debugPrint('❌ Error fetching hadiths: $e');
+    } catch (e, s) {
+      errorService.reportError('Error fetching hadiths: $e', s);
       if (cached != null) {
         final items = (cached['hadiths'] as List? ?? [])
             .map((e) => HadithItem(
@@ -285,8 +286,8 @@ class HadithAPI {
           arab: data['arab'] as String?,
         );
       }
-    } catch (e) {
-      debugPrint('❌ Error fetching random hadith: $e');
+    } catch (e, s) {
+      errorService.reportError('Error fetching random hadith: $e', s);
     }
     return null;
   }
