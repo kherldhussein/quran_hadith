@@ -21,6 +21,8 @@ import 'package:quran_hadith/services/notification_service.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/services/analytics_service.dart';
 import 'package:quran_hadith/services/native_desktop_service.dart';
+import 'package:quran_hadith/services/audio_native_desktop_bridge.dart';
+import 'package:quran_hadith/services/reading_mode_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/models/reciter_model.dart';
 
@@ -67,6 +69,9 @@ void main() async {
         ),
         ChangeNotifierProvider<EnhancedAudioController>(
           create: (_) => EnhancedAudioController(),
+        ),
+        ChangeNotifierProvider<ReadingModeService>(
+          create: (_) => ReadingModeService(),
         ),
       ],
       child: const QuranHadithApp(),
@@ -150,6 +155,13 @@ Future<void> _initializeApp(ThemeState themeState) async {
       errorService.reportError('Warning initializing native desktop: $e', s);
     }
   }
+
+  // Initialize reading mode service
+  try {
+    await ReadingModeService().initialize();
+  } catch (e, s) {
+    errorService.reportError('Warning initializing reading mode: $e', s);
+  }
 }
 
 /// Configure desktop window properties
@@ -217,6 +229,21 @@ class _QuranHadithAppState extends State<QuranHadithApp>
         audioController: audioController,
       );
       WidgetsBinding.instance.addObserver(_lifecycleObserver);
+
+      // Initialize audio-native desktop bridge for media controls integration
+      if (!kIsWeb &&
+          (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+        try {
+          final bridge = AudioNativeDesktopBridge();
+          bridge.initialize(audioController).then((_) {
+            debugPrint('✅ Audio-Native Desktop Bridge connected');
+          }).catchError((e) {
+            debugPrint('⚠️ Error connecting Audio-Native Desktop Bridge: $e');
+          });
+        } catch (e) {
+          debugPrint('⚠️ Error initializing Audio-Native Desktop Bridge: $e');
+        }
+      }
     });
   }
 
