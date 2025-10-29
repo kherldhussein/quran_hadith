@@ -41,7 +41,8 @@ jobs:
             pkg-config \
             libgtk-3-dev \
             liblzma-dev \
-            libkeybinder-3.0-dev
+            libkeybinder-3.0-dev \
+            libayatana-appindicator3-dev
 
       - name: Flutter pub get
         run: flutter pub get
@@ -65,7 +66,7 @@ jobs:
       # path: build/web
 
   build-desktop:
-    name: Build Desktop (${% raw %}{{ matrix.os }}{% endraw %})
+    name: Build Desktop (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: checks
     timeout-minutes: 40
@@ -94,7 +95,8 @@ jobs:
             pkg-config \
             libgtk-3-dev \
             liblzma-dev \
-            libkeybinder-3.0-dev
+            libkeybinder-3.0-dev \
+            libayatana-appindicator3-dev
 
       - name: Flutter pub get
         run: flutter pub get
