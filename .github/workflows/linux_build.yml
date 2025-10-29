@@ -157,13 +157,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install git-cliff
+        run: sudo apt-get update && sudo apt-get install -y git-cliff
+
       - name: Generate changelog (git-cliff)
-        uses: orhun/git-cliff-action@v4
-        with:
-          config: cliff.toml
-          args: --tag "${{ github.ref_name }}" --strip all
+        run: git-cliff --config cliff.toml --tag "${{ github.ref_name }}" --strip all --output RELEASE_NOTES.md
         env:
-          OUTPUT: RELEASE_NOTES.md
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download all artifacts
