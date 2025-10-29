@@ -72,15 +72,13 @@ jobs:
           owner="${GITHUB_REPOSITORY_OWNER}"
           owner=$(echo "$owner" | tr '[:upper:]' '[:lower:]')
 
-          tags="ghcr.io/${owner}/${IMAGE_NAME}:${version}\n"
-          tags+="ghcr.io/${owner}/${IMAGE_NAME}:latest"
+          tags="ghcr.io/${owner}/${IMAGE_NAME}:${version},ghcr.io/${owner}/${IMAGE_NAME}:latest"
 
           if [ -n "$DOCKER_USERNAME" ]; then
-            tags+="\n${DOCKER_USERNAME}/${IMAGE_NAME}:${version}"
-            tags+="\n${DOCKER_USERNAME}/${IMAGE_NAME}:latest"
+            tags+=",${DOCKER_USERNAME}/${IMAGE_NAME}:${version},${DOCKER_USERNAME}/${IMAGE_NAME}:latest"
           fi
 
-          printf 'tags<<EOF\n%s\nEOF\n' "$tags" >> "$GITHUB_OUTPUT"
+          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata for OCI labels
         id: meta
