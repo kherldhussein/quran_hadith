@@ -52,7 +52,7 @@ class _NavRailItem {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
- int _selectedIndex = 0;
+  int _selectedIndex = 0;
   late final List<Widget> _contentScreens;
   late ValueNotifier<bool> _isExtended;
   final qsearch.Search _offlineSearch = qsearch.Search();
@@ -402,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-   Widget _buildDashboard(BuildContext context) {
+  Widget _buildDashboard(BuildContext context) {
     final audioController = AudioController();
 
     return AnimatedBuilder(
@@ -433,7 +433,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-
 
   Widget _buildHeroBanner(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -482,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ),
-          
+
           // Content
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +504,8 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ],
                     ),
-                    child: const ImageIcon(AssetImage('assets/images/Logo.png')),
+                    child:
+                        const ImageIcon(AssetImage('assets/images/Logo.png')),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -605,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildDailyAyahCard(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       decoration: BoxDecoration(
@@ -614,7 +614,7 @@ class _HomeScreenState extends State<HomeScreen>
           end: Alignment.bottomRight,
           colors: [
             theme.colorScheme.surface.withOpacity(0.9),
-            theme.colorScheme.surfaceVariant.withOpacity(0.7),
+            theme.colorScheme.surfaceContainerHighest.withOpacity(0.7),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
@@ -694,9 +694,8 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: IconButton(
         tooltip: 'Refresh ayah',
-        onPressed: _loadingDailyAyah
-            ? null
-            : () => _loadDailyAyah(forceRefresh: true),
+        onPressed:
+            _loadingDailyAyah ? null : () => _loadDailyAyah(forceRefresh: true),
         icon: _loadingDailyAyah
             ? SizedBox(
                 width: 20,
@@ -776,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
         const SizedBox(height: 20),
-        
+
         // Translation
         Text(
           ayah.translation.isNotEmpty
@@ -789,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
         const SizedBox(height: 20),
-        
+
         // Metadata and Actions
         Row(
           children: [
@@ -892,7 +891,7 @@ class _HomeScreenState extends State<HomeScreen>
           _buildLastListenedCard(context),
           _buildLastReadHadithCard(context),
         ];
-        
+
         if (constraints.maxWidth < 640) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -904,7 +903,7 @@ class _HomeScreenState extends State<HomeScreen>
             }).toList(),
           );
         }
-        
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: cards.asMap().entries.map((entry) {
@@ -951,7 +950,7 @@ class _HomeScreenState extends State<HomeScreen>
                 end: Alignment.bottomRight,
                 colors: [
                   colorScheme.surface,
-                  colorScheme.surfaceVariant.withOpacity(0.5),
+                  colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 ],
               ),
               boxShadow: [
@@ -989,7 +988,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   title,
@@ -999,7 +998,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Subtitle
                 Text(
                   subtitle,
@@ -1009,7 +1008,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Footer
                 Text(
                   footer,
@@ -1017,7 +1016,7 @@ class _HomeScreenState extends State<HomeScreen>
                     color: colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
-                
+
                 // Action Button
                 if (actionLabel != null) ...[
                   const SizedBox(height: 16),
@@ -1069,7 +1068,6 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-
 
   List<Widget> _buildReciterPopover(BuildContext context) {
     final theme = Theme.of(context);
@@ -1398,7 +1396,8 @@ class _HomeScreenState extends State<HomeScreen>
       animation: _animationController,
       builder: (context, child) {
         return Scaffold(
-          appBar: _buildFuturisticAppBar(context, isSmall, isCompact, searchButton),
+          appBar:
+              _buildFuturisticAppBar(context, isSmall, isCompact, searchButton),
           body: Row(
             children: [
               _buildAnimatedNavigationRail(context, isSmall),
@@ -1427,7 +1426,7 @@ class _HomeScreenState extends State<HomeScreen>
           colors: [
             Theme.of(context).colorScheme.primary.withOpacity(0.1),
             Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-        ],
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1464,8 +1463,8 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  AppBar _buildFuturisticAppBar(BuildContext context, bool isSmall,
-      bool isCompact, Widget searchButton) {
+  AppBar _buildFuturisticAppBar(
+      BuildContext context, bool isSmall, bool isCompact, Widget searchButton) {
     final theme = Theme.of(context);
 
     return AppBar(
@@ -1478,7 +1477,7 @@ class _HomeScreenState extends State<HomeScreen>
             end: Alignment.topRight,
             colors: [
               theme.colorScheme.surface.withOpacity(0.98),
-              theme.colorScheme.surfaceVariant.withOpacity(0.9),
+              theme.colorScheme.surfaceContainerHighest.withOpacity(0.9),
             ],
           ),
           border: Border(
@@ -1605,10 +1604,16 @@ class _HomeScreenState extends State<HomeScreen>
                       fontWeight: FontWeight.w600,
                     ),
                     unselectedIconTheme: IconThemeData(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     unselectedLabelTextStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     destinations: _navItems
                         .map((item) => _buildNavDestination(item, isSmall))
@@ -1651,7 +1656,7 @@ class _HomeScreenState extends State<HomeScreen>
           colors: [
             Theme.of(context).colorScheme.primary.withOpacity(0.1),
             Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-        ],
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1675,7 +1680,7 @@ class _HomeScreenState extends State<HomeScreen>
           colors: [
             Theme.of(context).colorScheme.primary.withOpacity(0.1),
             Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-        ],
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1786,10 +1791,10 @@ class QuranSearchDelegate extends SearchDelegate {
 }
 
 extension on _HomeScreenState {
-  AppBar _buildFuturisticAppBar(BuildContext context, bool isSmall,
-      bool isCompact, Widget searchButton) {
+  AppBar _buildFuturisticAppBar(
+      BuildContext context, bool isSmall, bool isCompact, Widget searchButton) {
     final theme = Theme.of(context);
-    
+
     return AppBar(
       backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
       elevation: 0,
@@ -1800,7 +1805,7 @@ extension on _HomeScreenState {
             end: Alignment.topRight,
             colors: [
               theme.colorScheme.surface.withOpacity(0.98),
-              theme.colorScheme.surfaceVariant.withOpacity(0.9),
+              theme.colorScheme.surfaceContainerHighest.withOpacity(0.9),
             ],
           ),
           border: Border(
@@ -1927,10 +1932,16 @@ extension on _HomeScreenState {
                       fontWeight: FontWeight.w600,
                     ),
                     unselectedIconTheme: IconThemeData(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     unselectedLabelTextStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     destinations: _HomeScreenState._navItems
                         .map((item) => _buildNavDestination(item, isSmall))
@@ -1973,7 +1984,7 @@ extension on _HomeScreenState {
           colors: [
             Theme.of(context).colorScheme.primary.withOpacity(0.1),
             Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-        ],
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1997,7 +2008,7 @@ extension on _HomeScreenState {
           colors: [
             Theme.of(context).colorScheme.primary.withOpacity(0.1),
             Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-        ],
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
