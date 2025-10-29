@@ -3,27 +3,24 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:quran_hadith/services/reading_mode_service.dart';
 
 /// Bottom sheet widget for reading mode controls
-class ReadingModeSheet extends StatefulWidget {
+class ReadingModeSheet extends StatelessWidget {
   const ReadingModeSheet({super.key});
-
-  @override
-  State<ReadingModeSheet> createState() => _ReadingModeSheetState();
-}
-
-class _ReadingModeSheetState extends State<ReadingModeSheet> {
-  final ReadingModeService _readingMode = ReadingModeService();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final readingMode = ReadingModeService();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
+    return ListenableBuilder(
+      listenable: readingMode,
+      builder: (context, _) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -62,11 +59,12 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
 
           // Focus Mode
           _buildModeCard(
+            context: context,
             icon: FontAwesomeIcons.eye,
             title: 'Focus Mode',
             subtitle: 'Hide UI, show only ayah text',
-            value: _readingMode.focusMode,
-            onChanged: (_) => _readingMode.toggleFocusMode(),
+            value: readingMode.focusMode,
+            onChanged: (_) => readingMode.toggleFocusMode(),
             color: theme.colorScheme.primary,
             keyboardHint: 'F',
           ),
@@ -74,11 +72,12 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
 
           // Night Mode
           _buildModeCard(
+            context: context,
             icon: FontAwesomeIcons.moon,
             title: 'Night Mode',
             subtitle: 'OLED-black background for dark reading',
-            value: _readingMode.nightMode,
-            onChanged: (_) => _readingMode.toggleNightMode(),
+            value: readingMode.nightMode,
+            onChanged: (_) => readingMode.toggleNightMode(),
             color: theme.colorScheme.secondary,
             keyboardHint: 'N',
           ),
@@ -98,19 +97,20 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
                 'Enable automatically from 8 PM to 6 AM',
                 style: TextStyle(fontSize: 12),
               ),
-              value: _readingMode.autoNightMode,
-              onChanged: (_) => _readingMode.toggleAutoNightMode(),
+              value: readingMode.autoNightMode,
+              onChanged: (_) => readingMode.toggleAutoNightMode(),
             ),
           ),
           const SizedBox(height: 12),
 
           // Dyslexia Mode
           _buildModeCard(
+            context: context,
             icon: FontAwesomeIcons.font,
             title: 'Dyslexia-Friendly Mode',
             subtitle: 'Enhanced spacing and font for easier reading',
-            value: _readingMode.dyslexiaMode,
-            onChanged: (_) => _readingMode.toggleDyslexiaMode(),
+            value: readingMode.dyslexiaMode,
+            onChanged: (_) => readingMode.toggleDyslexiaMode(),
             color: theme.colorScheme.tertiary,
             keyboardHint: null,
           ),
@@ -142,16 +142,14 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
               ),
               Expanded(
                 child: Slider(
-                  value: _readingMode.blueLight,
+                  value: readingMode.blueLight,
                   min: 0.0,
                   max: 1.0,
                   divisions: 10,
                   label:
-                      '${(_readingMode.blueLight * 100).toStringAsFixed(0)}%',
+                      '${(readingMode.blueLight * 100).toStringAsFixed(0)}%',
                   onChanged: (value) {
-                    setState(() {
-                      _readingMode.setBlueLight(value);
-                    });
+                    readingMode.setBlueLight(value);
                   },
                 ),
               ),
@@ -193,9 +191,9 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _buildShortcutRow('F11', 'Toggle fullscreen'),
-                _buildShortcutRow('F', 'Toggle focus mode'),
-                _buildShortcutRow('N', 'Toggle night mode'),
+                _buildShortcutRow(context, 'F11', 'Toggle fullscreen'),
+                _buildShortcutRow(context, 'F', 'Toggle focus mode'),
+                _buildShortcutRow(context, 'N', 'Toggle night mode'),
               ],
             ),
           ),
@@ -208,12 +206,15 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
               child: const Text('Done'),
             ),
           ),
-        ],
-      ),
+          ],
+        ),
+      );
+      },
     );
   }
 
   Widget _buildModeCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -283,7 +284,7 @@ class _ReadingModeSheetState extends State<ReadingModeSheet> {
     );
   }
 
-  Widget _buildShortcutRow(String key, String action) {
+  Widget _buildShortcutRow(BuildContext context, String key, String action) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
