@@ -99,7 +99,7 @@ flutter:
         - asset: assets/fonts/OpenDyslexic-Regular.otf
         - asset: assets/fonts/OpenDyslexic-Bold.otf
         - asset: assets/fonts/OpenDyslexic-Italic.otf
-        - asset: assets/fonts/OpenDyslexic-BoldItalic.otf
+        - asset: assets/fonts/OpenDyslexic-Bold-Italic.otf
 
 dependency_overrides:
   win32: ^5.14.0
