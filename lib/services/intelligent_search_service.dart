@@ -31,9 +31,9 @@ class SearchResult {
   });
 
   Map<String, dynamic> toJson() => {
-        'ayah': ayah.verse,
-        'surah': ayah.surahName,
-        'ayahNumber': ayah.ayahNumber,
+        'ayah': ayah,
+        'surah': ayah.surah,
+        'ayahNumber': ayah.num,
         'relevance': relevance,
         'matchType': matchType,
       };

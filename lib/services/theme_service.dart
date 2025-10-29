@@ -13,7 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - Background images/gradients
 class ThemeService extends ChangeNotifier {
   static final ThemeService _instance = ThemeService._internal();
+
   factory ThemeService() => _instance;
+
   ThemeService._internal();
 
   // Current theme
@@ -22,6 +24,7 @@ class ThemeService extends ChangeNotifier {
 
   // Getters
   CustomTheme get currentTheme => _currentTheme;
+
   List<CustomTheme> get savedThemes => _savedThemes;
 
   // Preferences keys
@@ -139,7 +142,7 @@ class ThemeService extends ChangeNotifier {
         foregroundColor: theme.textOnPrimary,
         elevation: theme.elevation,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: theme.cardColor,
         elevation: theme.elevation,
         shape: RoundedRectangleBorder(
@@ -196,13 +199,15 @@ class ThemeService extends ChangeNotifier {
   /// Save current theme
   Future<void> _saveCurrentTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyCurrentTheme, json.encode(_currentTheme.toJson()));
+    await prefs.setString(
+        _keyCurrentTheme, json.encode(_currentTheme.toJson()));
   }
 
   /// Save themes list
   Future<void> _saveThemesList() async {
     final prefs = await SharedPreferences.getInstance();
-    final themesJson = _savedThemes.map((t) => json.encode(t.toJson())).toList();
+    final themesJson =
+        _savedThemes.map((t) => json.encode(t.toJson())).toList();
     await prefs.setStringList(_keySavedThemes, themesJson);
   }
 }
