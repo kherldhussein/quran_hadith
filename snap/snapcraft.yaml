@@ -24,6 +24,7 @@ apps:
     plugs:
       - network
       - audio-playback
+      - pulseaudio
       - desktop
       - desktop-legacy
       - home
@@ -51,3 +52,13 @@ parts:
       - libgtk-3-0
       - libglu1-mesa
       - libkeybinder-3.0-0
+      # GStreamer runtime libraries for just_audio
+      - libgstreamer1.0-0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-libav
+      # PulseAudio support
+      - libpulse0
+      - pulseaudio-utils
