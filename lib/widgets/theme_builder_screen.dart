@@ -276,7 +276,7 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _theme.bodyFontFamily,
+              initialValue: _theme.bodyFontFamily,
               decoration: const InputDecoration(
                 labelText: 'Body Font',
                 border: OutlineInputBorder(),
@@ -298,7 +298,7 @@ class _ThemeBuilderScreenState extends State<ThemeBuilderScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _theme.headingFontFamily,
+              initialValue: _theme.headingFontFamily,
               decoration: const InputDecoration(
                 labelText: 'Heading Font',
                 border: OutlineInputBorder(),

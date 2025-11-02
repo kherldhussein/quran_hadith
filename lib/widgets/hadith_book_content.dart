@@ -12,12 +12,16 @@ class HadithBookContent extends StatefulWidget {
   final String bookSlug;
   final bool showArabic;
   final String query; // in-book search filter
+  final double fontSize;
+  final bool isSplitView;
 
   const HadithBookContent({
     super.key,
     required this.bookSlug,
     required this.showArabic,
     this.query = '',
+    this.fontSize = 18.0,
+    this.isSplitView = false,
   });
 
   @override
@@ -199,6 +203,7 @@ class _HadithBookContentState extends State<HadithBookContent> {
                           bookSlug: widget.bookSlug,
                           hadith: filtered[index],
                           showArabic: widget.showArabic,
+                          fontSize: widget.fontSize,
                         );
                       },
                     ),
@@ -253,11 +258,13 @@ class _HadithCard extends StatelessWidget {
   final String bookSlug;
   final HadithItem hadith;
   final bool showArabic;
+  final double fontSize;
 
   const _HadithCard({
     required this.bookSlug,
     required this.hadith,
     required this.showArabic,
+    this.fontSize = 18.0,
   });
 
   @override
@@ -378,7 +385,7 @@ class _HadithCard extends StatelessWidget {
                                     hadith.arab!,
                                     textAlign: TextAlign.right,
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: fontSize,
                                       height: 2.0,
                                       fontFamily: 'Amiri',
                                       color: theme.colorScheme.onSurface,
