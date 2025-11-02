@@ -1,6 +1,4 @@
 import 'dart:io' show Platform;
-import 'dart:ffi' as ffi;
-import 'package:ffi/ffi.dart' as pkgffi;
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,33 +23,16 @@ import 'package:quran_hadith/services/audio_native_desktop_bridge.dart';
 import 'package:quran_hadith/services/reading_mode_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/models/reciter_model.dart';
+import 'package:quran_hadith/utils/numeric_locale.dart';
 
 import 'controller/hadithAPI.dart';
 import 'theme/app_theme.dart';
-
-typedef _NativeSetLocale = ffi.Pointer<ffi.Int8> Function(
-    ffi.Int32, ffi.Pointer<ffi.Int8>);
-typedef _DartSetLocale = ffi.Pointer<ffi.Int8> Function(
-    int, ffi.Pointer<ffi.Int8>);
 
 /// Main application entry point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!Platform.isWindows) {
-    try {
-      final dylib = ffi.DynamicLibrary.process();
-      final setlocale =
-          dylib.lookupFunction<_NativeSetLocale, _DartSetLocale>('setlocale');
-      const int lcNumeric = 4; // common value on POSIX systems
-      final ptr = 'C'.toNativeUtf8();
-      setlocale(lcNumeric, ptr.cast<ffi.Int8>());
-      pkgffi.malloc.free(ptr);
-    } catch (e, s) {
-      errorService.reportError(
-          'Warning: failed to setlocale(LC_NUMERIC, "C"): $e', s);
-    }
-  }
+  await ensureNumericLocale();
 
   final themeState = ThemeState();
   await _initializeApp(themeState);
@@ -94,12 +75,15 @@ Future<void> _initializeApp(ThemeState themeState) async {
 
   try {
     await appSP.init();
+    debugPrint('✅ SharedPreferences initialized');
   } catch (e, s) {
     errorService.reportError('Warning: appSP.init() failed: $e', s);
   }
 
   try {
     await ReciterService.instance.initializeCurrentReciter();
+    debugPrint(
+        '✅ Current reciter initialized: ${ReciterService.instance.currentReciterId.value}');
   } catch (e, s) {
     errorService.reportError('Warning initializing current reciter: $e', s);
   }
@@ -118,6 +102,7 @@ Future<void> _initializeApp(ThemeState themeState) async {
 
   try {
     await ReciterService.instance.getReciters();
+    debugPrint('✅ Reciters preloaded successfully');
   } catch (e, s) {
     errorService.reportError('Warning preloading reciters failed: $e', s);
   }
