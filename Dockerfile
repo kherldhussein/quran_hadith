@@ -13,7 +13,7 @@ RUN flutter config --enable-web
 RUN flutter pub get
 RUN flutter build web --release
 
-FROM nginx:1.27-alpine AS runtime
+FROM cgr.dev/chainguard/nginx:latest AS runtime
 WORKDIR /usr/share/nginx/html
 
 # Replace the default server configuration and publish the Flutter build
@@ -22,4 +22,4 @@ COPY --from=build /app/build/web ./
 
 EXPOSE 8080
 
-CMD ["/docker-entrypoint.sh", "nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]

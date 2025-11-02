@@ -126,6 +126,86 @@ jobs:
           zip -r ../../../linux-x64.zip bundle
         shell: bash
 
+      - name: Build Debian package
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          APP_ID="quran-hadith"
+          APP_EXEC="quran_hadith"
+          BUILD_DIR="build/linux/x64/release/bundle"
+          if [[ ! -d "$BUILD_DIR" ]]; then
+            echo "Bundle directory not found at $BUILD_DIR" >&2
+            exit 1
+          fi
+
+          VERSION="${GITHUB_REF_NAME:-0.0.0}"
+          if [[ ! "${GITHUB_REF}" =~ ^refs/tags/ ]]; then
+            VERSION="0.0.0~dev${GITHUB_RUN_NUMBER}"
+          fi
+          VERSION="${VERSION#v}"
+
+          STAGING_ROOT="build/linux/x64/release/debian"
+          STAGING="$STAGING_ROOT/${APP_ID}_${VERSION}_amd64"
+          rm -rf "$STAGING"
+          mkdir -p "$STAGING/DEBIAN"
+          mkdir -p "$STAGING/usr/bin"
+          mkdir -p "$STAGING/usr/share/applications"
+          mkdir -p "$STAGING/usr/share/icons/hicolor/512x512/apps"
+          mkdir -p "$STAGING/opt/${APP_ID}"
+
+          cp -r "$BUILD_DIR"/* "$STAGING/opt/${APP_ID}/"
+
+          ln -sf "/opt/${APP_ID}/${APP_EXEC}" "$STAGING/usr/bin/${APP_ID}"
+
+          if [[ -f assets/images/Logo.png ]]; then
+            cp assets/images/Logo.png "$STAGING/usr/share/icons/hicolor/512x512/apps/${APP_ID}.png"
+          fi
+
+          printf '%s\n' \
+            '[Desktop Entry]' \
+            'Version=1.0' \
+            'Type=Application' \
+              "Name=Qur'an & Hadith" \
+            "Comment=Read and listen to the Qur'an and Hadith collections" \
+            "Exec=${APP_ID} %U" \
+            "Icon=${APP_ID}" \
+            'Terminal=false' \
+            'Categories=Education;Utility;' \
+            > "$STAGING/usr/share/applications/${APP_ID}.desktop"
+
+          INSTALLED_SIZE=$(du -ks "$STAGING/opt/${APP_ID}" | cut -f1)
+          printf '%s\n' \
+            "Package: ${APP_ID}" \
+            "Version: ${VERSION}" \
+              "Section: misc" \
+              "Priority: optional" \
+              "Architecture: amd64" \
+              "Depends: libgtk-3-0, libayatana-appindicator3-1, libstdc++6, liblzma5" \
+              "Maintainer: Quran Hadith Team <support@quran-hadith.app>" \
+              "Installed-Size: ${INSTALLED_SIZE}" \
+              "Description: Quran & Hadith desktop application built with Flutter." \
+              " This package provides the Qur'an & Hadith desktop experience with offline audio playback." \
+            > "$STAGING/DEBIAN/control"
+
+          printf '%s\n' \
+            '#!/usr/bin/env bash' \
+            'set -e' \
+            'if command -v update-desktop-database >/dev/null 2>&1; then' \
+            '  update-desktop-database -q /usr/share/applications || true' \
+            'fi' \
+            'if command -v gtk-update-icon-cache >/dev/null 2>&1; then' \
+            '  gtk-update-icon-cache -q /usr/share/icons/hicolor || true' \
+            'fi' \
+            'exit 0' \
+            > "$STAGING/DEBIAN/postinst"
+          chmod 0755 "$STAGING/DEBIAN/postinst"
+
+          dpkg-deb --build "$STAGING" "${APP_ID}_${VERSION}_amd64.deb"
+
       - name: Package Windows artifact
         if: matrix.os == 'windows-latest'
         shell: powershell
@@ -142,6 +222,7 @@ jobs:
             windows-x64.zip
             build/linux/x64/release/bundle
             linux-x64.zip
+            *.deb
           if-no-files-found: warn
 
   release:
@@ -201,6 +282,7 @@ jobs:
           files: |
             linux-x64.zip
             windows-x64.zip
+            quran-hadith_*.deb
           body_path: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
