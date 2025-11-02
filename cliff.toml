@@ -8,13 +8,15 @@ header = """
 
 """
 body = """
-{{#each groups}}{{#if commits}}
-## {{title}}
+{% for group in groups %}
+{% if group.commits %}
+## {{ group.title }}
 
-{{#each commits}}- {{#if scope}}**{{scope}}:** {{/if}}{{subject}} {{#if breaking}}(BREAKING){{/if}}{{#if hash}} - {{hash}}{{/if}}
-{{/each}}
-
-{{/if}}{{/each}}
+{% for commit in group.commits -%}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message }}{% if commit.breaking %} (BREAKING){% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
 """
 # Footer includes compare links
 footer = """
