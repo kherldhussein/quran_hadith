@@ -46,17 +46,28 @@ class Reciter {
     }
 
     String identifier = '';
-    final jsonId = json['identifier'] ?? json['slug'] ?? json['id'];
-    if (jsonId is String) {
-      identifier = jsonId;
-    } else if (jsonId != null) {
-      identifier = jsonId.toString();
+
+    // Priority: identifier (best), slug, audio_url_prefix extraction
+    final jsonIdentifier = json['identifier'];
+    if (jsonIdentifier is String && jsonIdentifier.isNotEmpty) {
+      identifier = jsonIdentifier;
+    } else {
+      final jsonSlug = json['slug'];
+      if (jsonSlug is String && jsonSlug.isNotEmpty) {
+        identifier = jsonSlug;
+      } else if (audioPrefix != null && audioPrefix.isNotEmpty) {
+        // Extract from audio_url_prefix if needed (e.g., "ar.alafasy")
+        final segments = audioPrefix.split('/');
+        if (segments.isNotEmpty) {
+          identifier = segments.last;
+        }
+      }
     }
 
-    if (identifier.isEmpty && audioPrefix != null) {
-      final segments = audioPrefix.split('/');
-      final candidate = segments.isNotEmpty ? segments.last : '';
-      if (candidate.isNotEmpty) identifier = candidate;
+    // Ensure identifier is in the expected format
+    if (identifier.isNotEmpty && !_isValidApiIdentifier(identifier)) {
+      // If it's a numeric ID or doesn't match format, try to create one
+      identifier = _generateIdentifier(identifier, json);
     }
 
     String name = 'Unknown Reciter';
@@ -90,6 +101,42 @@ class Reciter {
           safeExtract(json['profile_picture']) ?? safeExtract(json['image']),
       audioUrlPrefix: audioPrefix,
     );
+  }
+
+  /// Validate if an identifier is in the expected format for API calls
+  static bool _isValidApiIdentifier(String id) {
+    // Expected format: "ar.alafasy", "en.reciter", etc.
+    // Pattern: two-letter language code, dot, reciter name (lowercase with dots/hyphens)
+    final validPattern =
+        RegExp(r'^[a-z]{2}\.[a-z0-9._-]+$', caseSensitive: false);
+    return validPattern.hasMatch(id);
+  }
+
+  /// Generate a valid API identifier from raw data
+  static String _generateIdentifier(String rawId, Map<String, dynamic> json) {
+    // If it's numeric or invalid, try to construct from name
+    String name = json['name'] ?? 'unknown';
+    String language = json['language']?.toString().toLowerCase() ?? 'ar';
+
+    // Extract language code (first 2 chars)
+    if (language.length > 2) {
+      language = language.substring(0, 2);
+    }
+
+    // Create slug from name: "Mohamed Siddiq al-Minshawi" -> "mohamedsiqqal-minshawi" -> "mohamedsiqqal-minshawi"
+    String slug = name
+        .toLowerCase()
+        .replaceAll(
+            RegExp(r'[^a-z0-9\s]'), '') // Remove special chars except spaces
+        .replaceAll(RegExp(r'\s+'), '-') // Replace spaces with hyphens
+        .replaceAll(RegExp(r'-+'), '-') // Remove consecutive hyphens
+        .replaceAll(RegExp(r'^-|-$'), ''); // Remove leading/trailing hyphens
+
+    if (slug.isEmpty) {
+      slug = 'reciter-${rawId.toLowerCase().replaceAll(RegExp(r'\D'), '')}';
+    }
+
+    return '$language.$slug';
   }
 
   Map<String, dynamic> toJson() {
