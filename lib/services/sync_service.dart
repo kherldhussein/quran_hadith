@@ -64,7 +64,8 @@ class SyncService {
         results.contains(ConnectivityResult.ethernet);
 
     if (isOnline && !_isSyncing) {
-      debugPrint('🔄 SyncService: Network available - starting background sync');
+      debugPrint(
+          '🔄 SyncService: Network available - starting background sync');
       _performBackgroundSync();
     } else if (!isOnline) {
       debugPrint('🔄 SyncService: Network unavailable - sync paused');
@@ -91,7 +92,8 @@ class SyncService {
     if (_lastSyncTime != null) {
       final timeSinceLastSync = DateTime.now().difference(_lastSyncTime!);
       if (timeSinceLastSync < const Duration(minutes: 30)) {
-        debugPrint('🔄 SyncService: Recent sync found (${timeSinceLastSync.inMinutes}m ago), skipping...');
+        debugPrint(
+            '🔄 SyncService: Recent sync found (${timeSinceLastSync.inMinutes}m ago), skipping...');
         return;
       }
     }
@@ -118,7 +120,8 @@ class SyncService {
       if (_retryCount < _maxRetries) {
         _retryCount++;
         final delay = _retryDelay * _retryCount;
-        debugPrint('🔄 SyncService: Scheduling retry ${_retryCount}/$_maxRetries in ${delay.inMinutes}m');
+        debugPrint(
+            '🔄 SyncService: Scheduling retry $_retryCount/$_maxRetries in ${delay.inMinutes}m');
 
         Timer(delay, () {
           _performBackgroundSync();
@@ -136,17 +139,18 @@ class SyncService {
   Future<void> _syncPriorityData() async {
     // Priority surahs (most commonly read)
     final prioritySurahs = [
-      1,   // Al-Fatihah
-      2,   // Al-Baqarah
-      18,  // Al-Kahf
-      36,  // Ya-Sin
-      55,  // Ar-Rahman
-      56,  // Al-Waqi'ah
-      67,  // Al-Mulk
-      78,  // An-Naba
+      1, // Al-Fatihah
+      2, // Al-Baqarah
+      18, // Al-Kahf
+      36, // Ya-Sin
+      55, // Ar-Rahman
+      56, // Al-Waqi'ah
+      67, // Al-Mulk
+      78, // An-Naba
     ];
 
-    debugPrint('🔄 SyncService: Syncing ${prioritySurahs.length} priority surahs...');
+    debugPrint(
+        '🔄 SyncService: Syncing ${prioritySurahs.length} priority surahs...');
 
     for (final surahNumber in prioritySurahs) {
       try {
