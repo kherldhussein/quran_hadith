@@ -43,6 +43,16 @@ parts:
     plugin: flutter
     flutter-channel: stable
     flutter-target: lib/main.dart
+    override-prime: |
+      craftctl default
+      arch_triplet="${CRAFT_ARCH_TRIPLET:-${SNAPCRAFT_ARCH_TRIPLET}}"
+      target_dir="$CRAFT_PRIME/usr/lib/${arch_triplet}"
+      if [ -d "$target_dir" ]; then
+        mpv_so=$(find "$target_dir" -maxdepth 1 -name 'libmpv.so.*' -print -quit)
+        if [ -n "$mpv_so" ] && [ ! -e "$target_dir/libmpv.so" ]; then
+          ln -sf "$(basename "$mpv_so")" "$target_dir/libmpv.so"
+        fi
+      fi
     build-packages:
       - clang
       - cmake
