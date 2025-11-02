@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:http/http.dart' as http;
@@ -27,12 +28,19 @@ class AudioController extends ChangeNotifier {
   bool _isDisposed = false;
   bool _playerInitAttempted = false;
   bool _playerAvailable = false;
+  bool _completedFlag = false;
 
   Future<void> _init() async {
     if (_playerInitAttempted) return;
     _playerInitAttempted = true;
 
     try {
+      try {
+        MediaKit.ensureInitialized();
+      } catch (e) {
+        debugPrint('AudioController: MediaKit.ensureInitialized() failed: $e');
+      }
+
       _player = Player();
       _playerAvailable = true;
 
@@ -85,9 +93,14 @@ class AudioController extends ChangeNotifier {
       _player!.stream.completed.listen((bool completed) {
         if (_isDisposed) return;
         if (completed) {
-          _player!.seek(Duration.zero);
+          debugPrint(
+              '✅ [AudioController] MEDIA COMPLETED - setting _completedFlag=true');
+          _completedFlag = true;
+          unawaited(_player!.seek(Duration.zero));
           _player!.pause();
           buttonNotifier.value = ButtonState.paused;
+          debugPrint(
+              '✅ [AudioController] Button state changed to PAUSED (via completion)');
         }
       });
     } catch (e) {
@@ -163,6 +176,7 @@ class AudioController extends ChangeNotifier {
     }
 
     try {
+      _completedFlag = false;
       buttonNotifier.value = ButtonState.loading;
       debugPrint("AudioController: Setting audio source: $url");
 
@@ -206,6 +220,7 @@ class AudioController extends ChangeNotifier {
           'Audio backend is not available on this platform (libmpv missing?).');
     }
     try {
+      _completedFlag = false;
       buttonNotifier.value = ButtonState.loading;
       try {
         await _player!.stop();
@@ -277,6 +292,21 @@ class AudioController extends ChangeNotifier {
     }
   }
 
+  Future<void> setVolume(double volume) async {
+    if (_isDisposed) return;
+    await _init();
+    if (!_playerAvailable || _player == null) {
+      debugPrint('AudioController: setVolume() called but player unavailable.');
+      return;
+    }
+    try {
+      await _player!.setVolume(volume.clamp(0.0, 1.0));
+      debugPrint('AudioController: Volume set to $volume');
+    } catch (e) {
+      debugPrint('AudioController: Failed to set volume: $e');
+    }
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
@@ -289,6 +319,12 @@ class AudioController extends ChangeNotifier {
     buttonNotifier.dispose();
     super.dispose();
     debugPrint('AudioController disposed');
+  }
+
+  bool get hasRecentlyCompleted => _completedFlag;
+
+  void clearCompletedFlag() {
+    _completedFlag = false;
   }
 }
 

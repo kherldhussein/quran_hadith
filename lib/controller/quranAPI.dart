@@ -342,11 +342,12 @@ class QuranAPI {
       {String? reciterId}) async {
     try {
       String selected = await _resolveReciterId(reciterId);
+      // Validate reciter format: "ar.alafasy", "ar.minshawi", etc.
       final validPattern =
-          RegExp(r'^[a-z]{2}\.[a-z0-9]+', caseSensitive: false);
+          RegExp(r'^[a-z]{2}\.[a-z0-9._-]+$', caseSensitive: false);
       if (!validPattern.hasMatch(selected)) {
         debugPrint(
-            'QuranAPI: Reciter "$selected" may be incompatible with api.alquran.cloud; falling back to ar.alafasy');
+            '⚠️ QuranAPI: Reciter "$selected" has invalid format; falling back to ar.alafasy');
         selected = 'ar.alafasy';
       }
       final response = await dio
@@ -361,6 +362,8 @@ class QuranAPI {
         if (data != null) {
           final audioUrl = data['audio'] as String?;
           if (audioUrl != null && audioUrl.isNotEmpty) {
+            debugPrint(
+                '✅ QuranAPI: Got audio URL for $suratNo:$ayahNo with reciter "$selected"');
             return audioUrl;
           }
         }
@@ -497,6 +500,7 @@ class QuranAPI {
   /// 5) Default 'ar.alafasy'
   Future<String> _resolveReciterId(String? overrideId) async {
     if (overrideId != null && overrideId.trim().isNotEmpty) {
+      debugPrint('🔊 QuranAPI: Using override reciter: $overrideId');
       return overrideId.trim();
     }
     try {
@@ -504,14 +508,24 @@ class QuranAPI {
     } catch (_) {}
     final fromSettings =
         appSP.getString('selectedReciter', defaultValue: '').trim();
-    if (fromSettings.isNotEmpty) return fromSettings;
+    if (fromSettings.isNotEmpty) {
+      debugPrint('🔊 QuranAPI: Using reciter from settings: $fromSettings');
+      return fromSettings;
+    }
 
     final legacy = SpUtil.getReciter().trim();
-    if (legacy.isNotEmpty) return legacy;
+    if (legacy.isNotEmpty) {
+      debugPrint('🔊 QuranAPI: Using legacy reciter: $legacy');
+      return legacy;
+    }
 
     final inMemory = ReciterService.instance.currentReciterId.value.trim();
-    if (inMemory.isNotEmpty) return inMemory;
+    if (inMemory.isNotEmpty) {
+      debugPrint('🔊 QuranAPI: Using in-memory reciter: $inMemory');
+      return inMemory;
+    }
 
+    debugPrint('🔊 QuranAPI: Using default reciter: ar.alafasy');
     return 'ar.alafasy';
   }
 }
