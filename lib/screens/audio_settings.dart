@@ -49,7 +49,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
     final storedReciter =
         appSP.getString('selectedReciter', defaultValue: _selectedReciterId);
     final storedSpeed = appSP.getDouble('playbackSpeed', defaultValue: 1.0);
-    final storedAutoPlay = appSP.getBool('autoPlay', defaultValue: false);
+    final storedAutoPlay = SpUtil.getAutoPlayNextAyah();
     final storedTranslation = appSP.getBool(
       'showTranslationWhilePlaying',
       defaultValue: true,
@@ -65,6 +65,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
         storedReciter.isNotEmpty ? storedReciter : _selectedReciterId;
     _playbackSpeed = storedSpeed;
     _autoPlay = storedAutoPlay;
+    await SpUtil.setAutoPlayNextAyah(_autoPlay);
     _showTranslationWhilePlaying = storedTranslation;
     _audioQuality = storedQuality;
     _repeatMode = storedRepeat;
@@ -75,6 +76,9 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
   Future<void> _saveSetting(String key, dynamic value) async {
     if (value is bool) {
       await appSP.setBool(key, value);
+      if (key == 'autoPlay') {
+        await SpUtil.setAutoPlayNextAyah(value);
+      }
     } else if (value is double) {
       await appSP.setDouble(key, value);
     } else if (value is int) {
@@ -124,8 +128,7 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
       try {
         return _reciters
             .firstWhere((reciter) => reciter.id == _selectedReciterId);
-      } catch (_) {
-      }
+      } catch (_) {}
     }
     return ReciterService.instance
         .resolveById(_selectedReciterId, within: _reciters);

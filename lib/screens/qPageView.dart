@@ -13,12 +13,12 @@ import 'package:scroll_to_index/scroll_to_index.dart';
 import 'dart:async';
 
 import '../controller/audio_controller.dart';
+import 'package:quran_hadith/services/global_audio_service.dart';
 import '../controller/favorite.dart';
 import '../utils/sp_util.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
 import 'package:quran_hadith/services/offline_audio_service.dart' as offline;
 import 'package:quran_hadith/services/native_desktop_service.dart';
-import 'package:quran_hadith/services/playback_state_service.dart';
 import 'package:quran_hadith/widgets/quick_jump_dialog.dart';
 import 'package:quran_hadith/widgets/reading_mode_sheet.dart';
 import 'package:quran_hadith/widgets/split_view_pane.dart';
@@ -49,7 +49,8 @@ class QPageView extends StatefulWidget {
 class _QPageViewState extends State<QPageView>
     with AutomaticKeepAliveClientMixin {
   late final AutoScrollController _scrollController;
-  late final AudioController _audioController;
+  late final GlobalAudioService _audioService;
+  AudioController get _audioController => _audioService.audioController;
   final Map<int, bool> _favoriteStates = {};
   final Map<int, String> _translations = {};
   bool _isLoadingTranslations = false;
@@ -62,13 +63,11 @@ class _QPageViewState extends State<QPageView>
   bool _isSurahPlaybackMode = false;
   DateTime? _sessionStartTime;
   Timer? _progressTrackingTimer;
-  Timer? _listeningProgressTimer;
   VoidCallback? _reciterListener;
   bool _isOfflineDownloaded = false;
-  bool _isProcessingAudioStateChange = false;
-  DateTime? _currentAyahPlaybackStart;
   bool _isSplitViewEnabled = false;
-  late final AutoScrollController _scrollControllerRight; // For split view right pane
+  late final AutoScrollController
+      _scrollControllerRight; // For split view right pane
   bool _isScrollingSyncInProgress = false; // Prevent infinite scroll loop
 
   @override
@@ -77,7 +76,11 @@ class _QPageViewState extends State<QPageView>
     _scrollController = AutoScrollController();
     _scrollControllerRight = AutoScrollController();
     _setupSynchronizedScrolling();
-    _audioController = AudioController();
+    _audioService = GlobalAudioService();
+    _audioService.setNavigationCallbacks(
+      onNextAyahRequested: _onServiceNextAyahRequested,
+      onPreviousAyahRequested: _onServicePreviousAyahRequested,
+    );
     _sessionStartTime = DateTime.now();
     _initializeData();
     _startProgressTracking();
@@ -117,8 +120,7 @@ class _QPageViewState extends State<QPageView>
           'with new reciter: ${ReciterService.instance.currentReciterId.value}',
         );
 
-        _audioController.pause();
-        _stopListeningProgressTracking();
+        _audioService.pause();
         await Future.delayed(const Duration(
             milliseconds: 300)); // Brief pause for smooth transition
 
@@ -177,54 +179,34 @@ class _QPageViewState extends State<QPageView>
 
   /// Handle play/pause keyboard shortcut (Space key)
   void _handlePlayPauseShortcut() {
-    if (!mounted || _currentlyPlayingAyah == null) return;
+    if (!mounted) return;
 
-    if (_audioController.buttonNotifier.value == ButtonState.playing) {
-      _audioController.pause();
-      _stopListeningProgressTracking();
-      debugPrint('⏸️ Pause: Keyboard shortcut (Space)');
-    } else {
-      final currentAyah = widget.ayahList?.firstWhere(
-        (a) => a.number == _currentlyPlayingAyah,
-        orElse: () => Ayah(),
-      );
-      if (currentAyah != null && currentAyah.number != null) {
-        _playAyahAudio(currentAyah);
-        debugPrint('▶️ Play: Keyboard shortcut (Space)');
-      }
+    if (_audioService.currentContext != null) {
+      _audioService.togglePlayPause();
+      debugPrint('🔁 Toggle playback: Keyboard shortcut (Space)');
+      return;
+    }
+
+    if (_currentlyPlayingAyah == null) return;
+    final currentAyah = _findAyahByNumber(_currentlyPlayingAyah!);
+    if (currentAyah != null) {
+      _playAyahAudio(currentAyah);
+      debugPrint('▶️ Play: Keyboard shortcut (Space)');
     }
   }
 
   /// Handle next ayah keyboard shortcut (Ctrl+Right)
   void _handleNextAyahShortcut() {
-    if (!mounted || _currentlyPlayingAyah == null || widget.ayahList == null) {
-      return;
-    }
-
-    final currentIndex =
-        widget.ayahList!.indexWhere((a) => a.number == _currentlyPlayingAyah);
-
-    if (currentIndex != -1 && currentIndex < widget.ayahList!.length - 1) {
-      final nextAyah = widget.ayahList![currentIndex + 1];
-      _playAyahAudio(nextAyah);
-      debugPrint('⏭️ Next Ayah: Keyboard shortcut (Ctrl+Right)');
-    }
+    if (!mounted) return;
+    unawaited(_audioService.playNext());
+    debugPrint('⏭️ Next Ayah: Keyboard shortcut (Ctrl+Right)');
   }
 
   /// Handle previous ayah keyboard shortcut (Ctrl+Left)
   void _handlePreviousAyahShortcut() {
-    if (!mounted || _currentlyPlayingAyah == null || widget.ayahList == null) {
-      return;
-    }
-
-    final currentIndex =
-        widget.ayahList!.indexWhere((a) => a.number == _currentlyPlayingAyah);
-
-    if (currentIndex > 0) {
-      final previousAyah = widget.ayahList![currentIndex - 1];
-      _playAyahAudio(previousAyah);
-      debugPrint('⏮️ Previous Ayah: Keyboard shortcut (Ctrl+Left)');
-    }
+    if (!mounted) return;
+    unawaited(_audioService.playPrevious());
+    debugPrint('⏮️ Previous Ayah: Keyboard shortcut (Ctrl+Left)');
   }
 
   /// Setup synchronized scrolling between left and right panes in split view
@@ -232,7 +214,8 @@ class _QPageViewState extends State<QPageView>
     // Listen to left controller (Arabic pane) and sync to right
     _scrollController.addListener(() {
       if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
-      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) return;
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients)
+        return;
 
       _isScrollingSyncInProgress = true;
 
@@ -256,7 +239,8 @@ class _QPageViewState extends State<QPageView>
     // Listen to right controller (translation pane) and sync to left
     _scrollControllerRight.addListener(() {
       if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
-      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) return;
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients)
+        return;
 
       _isScrollingSyncInProgress = true;
 
@@ -281,70 +265,34 @@ class _QPageViewState extends State<QPageView>
   }
 
   void _onAudioStateChanged() {
-    if (_isProcessingAudioStateChange) {
-      debugPrint('⚠️ Audio state change already being processed, skipping...');
+    final state = _audioController.buttonNotifier.value;
+
+    if (state == ButtonState.playing) {
       return;
     }
 
-    if (_audioController.buttonNotifier.value == ButtonState.paused &&
-        !_isAudioLoading) {
-      _isProcessingAudioStateChange = true;
+    if (state == ButtonState.paused && !_isAudioLoading) {
+      final lastAyahNumber = widget.ayahList?.isNotEmpty == true
+          ? widget.ayahList!.last.number
+          : null;
 
-      final repeatMode = SpUtil.getRepeatMode();
-      final autoPlayNext = SpUtil.getAutoPlayNextAyah();
-
-      if (repeatMode == 'ayah' && _currentlyPlayingAyah != null) {
-        final match = widget.ayahList?.firstWhere(
-            (a) => a.number == _currentlyPlayingAyah,
-            orElse: () => Ayah());
-        if (match != null && match.number != null) {
-          Future.delayed(AnimationTimings.autoScrollDelay, () {
-            if (!mounted) return;
-            _isProcessingAudioStateChange = false;
-            _playAyahAudio(match);
-          });
-          return;
-        }
-      }
-
-      if ((_isSurahPlaybackMode || autoPlayNext) &&
-          _currentlyPlayingAyah != null) {
-        final currentIndex = widget.ayahList!
-            .indexWhere((a) => a.number == _currentlyPlayingAyah);
-
-        if (currentIndex != -1 && currentIndex < widget.ayahList!.length - 1) {
-          Future.delayed(AnimationTimings.autoScrollDelay, () {
-            if (!mounted) return;
-            _isProcessingAudioStateChange = false;
-            _playAyahAudio(widget.ayahList![currentIndex + 1]);
-          });
-        } else if (repeatMode == 'surah' &&
-            currentIndex == widget.ayahList!.length - 1) {
-          Future.delayed(AnimationTimings.autoScrollDelay, () {
-            if (!mounted) return;
-            _isProcessingAudioStateChange = false;
-            _playAyahAudio(widget.ayahList![0]);
-          });
-        } else if (_isSurahPlaybackMode) {
-          _isSurahPlaybackMode = false;
-          _isProcessingAudioStateChange = false;
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Finished playing ${widget.suratEnglishName}',
-                ),
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 2),
+      if (_isSurahPlaybackMode &&
+          lastAyahNumber != null &&
+          _currentlyPlayingAyah == lastAyahNumber) {
+        setState(() => _isSurahPlaybackMode = false);
+        _audioService.setSurahMode(false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Finished playing ${widget.suratEnglishName}',
               ),
-            );
-          }
-        } else {
-          _isProcessingAudioStateChange = false;
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
         }
-      } else {
-        _isProcessingAudioStateChange = false;
       }
     }
   }
@@ -424,33 +372,6 @@ class _QPageViewState extends State<QPageView>
     });
   }
 
-  /// Start tracking listening progress during audio playback
-  void _startListeningProgressTracking() {
-    _listeningProgressTimer?.cancel();
-    _currentAyahPlaybackStart = DateTime.now();
-
-    _listeningProgressTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (_currentlyPlayingAyah != null &&
-          _audioController.buttonNotifier.value == ButtonState.playing) {
-        final currentPosition = _audioController.progressNotifier.value.current;
-        _saveListeningProgress(_currentlyPlayingAyah!, currentPosition.inMilliseconds);
-      }
-    });
-  }
-
-  /// Stop tracking listening progress
-  void _stopListeningProgressTracking() {
-    _listeningProgressTimer?.cancel();
-    _listeningProgressTimer = null;
-
-    // Save final progress when stopping
-    if (_currentlyPlayingAyah != null) {
-      final currentPosition = _audioController.progressNotifier.value.current;
-      _saveListeningProgress(_currentlyPlayingAyah!, currentPosition.inMilliseconds);
-    }
-    _currentAyahPlaybackStart = null;
-  }
-
   /// Load last read position for this surah
   Future<void> _loadLastReadPosition() async {
     try {
@@ -520,9 +441,46 @@ class _QPageViewState extends State<QPageView>
     setState(() {});
   }
 
+  Ayah? _findAyahByNumber(int ayahNumber) {
+    if (widget.ayahList == null) return null;
+    try {
+      return widget.ayahList!.firstWhere((ayah) => ayah.number == ayahNumber);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _onServiceNextAyahRequested(int ayahNumber) {
+    debugPrint(
+        '🎯 [qPageView._onServiceNextAyahRequested] Callback invoked with ayahNumber=$ayahNumber');
+    final nextAyah = _findAyahByNumber(ayahNumber);
+    if (nextAyah != null) {
+      debugPrint(
+          '✅ [qPageView._onServiceNextAyahRequested] Ayah found, calling _playAyahAudio');
+      _playAyahAudio(nextAyah);
+    } else {
+      debugPrint(
+          '❌ [qPageView._onServiceNextAyahRequested] Ayah $ayahNumber not found in list');
+    }
+  }
+
+  void _onServicePreviousAyahRequested(int ayahNumber) {
+    debugPrint(
+        '🎯 [qPageView._onServicePreviousAyahRequested] Callback invoked with ayahNumber=$ayahNumber');
+    final previousAyah = _findAyahByNumber(ayahNumber);
+    if (previousAyah != null) {
+      debugPrint(
+          '✅ [qPageView._onServicePreviousAyahRequested] Ayah found, calling _playAyahAudio');
+      _playAyahAudio(previousAyah);
+    } else {
+      debugPrint(
+          '❌ [qPageView._onServicePreviousAyahRequested] Ayah $ayahNumber not found in list');
+    }
+  }
+
   /// Load and play audio for a specific ayah
   Future<void> _playAyahAudio(Ayah ayah) async {
-    if (_isAudioLoading) return;
+    if (!mounted || _isAudioLoading) return;
 
     setState(() {
       _isAudioLoading = true;
@@ -530,105 +488,66 @@ class _QPageViewState extends State<QPageView>
       _currentlyPlayingAyah = ayah.number;
     });
 
+    _audioService.setSurahMode(_isSurahPlaybackMode);
+
     try {
       final quranAPI = Provider.of<QuranAPI>(context, listen: false);
+      String? audioUrl;
 
-      final reciterId = ReciterService.instance.currentReciterId.value;
-      final localFile =
-          await offline.OfflineAudioService.instance.getLocalAyahFile(
-        reciterId: reciterId,
-        surahNumber: widget.suratNo!,
-        ayahNumber: ayah.number!,
-      );
-
-      if (localFile != null) {
-        await _audioController.setLocalSource(localFile.path);
-        await _audioController.setSpeed(SpUtil.getAudioSpeed());
-        _audioController.play();
-
-        // Update global playback state
-        PlaybackStateService().updatePlayback(
-          surahName: widget.suratName ?? '',
-          surahEnglishName: widget.suratEnglishName ?? '',
-          surahNumber: widget.suratNo ?? 0,
-          ayahNumber: ayah.number ?? 0,
-          reciter: ReciterService.instance.currentReciterId.value,
-        );
-
-        // Update native desktop media controls
-        nativeDesktop.updatePlaybackInfo(
-          surah: widget.suratEnglishName ?? widget.suratName ?? 'Surah',
-          ayah: ayah.number ?? 0,
-          reciter: ReciterService.instance.currentReciterId.value,
-          isPlaying: true,
-          position: Duration.zero,
-          duration: const Duration(seconds: 60),
-        );
-      } else {
-        final audioUrl = await quranAPI.getAyahAudioUrl(
+      try {
+        audioUrl = await quranAPI.getAyahAudioUrl(
           widget.suratNo!,
           ayah.number!,
         );
+      } catch (error) {
+        debugPrint('⚠️ Failed to resolve remote audio url: $error');
+      }
 
-        if (audioUrl == null || audioUrl.isEmpty) {
-          setState(() {
-            _audioError = 'Audio not available for this ayah';
-            _currentlyPlayingAyah = null;
-          });
+      if ((audioUrl == null || audioUrl.isEmpty) &&
+          !await offline.OfflineAudioService.instance.isSurahDownloaded(
+            reciterId: ReciterService.instance.currentReciterId.value,
+            surahNumber: widget.suratNo!,
+            ayahCount: widget.ayahList?.length ?? 0,
+          )) {
+        if (!mounted) return;
+        setState(() {
+          _audioError = 'Audio not available for this ayah';
+          _currentlyPlayingAyah = null;
+        });
 
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_audioError!),
               backgroundColor: Colors.orange,
             ),
           );
-          return;
         }
-
-        await _audioController.setAudioSource(audioUrl);
-        await _audioController.setSpeed(SpUtil.getAudioSpeed());
-        _audioController.play();
-
-        // Update global playback state
-        PlaybackStateService().updatePlayback(
-          surahName: widget.suratName ?? '',
-          surahEnglishName: widget.suratEnglishName ?? '',
-          surahNumber: widget.suratNo ?? 0,
-          ayahNumber: ayah.number ?? 0,
-          reciter: ReciterService.instance.currentReciterId.value,
-        );
-
-        // Update native desktop media controls
-        nativeDesktop.updatePlaybackInfo(
-          surah: widget.suratEnglishName ?? widget.suratName ?? 'Surah',
-          ayah: ayah.number ?? 0,
-          reciter: ReciterService.instance.currentReciterId.value,
-          isPlaying: true,
-          position: Duration.zero,
-          duration: const Duration(seconds: 60),
-        );
+        return;
       }
 
-      // Start periodic listening progress tracking
-      _startListeningProgressTracking();
-
-      await _saveListeningProgress(ayah.number!, 0);
-
-      SpUtil.setLastListen(
-        surah: widget.suratNo!,
-        ayah: ayah.number!,
-        positionMs: 0,
+      await _audioService.playAyah(
+        surahNumber: widget.suratNo!,
+        ayahNumber: ayah.number!,
+        surahName: widget.suratName ?? '',
+        surahEnglishName: widget.suratEnglishName ?? '',
+        arabicText: ayah.text,
+        audioUrl: audioUrl,
+        allAyahsInSurah: widget.ayahList
+            ?.where((a) => a.number != null)
+            .map((a) => a.number!)
+            .toList(),
       );
 
       if (mounted) {
         Future.delayed(AnimationTimings.autoScrollDelay, () {
-          if (mounted) {
+          if (mounted && ayah.number != null) {
             _scrollToAyah(ayah.number!);
           }
         });
       }
     } catch (e) {
-      debugPrint("Error playing audio for ayah ${ayah.number}: $e");
+      debugPrint('Error playing audio for ayah ${ayah.number}: $e');
 
       String errorMessage = 'Failed to load audio';
       if (e.toString().contains('invalid parameter')) {
@@ -640,10 +559,12 @@ class _QPageViewState extends State<QPageView>
         errorMessage = 'Connection timeout. Please try again.';
       }
 
-      setState(() {
-        _audioError = errorMessage;
-        _currentlyPlayingAyah = null;
-      });
+      if (mounted) {
+        setState(() {
+          _audioError = errorMessage;
+          _currentlyPlayingAyah = null;
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -752,6 +673,7 @@ class _QPageViewState extends State<QPageView>
     setState(() {
       _isSurahPlaybackMode = true;
     });
+    _audioService.setSurahMode(true);
 
     await _playAyahAudio(widget.ayahList!.first);
 
@@ -769,8 +691,7 @@ class _QPageViewState extends State<QPageView>
             textColor: Theme.of(context).colorScheme.onPrimary,
             onPressed: () {
               setState(() => _isSurahPlaybackMode = false);
-              _audioController.pause();
-              _stopListeningProgressTracking();
+              _audioService.stop();
             },
           ),
         ),
@@ -798,8 +719,8 @@ class _QPageViewState extends State<QPageView>
     );
   }
 
-  void _scrollToAyah(int ayahNumber) {
-    if (!database.getPreferences().autoScroll) {
+  Future<void> _scrollToAyah(int ayahNumber) async {
+    if (!SpUtil.getAutoScroll()) {
       debugPrint('⏸️ Auto scroll disabled by user');
       return;
     }
@@ -807,65 +728,28 @@ class _QPageViewState extends State<QPageView>
     final index =
         widget.ayahList!.indexWhere((ayah) => ayah.number == ayahNumber);
     if (index != -1) {
-      _scrollController.scrollToIndex(
-        index,
-        duration: AnimationTimings.scrollAnimationDuration,
-        preferPosition: AutoScrollPosition.middle,
-      );
-      _lastVisibleAyah = ayahNumber; // Track visible ayah
-      debugPrint('📜 Auto scrolled to Ayah $ayahNumber');
-    }
-  }
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          await _scrollController.scrollToIndex(
+            index,
+            duration: AnimationTimings.scrollAnimationDuration,
+            preferPosition: AutoScrollPosition.middle,
+          );
 
-  /// Save listening progress to database with realistic time calculation
-  Future<void> _saveListeningProgress(int ayahNumber, int positionMs) async {
-    if (widget.suratNo == null) return;
+          if (_isSplitViewEnabled) {
+            await _scrollControllerRight.scrollToIndex(
+              index,
+              duration: AnimationTimings.scrollAnimationDuration,
+              preferPosition: AutoScrollPosition.middle,
+            );
+          }
 
-    try {
-      final currentProgress = database.getListeningProgress(
-        widget.suratNo!,
-        ayahNumber,
-      );
-
-      int addedListenTime = 0;
-
-      // Calculate time elapsed since playback started for this ayah
-      if (_currentAyahPlaybackStart != null) {
-        final elapsed = DateTime.now().difference(_currentAyahPlaybackStart!).inSeconds;
-        // Add elapsed time, but cap it at a reasonable limit
-        addedListenTime = elapsed.clamp(0, 300);
-
-        // Reset the start time for next interval
-        _currentAyahPlaybackStart = DateTime.now();
-      } else if (currentProgress != null) {
-        // Fallback: use position difference
-        final previousPosition = currentProgress.positionMs;
-        addedListenTime = ((positionMs - previousPosition) ~/ 1000).abs();
-        addedListenTime = addedListenTime.clamp(0, 300);
-      } else {
-        // First time tracking this ayah
-        addedListenTime = 5; // Default 5 seconds for initial save
-      }
-
-      final previousTotal = currentProgress?.totalListenTimeSeconds ?? 0;
-      final newTotalListenTime = previousTotal + addedListenTime;
-
-      final progress = ListeningProgress(
-        surahNumber: widget.suratNo!,
-        ayahNumber: ayahNumber,
-        positionMs: positionMs,
-        lastListenedAt: DateTime.now(),
-        totalListenTimeSeconds: newTotalListenTime,
-        completed: false,
-        reciter: ReciterService.instance.currentReciterId.value,
-        playbackSpeed: SpUtil.getAudioSpeed(),
-      );
-
-      await database.saveListeningProgress(progress);
-      debugPrint(
-          '⏱️ Listening: Surah ${widget.suratNo}, Ayah $ayahNumber - Added ${addedListenTime}s (Total: ${newTotalListenTime}s)');
-    } catch (e) {
-      debugPrint('❌ Error saving listening progress: $e');
+          _lastVisibleAyah = ayahNumber; // Track visible ayah
+          debugPrint('📜 Auto scrolled to Ayah $ayahNumber');
+        } catch (e) {
+          debugPrint('⚠️ Failed to auto scroll to Ayah $ayahNumber: $e');
+        }
+      });
     }
   }
 
@@ -916,7 +800,7 @@ class _QPageViewState extends State<QPageView>
     final isDesktop = isDisplayDesktop(context);
 
     return ChangeNotifierProvider.value(
-      value: _audioController, // Provide the AudioController instance
+      value: _audioController,
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         body: Column(
@@ -1051,7 +935,8 @@ class _QPageViewState extends State<QPageView>
                   );
                 }
               },
-              tooltip: _isSplitViewEnabled ? 'Exit Split View' : 'Enable Split View',
+              tooltip:
+                  _isSplitViewEnabled ? 'Exit Split View' : 'Enable Split View',
               splashRadius: 20,
             ),
           PopupMenuButton<String>(
@@ -1155,11 +1040,14 @@ class _QPageViewState extends State<QPageView>
                       _buildNavigationChip(
                           'Middle', widget.ayahList!.length ~/ 2, theme),
                       ActionChip(
-                        avatar: Icon(FontAwesomeIcons.locationArrow, size: 14, color: theme.colorScheme.secondary),
+                        avatar: Icon(FontAwesomeIcons.locationArrow,
+                            size: 14, color: theme.colorScheme.secondary),
                         label: const Text('Jump to Ayah'),
                         onPressed: _showQuickJumpDialog,
-                        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
-                        labelStyle: TextStyle(color: theme.colorScheme.secondary),
+                        backgroundColor:
+                            theme.colorScheme.secondary.withOpacity(0.1),
+                        labelStyle:
+                            TextStyle(color: theme.colorScheme.secondary),
                       ),
                     ],
                   ),
@@ -1662,8 +1550,7 @@ class _QPageViewState extends State<QPageView>
               icon: const Icon(FontAwesomeIcons.pause, size: 18),
               color: theme.colorScheme.primary,
               onPressed: () {
-                _audioController.pause();
-                _stopListeningProgressTracking();
+                _audioService.pause();
                 setState(() => _currentlyPlayingAyah = null);
               },
               tooltip: 'Pause',
@@ -1780,7 +1667,8 @@ class _QPageViewState extends State<QPageView>
         onPressed: () => _scrollToAyah(1),
         backgroundColor: theme.colorScheme.primary,
         tooltip: 'Scroll to top',
-        child: Icon(FontAwesomeIcons.arrowUp, color: theme.colorScheme.onPrimary),
+        child:
+            Icon(FontAwesomeIcons.arrowUp, color: theme.colorScheme.onPrimary),
       );
     } else {
       return FloatingActionButton.extended(
@@ -2090,14 +1978,13 @@ class _QPageViewState extends State<QPageView>
   @override
   void dispose() {
     _progressTrackingTimer?.cancel();
-    _listeningProgressTimer?.cancel();
     _audioController.buttonNotifier.removeListener(_onAudioStateChanged);
     if (_reciterListener != null) {
       ReciterService.instance.currentReciterId
           .removeListener(_reciterListener!);
     }
+    _audioService.clearNavigationCallbacks();
     _saveReadingProgress();
-    _stopListeningProgressTracking();
     _scrollController.dispose();
     _scrollControllerRight.dispose();
     // Don't dispose the singleton AudioController - it persists across navigation
