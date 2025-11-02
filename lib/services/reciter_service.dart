@@ -41,27 +41,53 @@ class ReciterService {
     final fromSettings =
         appSP.getString('selectedReciter', defaultValue: '').trim();
     final fromLegacy = SpUtil.getReciter();
-    final resolved =
-        (fromSettings.isNotEmpty ? fromSettings : fromLegacy).trim();
+    var resolved = (fromSettings.isNotEmpty ? fromSettings : fromLegacy).trim();
+
+    // Validate reciter ID format - if it's just a number, it's invalid
+    if (resolved.isNotEmpty && !_isValidReciterId(resolved)) {
+      debugPrint(
+          '⚠️ ReciterService: Invalid reciter ID format "$resolved", resetting to default');
+      resolved = 'ar.alafasy'; // Reset to default
+    }
+
     if (resolved.isNotEmpty && resolved != currentReciterId.value) {
       currentReciterId.value = resolved;
     }
+  }
+
+  /// Validate reciter ID format - should be in pattern like "ar.alafasy"
+  bool _isValidReciterId(String id) {
+    final validPattern =
+        RegExp(r'^[a-z]{2}\.[a-z0-9._-]+$', caseSensitive: false);
+    return validPattern.hasMatch(id);
   }
 
   /// Update the current reciter and notify listeners. Persistence should be
   /// handled by the caller (UI) to avoid coupling storage here.
   void setCurrentReciterId(String id) {
     if (id.isEmpty) return;
+
+    // Validate reciter ID format
+    if (!_isValidReciterId(id)) {
+      debugPrint(
+          '⚠️ ReciterService: Invalid reciter ID format "$id", ignoring');
+      return;
+    }
+
     if (id != currentReciterId.value) {
       currentReciterId.value = id;
     }
   }
 
   Future<List<Reciter>> getReciters({bool forceRefresh = false}) async {
+    // Layer 1: In-memory cache (fastest)
     if (!forceRefresh && _inMemory != null) {
+      debugPrint(
+          '✅ ReciterService: Returning ${_inMemory!.length} reciters from memory cache');
       return _inMemory!;
     }
 
+    // Layer 2: Disk cache from Hive
     final cached = database.getCachedReciters();
     final cachedAt = database.getRecitersCachedAt();
 
@@ -69,13 +95,20 @@ class ReciterService {
       final isFresh = cachedAt != null &&
           DateTime.now().difference(cachedAt) < _cacheValidity;
       if (isFresh) {
+        debugPrint(
+            '✅ ReciterService: Returning ${cached.length} reciters from disk cache (age: ${DateTime.now().difference(cachedAt).inHours}h)');
         _inMemory = cached;
         _lastFetched = cachedAt;
         return cached;
+      } else if (cached.isNotEmpty && cachedAt != null) {
+        debugPrint(
+            '⚠️ ReciterService: Disk cache exists but stale (age: ${DateTime.now().difference(cachedAt).inDays}d), will try API refresh');
       }
     }
 
+    // Layer 3: Fetch from API
     try {
+      debugPrint('🔄 ReciterService: Fetching reciters from API...');
       final response = await _client.get<Map<String, dynamic>>(
         '/reciters',
         queryParameters: {
@@ -106,18 +139,26 @@ class ReciterService {
         _inMemory = reciters;
         _lastFetched = DateTime.now();
         await database.cacheReciters(reciters);
+        debugPrint(
+            '✅ ReciterService: Fetched ${reciters.length} reciters from API and cached');
         return reciters;
       }
     } catch (e) {
-      debugPrint('ReciterService: Failed to fetch reciters: $e');
+      debugPrint('⚠️ ReciterService: Failed to fetch reciters from API: $e');
     }
 
+    // Layer 4: Fallback to stale cache if available
     if (cached.isNotEmpty) {
+      debugPrint(
+          '⚠️ ReciterService: Using stale disk cache with ${cached.length} reciters');
       _inMemory = cached;
       _lastFetched = cachedAt;
       return cached;
     }
 
+    // Layer 5: Last resort - hardcoded fallback
+    debugPrint(
+        '⚠️ ReciterService: Using hardcoded fallback with ${Reciter.fallback.length} reciters');
     _inMemory = Reciter.fallback;
     return Reciter.fallback;
   }

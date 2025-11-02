@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:quran_hadith/models/search/ayah.dart';
-import 'package:quran_hadith/models/search/surah.dart';
 import 'package:quran_hadith/controller/search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -67,8 +66,124 @@ class IntelligentSearchService extends ChangeNotifier {
 
   // Surah characteristics
   final Map<String, List<int>> _surahCharacteristics = {
-    'makki': [1, 6, 7, 10, 11, 12, 15, 17, 18, 19, 20, 21, 23, 25, 26, 27, 28, 29, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 50, 51, 52, 53, 54, 55, 56, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 114],
-    'madani': [2, 3, 4, 5, 8, 9, 13, 14, 16, 22, 24, 33, 47, 48, 49, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 98, 99, 110],
+    'makki': [
+      1,
+      6,
+      7,
+      10,
+      11,
+      12,
+      15,
+      17,
+      18,
+      19,
+      20,
+      21,
+      23,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      111,
+      112,
+      113,
+      114
+    ],
+    'madani': [
+      2,
+      3,
+      4,
+      5,
+      8,
+      9,
+      13,
+      14,
+      16,
+      22,
+      24,
+      33,
+      47,
+      48,
+      49,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      98,
+      99,
+      110
+    ],
   };
 
   // Arabic root patterns (simplified)
@@ -156,7 +271,8 @@ class IntelligentSearchService extends ChangeNotifier {
   }
 
   /// Standard text search with exact matching
-  Future<List<SearchResult>> _textSearch(String query, bool fuzzyEnabled) async {
+  Future<List<SearchResult>> _textSearch(
+      String query, bool fuzzyEnabled) async {
     final List<SearchResult> results = [];
     final normalized = _basicSearch.normalise(query.trim());
 
@@ -350,7 +466,8 @@ class IntelligentSearchService extends ChangeNotifier {
         int temp = costs[i];
         costs[i] = s1[i - 1] == s2[j - 1]
             ? costs[i - 1]
-            : 1 + [costs[i - 1], prev, costs[i]].reduce((a, b) => a < b ? a : b);
+            : 1 +
+                [costs[i - 1], prev, costs[i]].reduce((a, b) => a < b ? a : b);
         prev = temp;
       }
     }
@@ -422,8 +539,8 @@ class IntelligentSearchService extends ChangeNotifier {
     if (partialQuery.isEmpty) return _searchHistory;
 
     return _searchHistory
-        .where((query) =>
-            query.toLowerCase().contains(partialQuery.toLowerCase()))
+        .where(
+            (query) => query.toLowerCase().contains(partialQuery.toLowerCase()))
         .toList();
   }
 

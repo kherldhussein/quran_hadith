@@ -29,7 +29,7 @@ class GestureService extends ChangeNotifier {
   // Sensitivity settings (0.0 - 1.0)
   double _swipeSensitivity = 0.5;
   double _pinchSensitivity = 0.5;
-  double _doubleTapDelay = 0.3; // seconds
+  final double _doubleTapDelay = 0.3; // seconds
 
   // Haptic feedback
   bool _hapticFeedback = true;
@@ -164,7 +164,8 @@ class GestureService extends ChangeNotifier {
       final timeDiff = now.difference(_lastTapTime!);
       final positionDiff = (position - _lastTapPosition!).distance;
 
-      if (timeDiff.inMilliseconds < (_doubleTapDelay * 1000) && positionDiff < 50) {
+      if (timeDiff.inMilliseconds < (_doubleTapDelay * 1000) &&
+          positionDiff < 50) {
         _lastTapTime = null;
         _lastTapPosition = null;
         debugPrint('👆 GestureService: Double-tap detected');
@@ -248,7 +249,9 @@ class GestureService extends ChangeNotifier {
 
   /// Handle two-finger swipe gesture
   GestureType? handleTwoFingerSwipe(DragEndDetails details, int pointerCount) {
-    if (!_gesturesEnabled || !_multiFingerGesturesEnabled || pointerCount != 2) {
+    if (!_gesturesEnabled ||
+        !_multiFingerGesturesEnabled ||
+        pointerCount != 2) {
       return null;
     }
 
@@ -269,8 +272,11 @@ class GestureService extends ChangeNotifier {
   }
 
   /// Handle three-finger swipe gesture
-  GestureType? handleThreeFingerSwipe(DragEndDetails details, int pointerCount) {
-    if (!_gesturesEnabled || !_multiFingerGesturesEnabled || pointerCount != 3) {
+  GestureType? handleThreeFingerSwipe(
+      DragEndDetails details, int pointerCount) {
+    if (!_gesturesEnabled ||
+        !_multiFingerGesturesEnabled ||
+        pointerCount != 3) {
       return null;
     }
 

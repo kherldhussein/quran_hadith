@@ -20,11 +20,13 @@ class PracticeModeService extends ChangeNotifier {
   // Recording state
   bool _isRecording = false;
   String? _recordingPath;
-  List<String> _recordings = []; // List of recording file paths for this ayah
+  final List<String> _recordings =
+      []; // List of recording file paths for this ayah
 
   // Progress tracking
   Map<String, int> _ayahPracticeCount = {}; // "surah:ayah" -> practice count
-  Map<String, DateTime> _lastPracticed = {}; // "surah:ayah" -> last practice date
+  Map<String, DateTime> _lastPracticed =
+      {}; // "surah:ayah" -> last practice date
 
   // Getters
   bool get isPracticeModeActive => _isPracticeModeActive;
@@ -101,7 +103,8 @@ class PracticeModeService extends ChangeNotifier {
     await _loadRecordings(surahNumber, ayahNumber);
 
     notifyListeners();
-    debugPrint('🎯 Practice mode started for Surah $surahNumber, Ayah $ayahNumber');
+    debugPrint(
+        '🎯 Practice mode started for Surah $surahNumber, Ayah $ayahNumber');
   }
 
   /// Stop practice mode
@@ -204,7 +207,8 @@ class PracticeModeService extends ChangeNotifier {
 
       // Mock recording path
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final recordingPath = 'recordings/${_practiceSurahNumber}_${_practiceAyahNumber}_$timestamp.m4a';
+      final recordingPath =
+          'recordings/${_practiceSurahNumber}_${_practiceAyahNumber}_$timestamp.m4a';
       _recordingPath = recordingPath;
       _recordings.add(recordingPath);
 
@@ -223,7 +227,8 @@ class PracticeModeService extends ChangeNotifier {
   Future<void> _loadRecordings(int surahNumber, int ayahNumber) async {
     // TODO: Load recordings from storage
     _recordings.clear();
-    debugPrint('🎙️ Loaded recordings for Surah $surahNumber, Ayah $ayahNumber');
+    debugPrint(
+        '🎙️ Loaded recordings for Surah $surahNumber, Ayah $ayahNumber');
   }
 
   /// Delete a recording
@@ -253,9 +258,8 @@ class PracticeModeService extends ChangeNotifier {
     // Save to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
 
-    final practiceCountString = _ayahPracticeCount.entries
-        .map((e) => '${e.key}=${e.value}')
-        .join('&');
+    final practiceCountString =
+        _ayahPracticeCount.entries.map((e) => '${e.key}=${e.value}').join('&');
     await prefs.setString(_keyPracticeCount, practiceCountString);
 
     final lastPracticedString = _lastPracticed.entries

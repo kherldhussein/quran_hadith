@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -169,7 +168,8 @@ class PerformanceService extends ChangeNotifier {
   }
 
   /// Preload image
-  Future<void> preloadImage(String key, String imagePath, BuildContext context) async {
+  Future<void> preloadImage(
+      String key, String imagePath, BuildContext context) async {
     if (!_enableImageCaching) return;
 
     if (_imageCache.containsKey(key)) return;
@@ -222,7 +222,8 @@ class PerformanceService extends ChangeNotifier {
             _preloadedAudio.add(key);
             debugPrint('⚡ PerformanceService: Preloaded audio: $key');
           } catch (e) {
-            debugPrint('⚡ PerformanceService: Failed to preload audio $key: $e');
+            debugPrint(
+                '⚡ PerformanceService: Failed to preload audio $key: $e');
           }
         }
       }
@@ -281,7 +282,8 @@ class PerformanceService extends ChangeNotifier {
   /// Trim image cache
   void _trimImageCache() {
     if (_imageCache.length > 30) {
-      final keysToRemove = _imageCache.keys.take(_imageCache.length - 30).toList();
+      final keysToRemove =
+          _imageCache.keys.take(_imageCache.length - 30).toList();
       for (final key in keysToRemove) {
         _imageCache.remove(key);
       }
@@ -298,11 +300,13 @@ class PerformanceService extends ChangeNotifier {
   /// Trim translation cache
   void _trimTranslationCache() {
     if (_translationCache.length > 100) {
-      final keysToRemove = _translationCache.keys.take(_translationCache.length - 100).toList();
+      final keysToRemove =
+          _translationCache.keys.take(_translationCache.length - 100).toList();
       for (final key in keysToRemove) {
         _translationCache.remove(key);
       }
-      debugPrint('⚡ PerformanceService: Trimmed translation cache to 100 items');
+      debugPrint(
+          '⚡ PerformanceService: Trimmed translation cache to 100 items');
     }
   }
 
@@ -338,7 +342,8 @@ class PerformanceService extends ChangeNotifier {
     if (frameRate < 55) {
       _jankCount++;
       _lastJankTime = DateTime.now();
-      debugPrint('⚡ PerformanceService: Jank detected! Frame rate: $frameRate FPS');
+      debugPrint(
+          '⚡ PerformanceService: Jank detected! Frame rate: $frameRate FPS');
     }
   }
 

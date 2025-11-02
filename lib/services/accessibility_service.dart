@@ -12,7 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - Skip-to-content shortcuts
 /// - Live region updates
 class AccessibilityService extends ChangeNotifier {
-  static final AccessibilityService _instance = AccessibilityService._internal();
+  static final AccessibilityService _instance =
+      AccessibilityService._internal();
   factory AccessibilityService() => _instance;
   AccessibilityService._internal();
 
@@ -22,7 +23,7 @@ class AccessibilityService extends ChangeNotifier {
   bool _announcePlaybackChanges = true;
   bool _announceNavigationChanges = true;
   bool _verboseAnnouncements = false;
-  double _announcementDelay = 0.5; // seconds
+  final double _announcementDelay = 0.5; // seconds
 
   // State tracking
   int? _currentAyahNumber;
@@ -41,7 +42,8 @@ class AccessibilityService extends ChangeNotifier {
   static const String _keyScreenReaderEnabled = 'accessibility_screen_reader';
   static const String _keyAnnounceAyah = 'accessibility_announce_ayah';
   static const String _keyAnnouncePlayback = 'accessibility_announce_playback';
-  static const String _keyAnnounceNavigation = 'accessibility_announce_navigation';
+  static const String _keyAnnounceNavigation =
+      'accessibility_announce_navigation';
   static const String _keyVerbose = 'accessibility_verbose';
 
   /// Initialize accessibility service
@@ -139,9 +141,8 @@ class AccessibilityService extends ChangeNotifier {
   void announceSearchResults(int count) {
     if (!_screenReaderEnabled) return;
 
-    final announcement = count == 1
-        ? '1 search result found'
-        : '$count search results found';
+    final announcement =
+        count == 1 ? '1 search result found' : '$count search results found';
 
     _announce(announcement);
   }
@@ -197,9 +198,12 @@ class AccessibilityService extends ChangeNotifier {
   }
 
   /// Generate semantic label for ayah card
-  String getAyahSemanticLabel(int surahNumber, int ayahNumber, String arabicText, {String? translation}) {
+  String getAyahSemanticLabel(
+      int surahNumber, int ayahNumber, String arabicText,
+      {String? translation}) {
     if (_verboseAnnouncements) {
-      String label = 'Surah $surahNumber, Ayah $ayahNumber. Arabic text: $arabicText';
+      String label =
+          'Surah $surahNumber, Ayah $ayahNumber. Arabic text: $arabicText';
       if (translation != null) {
         label += '. Translation: $translation';
       }
