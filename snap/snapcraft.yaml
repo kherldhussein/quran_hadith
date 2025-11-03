@@ -36,6 +36,9 @@ apps:
       - x11
       - unity7
       - opengl
+    environment:
+      # Ensure media_kit can find libmpv
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib:$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET
 
 parts:
   quran-hadith:
@@ -45,12 +48,23 @@ parts:
     flutter-target: lib/main.dart
     override-prime: |
       craftctl default
+      # Ensure libmpv symlink exists for media_kit
       arch_triplet="${CRAFT_ARCH_TRIPLET:-${SNAPCRAFT_ARCH_TRIPLET}}"
       target_dir="$CRAFT_PRIME/usr/lib/${arch_triplet}"
       if [ -d "$target_dir" ]; then
+        # Find libmpv and create symlink if needed
         mpv_so=$(find "$target_dir" -maxdepth 1 -name 'libmpv.so.*' -print -quit)
-        if [ -n "$mpv_so" ] && [ ! -e "$target_dir/libmpv.so" ]; then
-          ln -sf "$(basename "$mpv_so")" "$target_dir/libmpv.so"
+        if [ -n "$mpv_so" ]; then
+          mpv_name=$(basename "$mpv_so")
+          echo "Found libmpv: $mpv_name"
+          # Create unversioned symlink for media_kit
+          if [ ! -e "$target_dir/libmpv.so" ]; then
+            ln -sf "$mpv_name" "$target_dir/libmpv.so"
+            echo "Created symlink: libmpv.so -> $mpv_name"
+          fi
+        else
+          echo "WARNING: libmpv not found in $target_dir"
+          find "$target_dir" -name '*mpv*' 2>/dev/null || echo "No mpv files found"
         fi
       fi
     build-packages:
@@ -62,19 +76,34 @@ parts:
       - liblzma-dev
       - pkg-config
       - libkeybinder-3.0-dev
+      - libmpv-dev
     stage-packages:
       - libgtk-3-0
       - libglu1-mesa
       - libkeybinder-3.0-0
-      # media_kit runtime dependencies (libmpv)
+      # media_kit runtime dependencies (libmpv + dependencies)
       - libmpv1
-      # GStreamer runtime libraries for just_audio
+      - libva2
+      - libva-drm2
+      - libvdpau1
+      # FFmpeg and video codec libraries needed by libmpv
+      - libavcodec59
+      - libavformat59
+      - libavutil57
+      - libswscale6
+      # GStreamer runtime libraries for audio/video
       - libgstreamer1.0-0
       - gstreamer1.0-plugins-base
       - gstreamer1.0-plugins-good
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
       - gstreamer1.0-libav
-      # PulseAudio support
+      # PulseAudio and ALSA for audio
       - libpulse0
+      - libpulse-mainloop-glib0
+      - alsa-lib
       - pulseaudio-utils
+      # Additional audio codec support
+      - libopus0
+      - libvorbis0a
+      - libflac8
