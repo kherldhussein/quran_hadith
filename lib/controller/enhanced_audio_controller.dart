@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart' as rx;
-import 'package:quran_hadith/models/surah_model.dart'; // Import Surah model
+import 'package:quran_hadith/models/surah_model.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/services/reciter_service.dart';
@@ -172,27 +172,22 @@ class EnhancedAudioController extends ChangeNotifier {
   bool get continuousPlayback => _continuousPlayback;
   String get reciter => _reciter;
 
-  // --- Start of newly added getters and methods for AudioNativeDesktopBridge --- 
-
-  /// Returns true if the audio player is currently playing.
   bool get isPlaying => buttonNotifier.value == AudioButtonState.playing;
 
   /// Returns the current Surah object based on the current track.
   Surah? get currentSurah {
     final track = currentTrack;
     if (track == null) return null;
-    // Assuming surahName in PlaylistItem is the English name or suitable for display
     return Surah(
       number: track.surahNumber,
       name: track.surahName,
-      englishName: track.surahName, 
-      // Populate other fields as necessary if used elsewhere, 
-      // otherwise defaults or empty strings are fine for this context.
+      englishName: track.surahName,
       englishNameTranslation: '',
       revelationType: '',
-      numberOfAyahs: (track.surahNumber > 0 && track.surahNumber <= _ayahCounts.length)
-          ? _ayahCounts[track.surahNumber - 1]
-          : 0, // Ensure a default value if _ayahCounts is not applicable
+      numberOfAyahs:
+          (track.surahNumber > 0 && track.surahNumber <= _ayahCounts.length)
+              ? _ayahCounts[track.surahNumber - 1]
+              : 0,
     );
   }
 
@@ -200,7 +195,7 @@ class EnhancedAudioController extends ChangeNotifier {
   int? get currentAyah => currentTrack?.ayahNumber;
 
   /// Returns the name of the current reciter.
-  String get currentReciterName => _reciter; 
+  String get currentReciterName => _reciter;
 
   /// Returns the total duration of the current audio track.
   Duration get duration => progressNotifier.value.total;
@@ -217,8 +212,6 @@ class EnhancedAudioController extends ChangeNotifier {
   void previousAyah() {
     previous();
   }
-
-  // --- End of newly added getters and methods --- 
 
   EnhancedAudioController() {
     _init();
@@ -341,7 +334,6 @@ class EnhancedAudioController extends ChangeNotifier {
     }
   }
 
-
   /// Set playlist from ayah list
   Future<void> setPlaylistFromAyahs({
     required List<Ayah> ayahs,
@@ -356,7 +348,7 @@ class EnhancedAudioController extends ChangeNotifier {
         surahName: surahName,
         ayahNumber: ayah.number ?? (entry.key + 1),
         ayahText: ayah.text ?? '',
-        audioUrl: '', // Will be constructed in _loadAndPlayCurrent
+        audioUrl: '',
       );
     }).toList();
 
@@ -427,7 +419,6 @@ class EnhancedAudioController extends ChangeNotifier {
 
     notifyListeners();
   }
-
 
   /// Load and play current track
   Future<void> _loadAndPlayCurrent() async {
@@ -549,7 +540,6 @@ class EnhancedAudioController extends ChangeNotifier {
     await seek(newPosition < Duration.zero ? Duration.zero : newPosition);
   }
 
-
   /// Play next track
   Future<void> next() async {
     if (shuffleNotifier.value) {
@@ -602,7 +592,6 @@ class EnhancedAudioController extends ChangeNotifier {
     } while (newIndex == _currentIndex);
     return newIndex;
   }
-
 
   /// Set playback speed
   Future<void> setSpeed(double speed) async {
@@ -671,7 +660,6 @@ class EnhancedAudioController extends ChangeNotifier {
     notifyListeners();
   }
 
-
   Future<void> _saveListeningProgress() async {
     if (currentTrack == null) return;
 
@@ -706,7 +694,6 @@ class EnhancedAudioController extends ChangeNotifier {
     }
   }
 
-
   /// Set volume
   Future<void> setVolume(double volume) async {
     if (volume < 0.0 || volume > 1.0) return;
@@ -722,7 +709,6 @@ class EnhancedAudioController extends ChangeNotifier {
 
   /// Get volume
   double get volume => _audioPlayer?.volume ?? 1.0;
-
 
   /// Combined duration state stream
   Stream<DurationState> get durationState =>
@@ -767,7 +753,6 @@ class EnhancedAudioController extends ChangeNotifier {
     return _playerAvailable;
   }
 }
-
 
 class PlaylistItem {
   final int surahNumber;

@@ -14,7 +14,7 @@ class HadithFetchSuccess extends HadithFetchResult {
 
 class HadithFetchError extends HadithFetchResult {
   final String message;
-  final dynamic error; // Store the actual error object for debugging
+  final dynamic error;
   const HadithFetchError(this.message, [this.error]);
 }
 
@@ -39,15 +39,16 @@ class HadithAPI {
     try {
       cachedRaw = database.getCachedHadithBooksRaw(languageCode);
       cachedAt = database.getHadithBooksCachedAt(languageCode);
-      if (cachedRaw != null && cachedRaw.isNotEmpty && !_isStale(cachedAt)) {
-        final books = cachedRaw.map((m) {
-          final bookId = (m['id'] as String?) ?? '';
-          return HadithBook(
-            name: (m['name'] as String?) ?? 'Unknown Book',
-            slug: bookId,
-            total: _asInt(m['available']) ?? _asInt(m['total']),
-          );
-        }).toList();
+      if (cachedRaw?.isNotEmpty == true && !_isStale(cachedAt)) {
+        final books = cachedRaw?.map((m) {
+              final bookId = (m['id'] as String?) ?? '';
+              return HadithBook(
+                name: (m['name'] as String?) ?? 'Unknown Book',
+                slug: bookId,
+                total: _asInt(m['available']) ?? _asInt(m['total']),
+              );
+            }).toList() ??
+            [];
         _hadithBooksCache[languageCode] = books;
         return HadithFetchSuccess(books);
       }
@@ -56,8 +57,7 @@ class HadithAPI {
     }
 
     try {
-      final res = await http.get(Uri.parse(
-          '$base/books')); // Current API doesn't support language param, so we simulate.
+      final res = await http.get(Uri.parse('$base/books'));
 
       if (res.statusCode != 200) {
         throw Exception('Failed to load books: Status code ${res.statusCode}');
@@ -80,11 +80,8 @@ class HadithAPI {
         await database.cacheHadithBooks(
             languageCode,
             fetchedBooks
-                .map((b) => {
-                      'name': b.name,
-                      'id': b.slug, // Store as 'id' to match API response
-                      'available': b.total
-                    })
+                .map(
+                    (b) => {'name': b.name, 'id': b.slug, 'available': b.total})
                 .toList());
       } catch (e, s) {
         errorService.reportError('Failed to persist Hadith books cache: $e', s);
@@ -132,7 +129,7 @@ class HadithAPI {
     try {
       cached = database.getCachedHadithPageRaw(book: book, page: page);
       cachedAt = database.getHadithPageCachedAt(book: book, page: page);
-      if (cached != null && !_isStale(cachedAt)) {
+      if (!_isStale(cachedAt) && cached != null) {
         final items = (cached['hadiths'] as List? ?? [])
             .map((e) => HadithItem(
                   number: (e['number'] ?? '').toString(),
@@ -293,14 +290,14 @@ class HadithAPI {
 }
 
 class HadithBook {
-  final String name; // Made non-nullable
-  final String slug; // Made non-nullable
+  final String name;
+  final String slug;
   final int? total;
   HadithBook({required this.name, required this.slug, this.total});
 }
 
 class HadithItem {
-  final String? id; // Actually the translation text
+  final String? id;
   final String? number;
   final String? arab;
   HadithItem({this.id, this.number, this.arab});

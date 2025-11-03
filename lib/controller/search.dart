@@ -12,6 +12,7 @@ class Search {
       surahList.add(s);
     }
   }
+
   Future<List<Aya>> searchByWord(String word) async {
     repeated = 0;
     String normalisedWord = normalise(word);
@@ -29,6 +30,7 @@ class Search {
     }
     return ayahs;
   }
+
   String normalise(String input) => input
       .replaceAll('\u0610', '') //ARABIC SIGN SALLALLAHOU ALAYHE WA SALLAM
       .replaceAll('\u0611', '') //ARABIC SIGN ALAYHE ASSALLAM
@@ -38,15 +40,15 @@ class Search {
 
       .replaceAll('\u0615', '') //ARABIC SMALL HIGH TAH
       .replaceAll(
-      '\u0616', '') //ARABIC SMALL HIGH LIGATURE ALEF WITH LAM WITH YEH
+          '\u0616', '') //ARABIC SMALL HIGH LIGATURE ALEF WITH LAM WITH YEH
       .replaceAll('\u0617', '') //ARABIC SMALL HIGH ZAIN
       .replaceAll('\u0618', '') //ARABIC SMALL FATHA
       .replaceAll('\u0619', '') //ARABIC SMALL DAMMA
       .replaceAll('\u061A', '') //ARABIC SMALL KASRA
       .replaceAll('\u06D6',
-      '') //ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA
+          '') //ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA
       .replaceAll('\u06D7',
-      '') //ARABIC SMALL HIGH LIGATURE QAF WITH LAM WITH ALEF MAKSURA
+          '') //ARABIC SMALL HIGH LIGATURE QAF WITH LAM WITH ALEF MAKSURA
       .replaceAll('\u06D8', '') //ARABIC SMALL HIGH MEEM INITIAL FORM
       .replaceAll('\u06D9', '') //ARABIC SMALL HIGH LAM ALEF
       .replaceAll('\u06DA', '') //ARABIC SMALL HIGH JEEM
@@ -71,7 +73,6 @@ class Search {
       .replaceAll('\u06ED', '') //ARABIC SMALL LOW MEEM
 
       .replaceAll('\u0640', '')
-
       .replaceAll('\u064B', '') //ARABIC FATHATAN
       .replaceAll('\u064C', '') //ARABIC DAMMATAN
       .replaceAll('\u064D', '') //ARABIC KASRATAN
@@ -93,17 +94,9 @@ class Search {
       .replaceAll('\u065D', '') //ARABIC REVERSED DAMMA
       .replaceAll('\u065E', '') //ARABIC FATHA WITH TWO DOTS
       .replaceAll('\u065F', '')
-
-
       .replaceAll('\u0624', '\u0648')
-
-
       .replaceAll('\u0629', '\u0647')
-
-
       .replaceAll('\u0626', '\u0649')
-
-
       .replaceAll('\u0622', '\u0627')
       .replaceAll('\u0671', '\u0627')
       .replaceAll('\u0656', '\u0627')

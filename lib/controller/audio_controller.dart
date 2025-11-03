@@ -10,7 +10,6 @@ import 'package:path_provider/path_provider.dart';
 /// backend is available (for example when libmpv is not installed on Linux).
 
 class AudioController extends ChangeNotifier {
-  // Singleton pattern
   static final AudioController _instance = AudioController._internal();
   factory AudioController() => _instance;
   AudioController._internal();
@@ -94,13 +93,13 @@ class AudioController extends ChangeNotifier {
         if (_isDisposed) return;
         if (completed) {
           debugPrint(
-              '✅ [AudioController] MEDIA COMPLETED - setting _completedFlag=true');
+              '[AudioController] MEDIA COMPLETED - setting _completedFlag=true');
           _completedFlag = true;
           unawaited(_player!.seek(Duration.zero));
           _player!.pause();
           buttonNotifier.value = ButtonState.paused;
           debugPrint(
-              '✅ [AudioController] Button state changed to PAUSED (via completion)');
+              '[AudioController] Button state changed to PAUSED (via completion)');
         }
       });
     } catch (e) {
@@ -234,7 +233,7 @@ class AudioController extends ChangeNotifier {
     }
   }
 
-  void play() async {
+  void play() {
     if (_isDisposed) return;
     if (!_playerAvailable || _player == null) {
       debugPrint('AudioController: play() called but player unavailable.');
@@ -242,13 +241,13 @@ class AudioController extends ChangeNotifier {
     }
 
     try {
-      await _player!.play();
+      unawaited(_player!.play());
     } catch (e) {
       debugPrint("Error playing audio: $e");
     }
   }
 
-  void pause() async {
+  void pause() {
     if (_isDisposed) return;
     if (!_playerAvailable || _player == null) {
       debugPrint('AudioController: pause() called but player unavailable.');
@@ -256,13 +255,13 @@ class AudioController extends ChangeNotifier {
     }
 
     try {
-      await _player!.pause();
+      unawaited(_player!.pause());
     } catch (e) {
       debugPrint("Error pausing audio: $e");
     }
   }
 
-  void seek(Duration position) async {
+  void seek(Duration position) {
     if (_isDisposed) return;
     if (!_playerAvailable || _player == null) {
       debugPrint('AudioController: seek() called but player unavailable.');
@@ -270,7 +269,7 @@ class AudioController extends ChangeNotifier {
     }
 
     try {
-      await _player!.seek(position);
+      unawaited(_player!.seek(position));
     } catch (e) {
       debugPrint("Error seeking audio: $e");
     }

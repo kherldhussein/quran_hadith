@@ -7,9 +7,9 @@ import 'package:quran_hadith/utils/sp_util.dart';
 class FavoriteItem {
   final String id;
   final String name;
-  final String type; // 'surah', 'ayah', 'pin'
+  final String type;
   final DateTime addedAt;
-  final String? note; // Optional note about why this was pinned
+  final String? note;
   final Map<String, dynamic>? metadata;
 
   FavoriteItem({
@@ -126,7 +126,7 @@ class FavoriteManager extends ChangeNotifier {
     Map<String, dynamic>? metadata,
   }) async {
     if (isFavorited(id)) {
-      return true; // Already favorited
+      return true;
     }
 
     _isLoading = true;
@@ -176,7 +176,7 @@ class FavoriteManager extends ChangeNotifier {
       if (removedCount == 0) {
         _isLoading = false;
         notifyListeners();
-        return true; // Item wasn't in favorites
+        return true;
       }
 
       _isFavorite = _favorites.isNotEmpty;
@@ -184,7 +184,7 @@ class FavoriteManager extends ChangeNotifier {
       final success = await _saveFavoritesToStorage();
 
       if (!success) {
-        await _loadFavorites(); // Reload from storage
+        await _loadFavorites();
         throw Exception('Failed to save changes');
       }
 

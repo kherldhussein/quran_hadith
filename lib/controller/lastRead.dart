@@ -9,7 +9,6 @@ class LastReadQ {
     try {
       return await appSP.setListString(savedDataKey, [ayahNo, surahName]);
     } catch (e) {
-      print('Failed to save last read: $e');
       return false;
     }
   }
@@ -20,7 +19,6 @@ class LastReadQ {
       final data = appSP.getListString(savedDataKey, defaultValue: const []);
       return data;
     } catch (e) {
-      print('Failed to load last read: $e');
       return [];
     }
   }

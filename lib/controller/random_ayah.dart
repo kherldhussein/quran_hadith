@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class RandomVerseManager {
-
   RandomVerseManager() {
     _initializeNotifications();
   }
@@ -30,5 +29,4 @@ class RandomVerseManager {
   }
 
   Future<void> displayDesktopNotification(String verse) async {}
-
 }
