@@ -21,6 +21,8 @@ class DatabaseService {
   static const String _preferencesBox = 'preferences';
   static const String _readingGoalsBox = 'reading_goals';
   static const String _metaBox = 'app_meta';
+  static const String _sessionHistoryBox = 'session_history';
+  static const String _monthlyStatisticsBox = 'monthly_statistics';
 
   bool _isInitialized = false;
 
@@ -40,6 +42,8 @@ class DatabaseService {
       Hive.registerAdapter(TranslationDataAdapter());
       Hive.registerAdapter(UserPreferencesAdapter());
       Hive.registerAdapter(ReadingGoalAdapter());
+      Hive.registerAdapter(SessionHistoryAdapter());
+      Hive.registerAdapter(MonthlyStatisticsAdapter());
 
       await Future.wait([
         Hive.openBox(_cachedSurahsBox),
@@ -51,6 +55,8 @@ class DatabaseService {
         Hive.openBox(_preferencesBox),
         Hive.openBox(_readingGoalsBox),
         Hive.openBox(_metaBox),
+        Hive.openBox(_sessionHistoryBox),
+        Hive.openBox(_monthlyStatisticsBox),
       ]);
 
       _isInitialized = true;
@@ -108,7 +114,7 @@ class DatabaseService {
             totalSize += await file.length();
           }
         }
-        return totalSize / (1024 * 1024); // Convert to MB
+        return totalSize / (1024 * 1024);
       }
       return 0;
     } catch (e) {
@@ -117,31 +123,25 @@ class DatabaseService {
     }
   }
 
-  /// Add bookmark
   Future<void> addBookmark(Bookmark bookmark) async {
     final box = Hive.box(_bookmarksBox);
     await box.put(bookmark.id, bookmark);
   }
 
-  /// Remove bookmark
   Future<void> removeBookmark(String id) async {
     final box = Hive.box(_bookmarksBox);
     await box.delete(id);
   }
 
-  /// Get bookmark
   Bookmark? getBookmark(String id) {
     final box = Hive.box(_bookmarksBox);
     return box.get(id);
   }
 
-  /// Get all bookmarks
   List<Bookmark> getAllBookmarks() {
     final box = Hive.box(_bookmarksBox);
     try {
-      return box.values
-          .whereType<Bookmark>()
-          .toList()
+      return box.values.whereType<Bookmark>().toList()
         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     } catch (e) {
       debugPrint('Error getting bookmarks: $e');
@@ -149,19 +149,16 @@ class DatabaseService {
     }
   }
 
-  /// Get bookmarks by category
   List<Bookmark> getBookmarksByCategory(String category) {
     return getAllBookmarks().where((b) => b.category == category).toList();
   }
 
-  /// Get bookmarks by surah
   List<Bookmark> getBookmarksBySurah(int surahNumber) {
     return getAllBookmarks()
         .where((b) => b.surahNumber == surahNumber)
         .toList();
   }
 
-  /// Search bookmarks
   List<Bookmark> searchBookmarks(String query) {
     final lowerQuery = query.toLowerCase();
     return getAllBookmarks().where((b) {
@@ -171,13 +168,11 @@ class DatabaseService {
     }).toList();
   }
 
-  /// Clear all bookmarks
   Future<void> clearBookmarks() async {
     final box = Hive.box(_bookmarksBox);
     await box.clear();
   }
 
-  /// Save reading progress
   Future<void> saveReadingProgress(ReadingProgress progress) async {
     final box = Hive.box(_readingProgressBox);
     final key = '${progress.surahNumber}:${progress.ayahNumber}';
@@ -304,9 +299,7 @@ class DatabaseService {
   List<StudyNote> getAllStudyNotes() {
     final box = Hive.box(_studyNotesBox);
     try {
-      return box.values
-          .whereType<StudyNote>()
-          .toList()
+      return box.values.whereType<StudyNote>().toList()
         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     } catch (e) {
       debugPrint('Error getting study notes: $e');
@@ -675,6 +668,134 @@ class DatabaseService {
     } catch (e) {
       debugPrint('Error clearing hadith reading: $e');
     }
+  }
+
+  // ==================== Session History Methods ====================
+
+  /// Save a daily session to history
+  Future<void> saveSessionHistory(SessionHistory session) async {
+    final box = Hive.box(_sessionHistoryBox);
+    await box.put(session.id, session);
+  }
+
+  /// Get session history for a specific date (UTC)
+  SessionHistory? getSessionHistory(DateTime date) {
+    final box = Hive.box(_sessionHistoryBox);
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    try {
+      return box.values.whereType<SessionHistory>().firstWhere(
+            (s) => s.date.toUtc().toString().startsWith(dateStr),
+            orElse: () => SessionHistory(date: date),
+          );
+    } catch (e) {
+      debugPrint('Error getting session history for $date: $e');
+      return null;
+    }
+  }
+
+  /// Get all session history
+  List<SessionHistory> getAllSessionHistory() {
+    final box = Hive.box(_sessionHistoryBox);
+    try {
+      return box.values.whereType<SessionHistory>().toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+    } catch (e) {
+      debugPrint('Error getting all session history: $e');
+      return [];
+    }
+  }
+
+  /// Get session history for a date range
+  List<SessionHistory> getSessionHistoryRange(
+      DateTime startDate, DateTime endDate) {
+    final box = Hive.box(_sessionHistoryBox);
+    try {
+      return box.values.whereType<SessionHistory>().where((s) {
+        final date = s.date.toUtc();
+        return date.isAfter(startDate) && date.isBefore(endDate);
+      }).toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+    } catch (e) {
+      debugPrint('Error getting session history range: $e');
+      return [];
+    }
+  }
+
+  /// Delete a session from history
+  Future<void> deleteSessionHistory(String id) async {
+    final box = Hive.box(_sessionHistoryBox);
+    await box.delete(id);
+  }
+
+  /// Clear all session history
+  Future<void> clearSessionHistory() async {
+    final box = Hive.box(_sessionHistoryBox);
+    await box.clear();
+  }
+
+  // ==================== Monthly Statistics Methods ====================
+
+  /// Save monthly statistics
+  Future<void> saveMonthlyStatistics(MonthlyStatistics stats) async {
+    final box = Hive.box(_monthlyStatisticsBox);
+    await box.put(stats.id, stats);
+    debugPrint('✅ Monthly statistics saved for ${stats.year}-${stats.month}');
+  }
+
+  /// Get monthly statistics for a specific month
+  MonthlyStatistics? getMonthlyStatistics(int year, int month) {
+    final box = Hive.box(_monthlyStatisticsBox);
+    final id = '${year}_${month.toString().padLeft(2, '0')}';
+    try {
+      return box.get(id);
+    } catch (e) {
+      debugPrint('Error getting monthly statistics for $year-$month: $e');
+      return null;
+    }
+  }
+
+  /// Get all monthly statistics
+  List<MonthlyStatistics> getAllMonthlyStatistics() {
+    final box = Hive.box(_monthlyStatisticsBox);
+    try {
+      return box.values.whereType<MonthlyStatistics>().toList()
+        ..sort((a, b) {
+          final yearCompare = b.year.compareTo(a.year);
+          if (yearCompare != 0) return yearCompare;
+          return b.month.compareTo(a.month);
+        });
+    } catch (e) {
+      debugPrint('Error getting all monthly statistics: $e');
+      return [];
+    }
+  }
+
+  /// Get monthly statistics for a year
+  List<MonthlyStatistics> getYearlyStatistics(int year) {
+    final box = Hive.box(_monthlyStatisticsBox);
+    try {
+      return box.values
+          .whereType<MonthlyStatistics>()
+          .where((s) => s.year == year)
+          .toList()
+        ..sort((a, b) => a.month.compareTo(b.month));
+    } catch (e) {
+      debugPrint('Error getting yearly statistics for $year: $e');
+      return [];
+    }
+  }
+
+  /// Delete monthly statistics
+  Future<void> deleteMonthlyStatistics(String id) async {
+    final box = Hive.box(_monthlyStatisticsBox);
+    await box.delete(id);
+  }
+
+  /// Clear all monthly statistics
+  Future<void> clearMonthlyStatistics() async {
+    final box = Hive.box(_monthlyStatisticsBox);
+    await box.clear();
   }
 
   Box get bookmarksBox => Hive.box(_bookmarksBox);

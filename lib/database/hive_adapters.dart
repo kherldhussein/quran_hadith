@@ -310,13 +310,13 @@ class UserPreferences extends HiveObject {
   late bool enableSystemTray;
 
   @HiveField(12)
-  late String theme; // 'light', 'dark', 'auto'
+  late String theme;
 
   @HiveField(13)
   late bool enableGlobalShortcuts;
 
   UserPreferences({
-    this.userName = 'Guest',
+    this.userName = 'Khalid',
     this.isDarkMode = false,
     this.fontSize = 24.0,
     this.fontFamily = 'Amiri',
@@ -360,4 +360,128 @@ class ReadingGoal extends HiveObject {
     this.enabled = false,
   })  : dailyProgress = dailyProgress ?? {},
         createdAt = createdAt ?? DateTime.now();
+}
+
+/// Daily study session history for tracking progress over time
+@HiveType(typeId: 9)
+class SessionHistory extends HiveObject {
+  @HiveField(0)
+  late String id;
+
+  @HiveField(1)
+  late DateTime date; // UTC date for session
+
+  @HiveField(2)
+  late int durationSeconds; // Total reading/listening time
+
+  @HiveField(3)
+  late int ayahsRead; // Number of ayahs read
+
+  @HiveField(4)
+  late int ayahsListened; // Number of ayahs listened
+
+  @HiveField(5)
+  late String sessionType; // 'reading', 'listening', 'mixed'
+
+  @HiveField(6)
+  late DateTime createdAt;
+
+  @HiveField(7)
+  late DateTime updatedAt;
+
+  @HiveField(8)
+  late List<String> surahsRead; // List of surah numbers read
+
+  @HiveField(9)
+  late int breaksTaken; // Number of breaks during session
+
+  @HiveField(10)
+  late bool goalAchieved; // Whether daily goal was met
+
+  SessionHistory({
+    String? id,
+    required this.date,
+    this.durationSeconds = 0,
+    this.ayahsRead = 0,
+    this.ayahsListened = 0,
+    this.sessionType = 'mixed',
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<String>? surahsRead,
+    this.breaksTaken = 0,
+    this.goalAchieved = false,
+  })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now(),
+        surahsRead = surahsRead ?? [];
+}
+
+/// Monthly statistics aggregated from daily sessions
+@HiveType(typeId: 10)
+class MonthlyStatistics extends HiveObject {
+  @HiveField(0)
+  late String id;
+
+  @HiveField(1)
+  late int year;
+
+  @HiveField(2)
+  late int month; // 1-12
+
+  @HiveField(3)
+  late int totalSessionsCount;
+
+  @HiveField(4)
+  late int totalDurationSeconds;
+
+  @HiveField(5)
+  late int totalAyahsRead;
+
+  @HiveField(6)
+  late int totalAyahsListened;
+
+  @HiveField(7)
+  late double averageSessionDurationMinutes;
+
+  @HiveField(8)
+  late int daysActive; // Number of days with sessions
+
+  @HiveField(9)
+  late int longestStreakDays;
+
+  @HiveField(10)
+  late List<String> mostReadSurahs; // Top 5 surahs
+
+  @HiveField(11)
+  late DateTime createdAt;
+
+  @HiveField(12)
+  late DateTime updatedAt;
+
+  @HiveField(13)
+  late int goalsAchieved; // Number of days goal was met
+
+  @HiveField(14)
+  late double consistencyPercentage; // (daysActive / daysInMonth) * 100
+
+  MonthlyStatistics({
+    String? id,
+    required this.year,
+    required this.month,
+    this.totalSessionsCount = 0,
+    this.totalDurationSeconds = 0,
+    this.totalAyahsRead = 0,
+    this.totalAyahsListened = 0,
+    this.averageSessionDurationMinutes = 0.0,
+    this.daysActive = 0,
+    this.longestStreakDays = 0,
+    List<String>? mostReadSurahs,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    this.goalsAchieved = 0,
+    this.consistencyPercentage = 0.0,
+  })  : id = id ?? '${year}_${month.toString().padLeft(2, '0')}',
+        mostReadSurahs = mostReadSurahs ?? [],
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 }

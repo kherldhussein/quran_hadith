@@ -1,6 +1,10 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'hive_adapters.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class CachedSurahAdapter extends TypeAdapter<CachedSurah> {
   @override
@@ -20,7 +24,7 @@ class CachedSurahAdapter extends TypeAdapter<CachedSurah> {
       revelationType: fields[4] as String,
       numberOfAyahs: fields[5] as int,
       ayahs: (fields[6] as List).cast<CachedAyah>(),
-      cachedAt: fields[7] as DateTime,
+      cachedAt: fields[7] as DateTime?,
     );
   }
 
@@ -493,6 +497,146 @@ class ReadingGoalAdapter extends TypeAdapter<ReadingGoal> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ReadingGoalAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class SessionHistoryAdapter extends TypeAdapter<SessionHistory> {
+  @override
+  final int typeId = 9;
+
+  @override
+  SessionHistory read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return SessionHistory(
+      id: fields[0] as String?,
+      date: fields[1] as DateTime,
+      durationSeconds: fields[2] as int,
+      ayahsRead: fields[3] as int,
+      ayahsListened: fields[4] as int,
+      sessionType: fields[5] as String,
+      createdAt: fields[6] as DateTime?,
+      updatedAt: fields[7] as DateTime?,
+      surahsRead: (fields[8] as List?)?.cast<String>(),
+      breaksTaken: fields[9] as int,
+      goalAchieved: fields[10] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, SessionHistory obj) {
+    writer
+      ..writeByte(11)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.date)
+      ..writeByte(2)
+      ..write(obj.durationSeconds)
+      ..writeByte(3)
+      ..write(obj.ayahsRead)
+      ..writeByte(4)
+      ..write(obj.ayahsListened)
+      ..writeByte(5)
+      ..write(obj.sessionType)
+      ..writeByte(6)
+      ..write(obj.createdAt)
+      ..writeByte(7)
+      ..write(obj.updatedAt)
+      ..writeByte(8)
+      ..write(obj.surahsRead)
+      ..writeByte(9)
+      ..write(obj.breaksTaken)
+      ..writeByte(10)
+      ..write(obj.goalAchieved);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SessionHistoryAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class MonthlyStatisticsAdapter extends TypeAdapter<MonthlyStatistics> {
+  @override
+  final int typeId = 10;
+
+  @override
+  MonthlyStatistics read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return MonthlyStatistics(
+      id: fields[0] as String?,
+      year: fields[1] as int,
+      month: fields[2] as int,
+      totalSessionsCount: fields[3] as int,
+      totalDurationSeconds: fields[4] as int,
+      totalAyahsRead: fields[5] as int,
+      totalAyahsListened: fields[6] as int,
+      averageSessionDurationMinutes: fields[7] as double,
+      daysActive: fields[8] as int,
+      longestStreakDays: fields[9] as int,
+      mostReadSurahs: (fields[10] as List?)?.cast<String>(),
+      createdAt: fields[11] as DateTime?,
+      updatedAt: fields[12] as DateTime?,
+      goalsAchieved: fields[13] as int,
+      consistencyPercentage: fields[14] as double,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, MonthlyStatistics obj) {
+    writer
+      ..writeByte(15)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.year)
+      ..writeByte(2)
+      ..write(obj.month)
+      ..writeByte(3)
+      ..write(obj.totalSessionsCount)
+      ..writeByte(4)
+      ..write(obj.totalDurationSeconds)
+      ..writeByte(5)
+      ..write(obj.totalAyahsRead)
+      ..writeByte(6)
+      ..write(obj.totalAyahsListened)
+      ..writeByte(7)
+      ..write(obj.averageSessionDurationMinutes)
+      ..writeByte(8)
+      ..write(obj.daysActive)
+      ..writeByte(9)
+      ..write(obj.longestStreakDays)
+      ..writeByte(10)
+      ..write(obj.mostReadSurahs)
+      ..writeByte(11)
+      ..write(obj.createdAt)
+      ..writeByte(12)
+      ..write(obj.updatedAt)
+      ..writeByte(13)
+      ..write(obj.goalsAchieved)
+      ..writeByte(14)
+      ..write(obj.consistencyPercentage);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MonthlyStatisticsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
