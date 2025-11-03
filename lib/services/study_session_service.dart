@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:quran_hadith/services/notification_service.dart';
 
 /// Service to track study sessions, reading time, and streaks
 class StudySessionService extends ChangeNotifier {
@@ -11,8 +12,8 @@ class StudySessionService extends ChangeNotifier {
 
   // Session state
   bool _isSessionActive = false;
-  DateTime? _sessionStartTime;
   Timer? _sessionTimer;
+  Timer? _autoSaveTimer; // Auto-save session data every 30 seconds
   int _currentSessionSeconds = 0;
 
   // Statistics
@@ -33,7 +34,8 @@ class StudySessionService extends ChangeNotifier {
   int get todayReadingSeconds => _todayReadingSeconds;
   int get currentStreak => _currentStreak;
   int get longestStreak => _longestStreak;
-  Map<String, int> get weeklyReadingTime => Map.unmodifiable(_weeklyReadingTime);
+  Map<String, int> get weeklyReadingTime =>
+      Map.unmodifiable(_weeklyReadingTime);
   int get dailyGoalMinutes => _dailyGoalMinutes;
   bool get showBreakReminders => _showBreakReminders;
   int get breakReminderInterval => _breakReminderInterval;
@@ -47,6 +49,7 @@ class StudySessionService extends ChangeNotifier {
   static const String _keyDailyGoal = 'study_daily_goal_minutes';
   static const String _keyBreakReminders = 'study_break_reminders';
   static const String _keyBreakInterval = 'study_break_interval';
+  static const String _keyLastCleanupDate = 'study_last_cleanup_date';
 
   /// Initialize the study session service
   Future<void> initialize() async {
@@ -77,10 +80,11 @@ class StudySessionService extends ChangeNotifier {
     if (_isSessionActive) return;
 
     _isSessionActive = true;
-    _sessionStartTime = DateTime.now();
     _currentSessionSeconds = 0;
 
     // Start timer that updates every second
+    // NOTE: This timer continues even if app goes to background!
+    // MUST be paused by AppLifecycleObserver when app pauses
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _currentSessionSeconds++;
       _todayReadingSeconds++;
@@ -94,6 +98,11 @@ class StudySessionService extends ChangeNotifier {
       notifyListeners();
     });
 
+    // Auto-save session data every 30 seconds to prevent data loss
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _saveSessionData();
+    });
+
     notifyListeners();
     debugPrint('📚 Study session started');
   }
@@ -104,12 +113,15 @@ class StudySessionService extends ChangeNotifier {
 
     _sessionTimer?.cancel();
     _sessionTimer = null;
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = null;
     _isSessionActive = false;
 
     await _saveSessionData();
 
     notifyListeners();
-    debugPrint('📚 Study session paused - Duration: ${_formatDuration(_currentSessionSeconds)}');
+    debugPrint(
+        '📚 Study session paused - Duration: ${_formatDuration(_currentSessionSeconds)}');
   }
 
   /// Resume the study session
@@ -125,6 +137,8 @@ class StudySessionService extends ChangeNotifier {
     if (_isSessionActive) {
       _sessionTimer?.cancel();
       _sessionTimer = null;
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = null;
       _isSessionActive = false;
     }
 
@@ -133,10 +147,10 @@ class StudySessionService extends ChangeNotifier {
 
     final sessionDuration = _currentSessionSeconds;
     _currentSessionSeconds = 0;
-    _sessionStartTime = null;
 
     notifyListeners();
-    debugPrint('📚 Study session ended - Total: ${_formatDuration(sessionDuration)}');
+    debugPrint(
+        '📚 Study session ended - Total: ${_formatDuration(sessionDuration)}');
   }
 
   /// Save current session data
@@ -155,66 +169,36 @@ class StudySessionService extends ChangeNotifier {
     await prefs.setString(_keyLastReadDate, today);
     _lastReadDate = today;
 
-    // Clean up old weekly data (keep last 30 days)
-    _cleanOldWeeklyData();
+    // Clean up old weekly data (keep last 30 days) - only once per day
+    _cleanOldWeeklyDataOncePerDay(prefs);
   }
 
-  /// Update the reading streak
-  Future<void> _updateStreak() async {
+  /// Clean up old weekly data, but only once per calendar day (performance optimization)
+  Future<void> _cleanOldWeeklyDataOncePerDay(SharedPreferences prefs) async {
     final today = _getTodayDateString();
-    final yesterday = _getYesterdayDateString();
+    final lastCleanup = prefs.getString(_keyLastCleanupDate);
 
-    if (_lastReadDate == today) {
-      // Already counted for today
-      return;
-    }
-
-    if (_lastReadDate == yesterday || _lastReadDate == null) {
-      // Continue or start streak
-      _currentStreak++;
-    } else {
-      // Streak broken
-      _currentStreak = 1;
-    }
-
-    // Update longest streak
-    if (_currentStreak > _longestStreak) {
-      _longestStreak = _currentStreak;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_keyLongestStreak, _longestStreak);
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keyCurrentStreak, _currentStreak);
-
-    notifyListeners();
-  }
-
-  /// Check if we need to reset daily stats
-  void _checkDayReset() {
-    final today = _getTodayDateString();
-
-    if (_lastReadDate != null && _lastReadDate != today) {
-      // New day - check if streak should be broken
-      final yesterday = _getYesterdayDateString();
-
-      if (_lastReadDate != yesterday) {
-        // Missed a day - break streak
-        _currentStreak = 0;
-        debugPrint('📚 Streak broken - missed a day');
-      }
-
-      // Reset daily reading time
-      _todayReadingSeconds = 0;
+    if (lastCleanup != today) {
+      // First save of the day - run cleanup
+      _cleanOldWeeklyData();
+      await prefs.setString(_keyLastCleanupDate, today);
     }
   }
 
   /// Clean up old weekly data (keep last 30 days)
   void _cleanOldWeeklyData() {
-    final cutoffDate = DateTime.now().subtract(const Duration(days: 30));
+    final cutoffDate =
+        DateTime.now().toUtc().subtract(const Duration(days: 30));
     final cutoffString = _formatDateString(cutoffDate);
 
-    _weeklyReadingTime.removeWhere((date, _) => date.compareTo(cutoffString) < 0);
+    final beforeCount = _weeklyReadingTime.length;
+    _weeklyReadingTime
+        .removeWhere((date, _) => date.compareTo(cutoffString) < 0);
+    final afterCount = _weeklyReadingTime.length;
+
+    if (beforeCount != afterCount) {
+      debugPrint('📚 Cleaned ${beforeCount - afterCount} old daily records');
+    }
   }
 
   /// Get reading time for a specific date
@@ -252,9 +236,11 @@ class StudySessionService extends ChangeNotifier {
 
   /// Set daily goal in minutes
   Future<void> setDailyGoal(int minutes) async {
-    _dailyGoalMinutes = minutes;
+    // Ensure minimum 1 minute and maximum 480 minutes (8 hours)
+    final validMinutes = minutes.clamp(1, 480);
+    _dailyGoalMinutes = validMinutes;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keyDailyGoal, minutes);
+    await prefs.setInt(_keyDailyGoal, validMinutes);
     notifyListeners();
   }
 
@@ -276,8 +262,24 @@ class StudySessionService extends ChangeNotifier {
 
   /// Trigger a break reminder notification
   void _triggerBreakReminder() {
-    // TODO: Integrate with notification service
-    debugPrint('⏰ Break reminder: You\'ve been reading for $_breakReminderInterval minutes');
+    debugPrint(
+        '⏰ Break reminder: You\'ve been reading for $_breakReminderInterval minutes');
+
+    try {
+      NotificationService.instance
+          .showNotification(
+        id: 1003, // Dedicated break reminder notification ID
+        title: '⏰ Time for a Break!',
+        body:
+            'You\'ve been reading for $_breakReminderInterval minutes. Take a 5-minute break to rest your eyes.',
+        payload: 'break_reminder',
+      )
+          .catchError((e) {
+        debugPrint('⚠️ Error showing break reminder: $e');
+      });
+    } catch (e) {
+      debugPrint('⚠️ Exception in break reminder: $e');
+    }
   }
 
   /// Format duration in seconds to readable string
@@ -299,19 +301,64 @@ class StudySessionService extends ChangeNotifier {
     }
   }
 
-  /// Get today's date as string (YYYY-MM-DD)
+  /// Get today's date as string (YYYY-MM-DD) in UTC
+  /// Using UTC prevents issues with timezone changes and day boundary edge cases
   String _getTodayDateString() {
-    return _formatDateString(DateTime.now());
+    return _formatDateString(DateTime.now().toUtc());
   }
 
-  /// Get yesterday's date as string
+  /// Get yesterday's date as string in UTC
   String _getYesterdayDateString() {
-    return _formatDateString(DateTime.now().subtract(const Duration(days: 1)));
+    return _formatDateString(
+        DateTime.now().toUtc().subtract(const Duration(days: 1)));
   }
 
-  /// Format date as YYYY-MM-DD
+  /// Format date as YYYY-MM-DD using UTC
+  /// UTC ensures consistent date strings across timezones
   String _formatDateString(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final utcDate = date.toUtc();
+    return '${utcDate.year}-${utcDate.month.toString().padLeft(2, '0')}-${utcDate.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Check if the day has reset and update daily stats accordingly
+  void _checkDayReset() {
+    final today = _getTodayDateString();
+    if (_lastReadDate != null && _lastReadDate != today) {
+      // Day has changed - reset today's reading time
+      _todayReadingSeconds = 0;
+      debugPrint('📚 Day reset detected - clearing today\'s reading time');
+    }
+  }
+
+  /// Update streak information based on last read date
+  Future<void> _updateStreak() async {
+    final today = _getTodayDateString();
+    final yesterday = _getYesterdayDateString();
+    final prefs = await SharedPreferences.getInstance();
+
+    if (_lastReadDate == today) {
+      // User read today - maintain streak
+      if (_currentStreak == 0) {
+        _currentStreak = 1;
+      }
+    } else if (_lastReadDate == yesterday) {
+      // User read yesterday - increment streak
+      _currentStreak++;
+      if (_currentStreak > _longestStreak) {
+        _longestStreak = _currentStreak;
+        await prefs.setInt(_keyLongestStreak, _longestStreak);
+      }
+    } else {
+      // Streak broken - reset to 1 if read today
+      if (_lastReadDate == today) {
+        _currentStreak = 1;
+      } else {
+        _currentStreak = 0;
+      }
+    }
+
+    await prefs.setInt(_keyCurrentStreak, _currentStreak);
+    notifyListeners();
   }
 
   /// Get total reading time (all time)
@@ -322,6 +369,7 @@ class StudySessionService extends ChangeNotifier {
   @override
   void dispose() {
     _sessionTimer?.cancel();
+    _autoSaveTimer?.cancel();
     super.dispose();
   }
 }

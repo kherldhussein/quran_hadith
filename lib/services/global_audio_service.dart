@@ -17,7 +17,6 @@ class GlobalAudioService extends ChangeNotifier {
   GlobalAudioService._internal() {
     _loadPreferences();
     _wireController();
-    debugPrint('✅ GlobalAudioService initialized');
   }
 
   static final GlobalAudioService _instance = GlobalAudioService._internal();
@@ -119,9 +118,12 @@ class GlobalAudioService extends ChangeNotifier {
       if (effectivePath != null) {
         await _audioController.setLocalSource(effectivePath);
       } else if (audioUrl != null && audioUrl.isNotEmpty) {
+        // Fallback to network URL if no local file available
         await _audioController.setAudioSource(audioUrl);
       } else {
-        throw Exception('No audio source available for ayah $ayahNumber');
+        debugPrint(
+            '🎵 GlobalAudioService.playAyah: No audio source available for $surahNumber:$ayahNumber');
+        throw Exception('No audio source available for this ayah');
       }
 
       await _audioController.setSpeed(SpUtil.getAudioSpeed());
@@ -152,7 +154,6 @@ class GlobalAudioService extends ChangeNotifier {
 
       notifyListeners();
     } catch (error, stackTrace) {
-      debugPrint('❌ GlobalAudioService: Error playing ayah: $error');
       _currentContext = null;
       currentContextNotifier.value = null;
       _buttonStateNotifier.value = ButtonState.paused;
@@ -204,52 +205,37 @@ class GlobalAudioService extends ChangeNotifier {
   }
 
   Future<void> playNext() async {
-    debugPrint(
-        '📞 [GlobalAudioService.playNext] Called | _currentContext=${_currentContext?.surahNumber}:${_currentContext?.ayahNumber}');
-
     if (_currentContext == null ||
         _currentContext!.allAyahsInSurah == null ||
         _currentContext!.allAyahsInSurah!.isEmpty) {
-      debugPrint(
-          '⚠️ [GlobalAudioService.playNext] Cannot play next - missing context or ayahs list');
       return;
     }
 
     final ayahs = _currentContext!.allAyahsInSurah!;
     final currentIndex = ayahs.indexOf(_currentContext!.ayahNumber);
-    debugPrint(
-        '📊 [GlobalAudioService.playNext] currentIndex=$currentIndex | totalAyahs=${ayahs.length} | currentAyah=${_currentContext!.ayahNumber}');
 
     if (currentIndex == -1) {
-      debugPrint(
-          '⚠️ [GlobalAudioService.playNext] Current ayah not found in list');
       return;
     }
 
     int? nextAyahNumber;
     if (currentIndex < ayahs.length - 1) {
       nextAyahNumber = ayahs[currentIndex + 1];
-      debugPrint(
-          '✅ [GlobalAudioService.playNext] Next ayah found: $nextAyahNumber');
     } else if (_repeatMode == 'surah') {
       nextAyahNumber = ayahs.first;
-      debugPrint(
-          '🔄 [GlobalAudioService.playNext] Repeat mode=surah, looping to first ayah: $nextAyahNumber');
     } else {
       debugPrint(
-          'ℹ️ [GlobalAudioService.playNext] At end of surah and no repeat mode');
+          'ℹ[GlobalAudioService.playNext] At end of surah and no repeat mode');
     }
 
     if (nextAyahNumber != null) {
       if (_onNextAyahRequested != null) {
-        debugPrint(
-            '🎯 [GlobalAudioService.playNext] Invoking callback with nextAyahNumber=$nextAyahNumber');
         _onNextAyahRequested!(nextAyahNumber);
       } else {
         // Callback not registered (user navigated away from QPageView)
         // Play the next ayah directly from the service
         debugPrint(
-            '⚠️ [GlobalAudioService.playNext] Callback is NULL - playing directly from service');
+            '[GlobalAudioService.playNext] Callback is NULL - playing directly from service');
         await _playNextAyahDirectly(nextAyahNumber);
       }
     }
@@ -259,17 +245,11 @@ class GlobalAudioService extends ChangeNotifier {
   /// This allows audio to continue playing even when user navigates away from QPageView
   Future<void> _playNextAyahDirectly(int nextAyahNumber) async {
     try {
-      debugPrint(
-          '🔊 [GlobalAudioService._playNextAyahDirectly] Playing ayah $nextAyahNumber directly');
-
       // Get the cached surah to fetch ayah details
       var cachedSurah = database.getCachedSurah(_currentContext!.surahNumber);
 
       // If not cached, fetch from API and cache it
       if (cachedSurah == null) {
-        debugPrint(
-            '📥 [GlobalAudioService._playNextAyahDirectly] Surah ${_currentContext!.surahNumber} not cached, fetching from API...');
-
         cachedSurah = await _fetchAndCacheSurah(_currentContext!.surahNumber);
         if (cachedSurah == null) {
           return;
@@ -281,9 +261,6 @@ class GlobalAudioService extends ChangeNotifier {
         (a) => a.number == nextAyahNumber,
         orElse: () => throw Exception('Ayah $nextAyahNumber not found'),
       );
-
-      debugPrint(
-          '✅ [GlobalAudioService._playNextAyahDirectly] Ayah $nextAyahNumber found in cache');
 
       // Try to get the local file path for offline playback
       String? localFilePath;
@@ -298,24 +275,24 @@ class GlobalAudioService extends ChangeNotifier {
         localFilePath = localFile?.path;
       } catch (e) {
         debugPrint(
-            '⚠️ [GlobalAudioService._playNextAyahDirectly] Could not get local file: $e');
+            '[GlobalAudioService._playNextAyahDirectly] Could not get local file: $e');
       }
 
       // Try to get fresh audio URL if not in cache
       String? audioUrl = nextAyah.audioUrl;
-      if (audioUrl == null || audioUrl.isEmpty) {
+      if (audioUrl?.isEmpty ?? true) {
         debugPrint(
-            '⚠️ [GlobalAudioService._playNextAyahDirectly] Audio URL not in cache, fetching...');
+            '[GlobalAudioService._playNextAyahDirectly] Audio URL not in cache, fetching...');
         try {
           audioUrl = await QuranAPI()
               .getAyahAudioUrl(_currentContext!.surahNumber, nextAyahNumber);
-          if (audioUrl != null && audioUrl.isNotEmpty) {
+          if (audioUrl?.isNotEmpty ?? false) {
             debugPrint(
-                '✅ [GlobalAudioService._playNextAyahDirectly] Fresh audio URL fetched');
+                '[GlobalAudioService._playNextAyahDirectly] Fresh audio URL fetched');
           }
         } catch (e) {
           debugPrint(
-              '⚠️ [GlobalAudioService._playNextAyahDirectly] Could not fetch audio URL: $e');
+              '[GlobalAudioService._playNextAyahDirectly] Could not fetch audio URL: $e');
         }
       }
 
@@ -330,11 +307,8 @@ class GlobalAudioService extends ChangeNotifier {
         localFilePath: localFilePath,
         allAyahsInSurah: _currentContext!.allAyahsInSurah,
       );
-
-      debugPrint(
-          '🎵 [GlobalAudioService._playNextAyahDirectly] Successfully playing next ayah');
     } catch (e) {
-      debugPrint('❌ [GlobalAudioService._playNextAyahDirectly] Error: $e');
+      debugPrint('[GlobalAudioService._playNextAyahDirectly] Error: $e');
     }
   }
 
@@ -361,7 +335,7 @@ class GlobalAudioService extends ChangeNotifier {
               await quranAPI.getAyahAudioUrl(surahNumber, ayah.number ?? 0);
         } catch (e) {
           debugPrint(
-              '⚠️ [_fetchAndCacheSurah] Could not fetch audio URL for $surahNumber:${ayah.number}: $e');
+              '[_fetchAndCacheSurah] Could not fetch audio URL for $surahNumber:${ayah.number}: $e');
         }
         return CachedAyah(
           number: ayah.number ?? 0,
@@ -386,11 +360,9 @@ class GlobalAudioService extends ChangeNotifier {
 
       // Cache it for future use
       await database.cacheSurah(cachedSurah);
-      debugPrint(
-          '✅ [_fetchAndCacheSurah] Surah $surahNumber cached with audio URLs');
       return cachedSurah;
     } catch (e) {
-      debugPrint('❌ [_fetchAndCacheSurah] Failed to fetch surah: $e');
+      debugPrint('[_fetchAndCacheSurah] Failed to fetch surah: $e');
       return null;
     }
   }
@@ -428,9 +400,6 @@ class GlobalAudioService extends ChangeNotifier {
 
       // If not cached, fetch from API and cache it
       if (cachedSurah == null) {
-        debugPrint(
-            '📥 [GlobalAudioService._playPreviousAyahDirectly] Surah ${_currentContext!.surahNumber} not cached, fetching from API...');
-
         cachedSurah = await _fetchAndCacheSurah(_currentContext!.surahNumber);
         if (cachedSurah == null) {
           return;
@@ -442,9 +411,6 @@ class GlobalAudioService extends ChangeNotifier {
         (a) => a.number == previousAyahNumber,
         orElse: () => throw Exception('Ayah $previousAyahNumber not found'),
       );
-
-      debugPrint(
-          '✅ [GlobalAudioService._playPreviousAyahDirectly] Ayah $previousAyahNumber found in cache');
 
       // Try to get the local file path for offline playback
       String? localFilePath;
@@ -459,24 +425,19 @@ class GlobalAudioService extends ChangeNotifier {
         localFilePath = localFile?.path;
       } catch (e) {
         debugPrint(
-            '⚠️ [GlobalAudioService._playPreviousAyahDirectly] Could not get local file: $e');
+            '[GlobalAudioService._playPreviousAyahDirectly] Could not get local file: $e');
       }
 
       // Try to get fresh audio URL if not in cache
       String? audioUrl = previousAyah.audioUrl;
-      if (audioUrl == null || audioUrl.isEmpty) {
-        debugPrint(
-            '⚠️ [GlobalAudioService._playPreviousAyahDirectly] Audio URL not in cache, fetching...');
+      if (audioUrl?.isEmpty ?? true) {
         try {
           audioUrl = await QuranAPI().getAyahAudioUrl(
               _currentContext!.surahNumber, previousAyahNumber);
-          if (audioUrl != null && audioUrl.isNotEmpty) {
-            debugPrint(
-                '✅ [GlobalAudioService._playPreviousAyahDirectly] Fresh audio URL fetched');
-          }
+          if (audioUrl?.isNotEmpty ?? false) {}
         } catch (e) {
           debugPrint(
-              '⚠️ [GlobalAudioService._playPreviousAyahDirectly] Could not fetch audio URL: $e');
+              '[GlobalAudioService._playPreviousAyahDirectly] Could not fetch audio URL: $e');
         }
       }
 
@@ -491,11 +452,8 @@ class GlobalAudioService extends ChangeNotifier {
         localFilePath: localFilePath,
         allAyahsInSurah: _currentContext!.allAyahsInSurah,
       );
-
-      debugPrint(
-          '🎵 [GlobalAudioService._playPreviousAyahDirectly] Successfully playing previous ayah');
     } catch (e) {
-      debugPrint('❌ [GlobalAudioService._playPreviousAyahDirectly] Error: $e');
+      debugPrint('[GlobalAudioService._playPreviousAyahDirectly] Error: $e');
     }
   }
 
@@ -578,8 +536,6 @@ class GlobalAudioService extends ChangeNotifier {
       // Check it with a small delay to ensure flag has propagated.
       Future.delayed(const Duration(milliseconds: 10), () {
         final completed = _audioController.hasRecentlyCompleted;
-        debugPrint(
-            '🔴 [GlobalAudioService._handleControllerButton] PAUSED | completed=$completed | ayah=${_currentContext?.ayahNumber}');
 
         if (completed && _currentContext != null) {
           _audioController.clearCompletedFlag();
@@ -587,19 +543,13 @@ class GlobalAudioService extends ChangeNotifier {
           // Re-read runtime settings each time to reflect user changes
           _autoPlayNext = SpUtil.getAutoPlayNextAyah();
           _repeatMode = SpUtil.getRepeatMode();
-          debugPrint(
-              '🎵 [GlobalAudioService._handleControllerButton] COMPLETED | _autoPlayNext=$_autoPlayNext | _repeatMode=$_repeatMode');
 
           if (_repeatMode == 'ayah') {
-            debugPrint(
-                '🔁 [GlobalAudioService._handleControllerButton] Repeating ayah');
             Future.delayed(const Duration(milliseconds: 200), resume);
             return;
           }
 
           if (_autoPlayNext || _isSurahPlaybackMode) {
-            debugPrint(
-                '⏭️ [GlobalAudioService._handleControllerButton] Calling playNext() after 250ms');
             Future.delayed(const Duration(milliseconds: 250), playNext);
             return;
           }
@@ -700,7 +650,7 @@ class GlobalAudioService extends ChangeNotifier {
       await database.saveListeningProgress(progress);
     } catch (error) {
       debugPrint(
-        '❌ GlobalAudioService: Failed to save listening progress: $error',
+        'GlobalAudioService: Failed to save listening progress: $error',
       );
     }
   }

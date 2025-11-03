@@ -143,6 +143,23 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
+  /// Show an immediate notification (for instant alerts like break reminders)
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    String? payload,
+    int id = 0,
+  }) async {
+    await initialize();
+    await _plugin.show(
+      id,
+      title,
+      body,
+      _defaultDetails,
+      payload: payload,
+    );
+  }
+
   tz.TZDateTime _nextInstanceOfTime(TimeOfDay time, {int? weekday}) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
