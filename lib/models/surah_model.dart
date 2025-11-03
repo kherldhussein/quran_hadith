@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-
 @HiveType(typeId: 0)
 class SurahList extends ChangeNotifier {
   @HiveField(0)
@@ -73,7 +72,8 @@ class Surah {
       revelationType: revelationType ?? this.revelationType,
       englishNameTranslation:
           englishNameTranslation ?? this.englishNameTranslation,
-      numberOfAyahs: numberOfAyahs ?? this.numberOfAyahs, // Update numberOfAyahs
+      numberOfAyahs:
+          numberOfAyahs ?? this.numberOfAyahs, // Update numberOfAyahs
     );
   }
 
@@ -89,7 +89,8 @@ class Surah {
       englishName: json['englishName'],
       revelationType: json['revelationType'],
       englishNameTranslation: json['englishNameTranslation'],
-      numberOfAyahs: json['numberOfAyahs'], // Assuming 'numberOfAyahs' might come from JSON as well
+      numberOfAyahs: json[
+          'numberOfAyahs'], // Assuming 'numberOfAyahs' might come from JSON as well
     );
   }
 }

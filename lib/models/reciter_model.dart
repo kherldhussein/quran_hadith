@@ -56,7 +56,6 @@ class Reciter {
       if (jsonSlug is String && jsonSlug.isNotEmpty) {
         identifier = jsonSlug;
       } else if (audioPrefix != null && audioPrefix.isNotEmpty) {
-        // Extract from audio_url_prefix if needed (e.g., "ar.alafasy")
         final segments = audioPrefix.split('/');
         if (segments.isNotEmpty) {
           identifier = segments.last;
@@ -66,7 +65,6 @@ class Reciter {
 
     // Ensure identifier is in the expected format
     if (identifier.isNotEmpty && !_isValidApiIdentifier(identifier)) {
-      // If it's a numeric ID or doesn't match format, try to create one
       identifier = _generateIdentifier(identifier, json);
     }
 
@@ -105,8 +103,6 @@ class Reciter {
 
   /// Validate if an identifier is in the expected format for API calls
   static bool _isValidApiIdentifier(String id) {
-    // Expected format: "ar.alafasy", "en.reciter", etc.
-    // Pattern: two-letter language code, dot, reciter name (lowercase with dots/hyphens)
     final validPattern =
         RegExp(r'^[a-z]{2}\.[a-z0-9._-]+$', caseSensitive: false);
     return validPattern.hasMatch(id);
@@ -114,11 +110,9 @@ class Reciter {
 
   /// Generate a valid API identifier from raw data
   static String _generateIdentifier(String rawId, Map<String, dynamic> json) {
-    // If it's numeric or invalid, try to construct from name
     String name = json['name'] ?? 'unknown';
     String language = json['language']?.toString().toLowerCase() ?? 'ar';
 
-    // Extract language code (first 2 chars)
     if (language.length > 2) {
       language = language.substring(0, 2);
     }
