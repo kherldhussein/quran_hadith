@@ -7,6 +7,7 @@ import 'package:quran_hadith/controller/hadithAPI.dart';
 import 'package:quran_hadith/widgets/social_share.dart' as share;
 import 'package:get/get.dart';
 import 'package:quran_hadith/screens/hadith_detail.dart';
+import 'package:quran_hadith/widgets/split_view_pane.dart';
 
 class HadithBookContent extends StatefulWidget {
   final String bookSlug;
@@ -30,6 +31,7 @@ class HadithBookContent extends StatefulWidget {
 
 class _HadithBookContentState extends State<HadithBookContent> {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollControllerTranslation = ScrollController();
   int _currentPage = 1;
   bool _initialLoading = false;
   bool _loadingMore = false;
@@ -40,6 +42,10 @@ class _HadithBookContentState extends State<HadithBookContent> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScrollLoadMore);
+    _scrollControllerTranslation.addListener(_onScrollLoadMore);
+    // Set up scroll synchronization for split view
+    _scrollController.addListener(_syncScrollControllers);
+    _scrollControllerTranslation.addListener(_syncScrollControllers);
     _reloadFromStart();
   }
 
@@ -55,6 +61,8 @@ class _HadithBookContentState extends State<HadithBookContent> {
   void dispose() {
     _scrollController.removeListener(_onScrollLoadMore);
     _scrollController.dispose();
+    _scrollControllerTranslation.removeListener(_onScrollLoadMore);
+    _scrollControllerTranslation.dispose();
     super.dispose();
   }
 
@@ -114,6 +122,25 @@ class _HadithBookContentState extends State<HadithBookContent> {
     }
   }
 
+  /// Synchronize scroll position between left and right panes in split view
+  void _syncScrollControllers() {
+    if (!widget.isSplitView) return;
+
+    // Only sync if this isn't from an external source
+    if (_scrollController.hasClients &&
+        _scrollControllerTranslation.hasClients) {
+      // If left pane is scrolling, sync right pane
+      if (_scrollController.position.isScrollingNotifier.value) {
+        _scrollControllerTranslation.jumpTo(_scrollController.offset);
+      }
+      // If right pane is scrolling, sync left pane
+      else if (_scrollControllerTranslation
+          .position.isScrollingNotifier.value) {
+        _scrollController.jumpTo(_scrollControllerTranslation.offset);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -129,6 +156,99 @@ class _HadithBookContentState extends State<HadithBookContent> {
                 (h.number ?? '').contains(q);
           }).toList();
 
+    // If split view is enabled, show both panes side by side
+    if (widget.isSplitView) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            child: Row(
+              children: [
+                Text(
+                  'Hadiths',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (_available > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Showing ${filtered.length} of $_available',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                if (_initialLoading)
+                  const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+              ],
+            ),
+          ),
+          // Split view panes
+          Expanded(
+            child: _initialLoading
+                ? _buildLoadingState(theme)
+                : filtered.isEmpty
+                    ? _buildEmptyState(theme)
+                    : Container(
+                        margin: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: SplitViewPane(
+                          leftChild: _buildArabicOnlyList(theme, filtered),
+                          rightChild:
+                              _buildTranslationOnlyList(theme, filtered),
+                          initialRatio: 0.5,
+                        ),
+                      ),
+          ),
+          // Load more button
+          if (_items.length < _available && !_initialLoading)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: OutlinedButton.icon(
+                onPressed: _loadingMore
+                    ? null
+                    : () {
+                        _currentPage += 1;
+                        _loadPage(_currentPage, append: true);
+                      },
+                icon: const Icon(FontAwesomeIcons.chevronDown, size: 14),
+                label: Text('Load more (${_items.length}/$_available)'),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Regular single-pane view
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -171,7 +291,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
             ],
           ),
         ),
-
         Expanded(
           child: _initialLoading
               ? _buildLoadingState(theme)
@@ -208,7 +327,6 @@ class _HadithBookContentState extends State<HadithBookContent> {
                       },
                     ),
         ),
-
         if (_items.length < _available && !_initialLoading)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -250,6 +368,120 @@ class _HadithBookContentState extends State<HadithBookContent> {
         'No hadiths found',
         style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
       ),
+    );
+  }
+
+  // Build Arabic-only list for split view (left pane)
+  Widget _buildArabicOnlyList(ThemeData theme, List<HadithItem> filtered) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(16),
+      itemCount: filtered.length + (_loadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (_loadingMore && index == filtered.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          );
+        }
+        final hadith = filtered[index];
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Hadith ${hadith.number ?? '-'}',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  hadith.arab ?? '',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'Amiri',
+                    fontSize: widget.fontSize,
+                    height: 1.8,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Build Translation-only list for split view (right pane)
+  Widget _buildTranslationOnlyList(ThemeData theme, List<HadithItem> filtered) {
+    return ListView.builder(
+      controller: _scrollControllerTranslation,
+      padding: const EdgeInsets.all(16),
+      itemCount: filtered.length + (_loadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (_loadingMore && index == filtered.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                ),
+              ),
+            ),
+          );
+        }
+        final hadith = filtered[index];
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Hadith ${hadith.number ?? '-'}',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  hadith.id ?? '',
+                  style: TextStyle(
+                    fontSize: widget.fontSize,
+                    height: 1.6,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -354,9 +586,7 @@ class _HadithCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
-
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -396,7 +626,6 @@ class _HadithCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                           ],
-
                           if ((hadith.id ?? '').isNotEmpty) ...[
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -431,7 +660,6 @@ class _HadithCard extends StatelessWidget {
                               ),
                             ),
                           ],
-
                           if ((hadith.arab ?? '').isEmpty &&
                               (hadith.id ?? '').isEmpty)
                             Text(
@@ -445,9 +673,7 @@ class _HadithCard extends StatelessWidget {
                             ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
