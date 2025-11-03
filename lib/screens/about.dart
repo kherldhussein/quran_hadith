@@ -71,7 +71,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
       final info = await PackageInfo.fromPlatform();
       if (mounted) setState(() => _info = info);
     } catch (e) {
-      debugPrint('⚠️ Failed to load package info: $e');
+      debugPrint('Failed to load package info: $e');
     }
   }
 
@@ -177,9 +177,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
             ],
           ),
         ),
-
         const SizedBox(height: 16),
-
         Card(
           clipBehavior: Clip.antiAlias,
           child: Padding(
@@ -223,9 +221,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
             ),
           ),
         ),
-
         const SizedBox(height: 16),
-
         const Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -247,9 +243,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
             ),
           ],
         ),
-
         const SizedBox(height: 16),
-
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -307,7 +301,7 @@ class AboutViewState extends State<AboutView> with TickerProviderStateMixin {
     try {
       return '${Platform.operatingSystem} ${Platform.version.split(' ').first}';
     } catch (e) {
-      debugPrint('⚠️ Failed to get platform info: $e');
+      debugPrint('Failed to get platform info: $e');
       return 'Unknown';
     }
   }

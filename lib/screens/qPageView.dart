@@ -54,6 +54,15 @@ class _QPageViewState extends State<QPageView>
   final Map<int, bool> _favoriteStates = {};
   final Map<int, String> _translations = {};
   bool _isLoadingTranslations = false;
+  String _selectedTranslationEdition = 'en.sahih';
+  final Map<String, String> _translationEditions = {
+    'en.sahih': 'Sahih International',
+    'en.pickthall': 'Marmaduke Pickthall',
+    'en.yusuf': 'Yusuf Ali',
+    'en.shakir': 'Muhammad Habib Shakir',
+    'ar.muyassar': 'Al-Muyassar',
+    'ar.jalalayn': 'Tafsir Al-Jalalayn',
+  };
   int? _currentlyPlayingAyah;
   int? _lastVisibleAyah;
   bool _showTranslation = true;
@@ -214,8 +223,9 @@ class _QPageViewState extends State<QPageView>
     // Listen to left controller (Arabic pane) and sync to right
     _scrollController.addListener(() {
       if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
-      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients)
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) {
         return;
+      }
 
       _isScrollingSyncInProgress = true;
 
@@ -239,8 +249,9 @@ class _QPageViewState extends State<QPageView>
     // Listen to right controller (translation pane) and sync to left
     _scrollControllerRight.addListener(() {
       if (_isScrollingSyncInProgress || !_isSplitViewEnabled) return;
-      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients)
+      if (!_scrollController.hasClients || !_scrollControllerRight.hasClients) {
         return;
+      }
 
       _isScrollingSyncInProgress = true;
 
@@ -328,16 +339,17 @@ class _QPageViewState extends State<QPageView>
       final quranAPI = Provider.of<QuranAPI>(context, listen: false);
       final translations = await quranAPI.getSurahTranslations(
         widget.suratNo!,
-        edition: 'en.sahih', // Sahih International translation
+        edition: _selectedTranslationEdition,
       );
 
       if (!mounted) return;
       setState(() {
+        _translations.clear();
         _translations.addAll(translations);
         _isLoadingTranslations = false;
       });
       debugPrint(
-          'Loaded ${translations.length} translations for Surah ${widget.suratNo}');
+          'Loaded ${translations.length} translations for Surah ${widget.suratNo} (${_translationEditions[_selectedTranslationEdition]})');
     } catch (e) {
       debugPrint('❌ Error loading translations: $e');
       if (!mounted) return;
@@ -361,6 +373,31 @@ class _QPageViewState extends State<QPageView>
       );
 
       setState(() => _isLoadingTranslations = false);
+    }
+  }
+
+  /// Switch to a different translation edition
+  Future<void> _switchTranslationEdition(String edition) async {
+    if (_selectedTranslationEdition == edition) return;
+
+    setState(() {
+      _selectedTranslationEdition = edition;
+      _translations.clear();
+      _isLoadingTranslations = true;
+    });
+
+    await _loadTranslations();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Switched to ${_translationEditions[edition]}',
+            maxLines: 1,
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -985,6 +1022,16 @@ class _QPageViewState extends State<QPageView>
                     Icon(FontAwesomeIcons.bookOpen, size: 18),
                     SizedBox(width: 12),
                     Text('Reading Modes'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'select_translation',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.language, size: 18),
+                    const SizedBox(width: 12),
+                    const Text('Translation'),
                   ],
                 ),
               ),
@@ -1686,6 +1733,9 @@ class _QPageViewState extends State<QPageView>
       case 'translation':
         setState(() => _showTranslation = !_showTranslation);
         break;
+      case 'select_translation':
+        _showTranslationSelector();
+        break;
       case 'download_surah':
         _promptDownloadSurah();
         break;
@@ -1705,6 +1755,55 @@ class _QPageViewState extends State<QPageView>
         setState(() => _fontSize = 28.0);
         break;
     }
+  }
+
+  /// Show translation edition selector dialog
+  void _showTranslationSelector() {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(FontAwesomeIcons.language, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            const Text('Select Translation'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _translationEditions.entries.map((entry) {
+              final isSelected = _selectedTranslationEdition == entry.key;
+              return ListTile(
+                title: Text(entry.value),
+                subtitle: Text(
+                  entry.key,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                trailing: isSelected
+                    ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                    : null,
+                selected: isSelected,
+                onTap: () {
+                  Navigator.pop(context);
+                  _switchTranslationEdition(entry.key);
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showReadingModeBottomSheet() {

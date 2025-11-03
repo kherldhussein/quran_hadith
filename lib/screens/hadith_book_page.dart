@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_hadith/database/database_service.dart';
 import 'package:quran_hadith/widgets/hadith_book_content.dart';
-import 'package:quran_hadith/widgets/split_view_pane.dart';
 import 'package:quran_hadith/theme/theme_state.dart';
 import 'package:quran_hadith/layout/adaptive.dart';
 
@@ -105,20 +104,55 @@ class _HadithBookPageState extends State<HadithBookPage> {
                     color: theme.colorScheme.primary),
                 onSelected: (value) => _handleSettingsSelection(value),
                 itemBuilder: (context) => [
+                  if (_isSplitViewEnabled)
+                    PopupMenuItem(
+                      enabled: false,
+                      child: Row(
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.columns,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Split View Mode Active',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_isSplitViewEnabled) const PopupMenuDivider(),
                   PopupMenuItem(
+                    enabled: !_isSplitViewEnabled,
                     value: 'show_arabic',
                     child: Row(
                       children: [
                         Icon(
                           _showArabic ? Icons.visibility : Icons.visibility_off,
                           size: 20,
+                          color: _isSplitViewEnabled
+                              ? theme.colorScheme.onSurface.withOpacity(0.3)
+                              : null,
                         ),
                         const SizedBox(width: 12),
-                        const Text('Show Arabic'),
+                        Text(
+                          'Show Arabic',
+                          style: TextStyle(
+                            color: _isSplitViewEnabled
+                                ? theme.colorScheme.onSurface.withOpacity(0.3)
+                                : null,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   PopupMenuItem(
+                    enabled: !_isSplitViewEnabled,
                     value: 'show_translation',
                     child: Row(
                       children: [
@@ -127,9 +161,19 @@ class _HadithBookPageState extends State<HadithBookPage> {
                               ? Icons.visibility
                               : Icons.visibility_off,
                           size: 20,
+                          color: _isSplitViewEnabled
+                              ? theme.colorScheme.onSurface.withOpacity(0.3)
+                              : null,
                         ),
                         const SizedBox(width: 12),
-                        const Text('Show Translation'),
+                        Text(
+                          'Show Translation',
+                          style: TextStyle(
+                            color: _isSplitViewEnabled
+                                ? theme.colorScheme.onSurface.withOpacity(0.3)
+                                : null,
+                          ),
+                        ),
                       ],
                     ),
                   ),

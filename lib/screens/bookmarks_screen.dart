@@ -92,9 +92,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
       body: Column(
         children: [
           _buildHeader(theme),
-
           if (_categories.isNotEmpty) _buildCategoryChips(theme),
-
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -173,7 +171,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-
               PopupMenuButton<String>(
                 icon:
                     const FaIcon(FontAwesomeIcons.arrowDownWideShort, size: 18),
@@ -233,7 +230,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   ),
                 ],
               ),
-
               IconButton(
                 icon: const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 18),
                 onPressed: () => _showOptionsMenu(context),
@@ -265,7 +261,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               selectedColor: theme.colorScheme.primary.withOpacity(0.2),
             ),
           ),
-
           ..._categories.map((category) => Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
@@ -335,7 +330,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,7 +352,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                     ],
                   ),
                 ),
-
                 PopupMenuButton(
                   icon:
                       const FaIcon(FontAwesomeIcons.ellipsisVertical, size: 16),
@@ -402,7 +395,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 ),
               ],
             ),
-
             if (bookmark.notes != null && bookmark.notes!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
@@ -416,7 +408,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 ),
               ),
             ],
-
             if (bookmark.tags.isNotEmpty || bookmark.category != null) ...[
               const SizedBox(height: 12),
               Wrap(
@@ -604,8 +595,6 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final titleController = TextEditingController(text: bookmark.title);
     final notesController = TextEditingController(text: bookmark.notes);
     final categoryController = TextEditingController(text: bookmark.category);
-    String selectedColor = bookmark.color ?? '#FF6B9D';
-    List<String> currentTags = List.from(bookmark.tags);
 
     Get.dialog(
       AlertDialog(
@@ -649,8 +638,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           ElevatedButton(
             onPressed: () async {
               bookmark.title = titleController.text;
-              bookmark.notes = notesController.text.isEmpty ? null : notesController.text;
-              bookmark.category = categoryController.text.isEmpty ? null : categoryController.text;
+              bookmark.notes =
+                  notesController.text.isEmpty ? null : notesController.text;
+              bookmark.category = categoryController.text.isEmpty
+                  ? null
+                  : categoryController.text;
               bookmark.updatedAt = DateTime.now();
               await bookmark.save();
               Get.back();
@@ -737,22 +729,25 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
   Future<void> _exportBookmarks() async {
     try {
-      final bookmarksData = _bookmarks.map((b) => {
-        'id': b.id,
-        'title': b.title,
-        'type': b.type,
-        'surahNumber': b.surahNumber,
-        'ayahNumber': b.ayahNumber,
-        'notes': b.notes,
-        'tags': b.tags,
-        'category': b.category,
-        'color': b.color,
-        'createdAt': b.createdAt.toIso8601String(),
-        'updatedAt': b.updatedAt.toIso8601String(),
-      }).toList();
+      final bookmarksData = _bookmarks
+          .map((b) => {
+                'id': b.id,
+                'title': b.title,
+                'type': b.type,
+                'surahNumber': b.surahNumber,
+                'ayahNumber': b.ayahNumber,
+                'notes': b.notes,
+                'tags': b.tags,
+                'category': b.category,
+                'color': b.color,
+                'createdAt': b.createdAt.toIso8601String(),
+                'updatedAt': b.updatedAt.toIso8601String(),
+              })
+          .toList();
 
       // TODO: Implement file picker to save JSON
-      Get.snackbar('Export', 'Bookmarks exported: ${bookmarksData.length} items');
+      Get.snackbar(
+          'Export', 'Bookmarks exported: ${bookmarksData.length} items');
     } catch (e) {
       Get.snackbar('Error', 'Failed to export bookmarks: $e');
     }
@@ -767,7 +762,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Clear All Bookmarks?'),
-        content: const Text('This will permanently delete all bookmarks. This action cannot be undone.'),
+        content: const Text(
+            'This will permanently delete all bookmarks. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),

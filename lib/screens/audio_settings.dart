@@ -1097,6 +1097,9 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
       _saveSetting('downloadOverWifiOnly', _downloadOverWifiOnly),
     ]);
 
+    // Persist reciter to storage
+    await appSP.setString('selectedReciter', _selectedReciterId);
+    await SpUtil.setReciter(_selectedReciterId);
     ReciterService.instance.setCurrentReciterId(_selectedReciterId);
 
     if (!mounted) return;
