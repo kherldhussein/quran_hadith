@@ -24,6 +24,7 @@ import 'package:quran_hadith/services/reading_mode_service.dart';
 import 'package:quran_hadith/database/hive_adapters.dart';
 import 'package:quran_hadith/models/reciter_model.dart';
 import 'package:quran_hadith/utils/numeric_locale.dart';
+import 'package:quran_hadith/services/study_session_service.dart';
 
 import 'controller/hadithAPI.dart';
 import 'theme/app_theme.dart';
@@ -221,12 +222,12 @@ class _QuranHadithAppState extends State<QuranHadithApp>
         try {
           final bridge = AudioNativeDesktopBridge();
           bridge.initialize(audioController).then((_) {
-            debugPrint('✅ Audio-Native Desktop Bridge connected');
+            debugPrint('Audio-Native Desktop Bridge connected');
           }).catchError((e) {
-            debugPrint('⚠️ Error connecting Audio-Native Desktop Bridge: $e');
+            debugPrint('Error connecting Audio-Native Desktop Bridge: $e');
           });
         } catch (e) {
-          debugPrint('⚠️ Error initializing Audio-Native Desktop Bridge: $e');
+          debugPrint('Error initializing Audio-Native Desktop Bridge: $e');
         }
       }
     });
@@ -341,6 +342,7 @@ class AppConstants {
 /// Production-ready app lifecycle observer with telemetry and proper state management
 class AppLifecycleObserver extends WidgetsBindingObserver {
   final EnhancedAudioController? audioController;
+  late final StudySessionService _studySessionService;
   DateTime? _pausedAt;
   DateTime? _resumedAt;
   DateTime? _sessionStart;
@@ -354,6 +356,7 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   AppLifecycleObserver({this.audioController}) {
     _sessionStart = DateTime.now();
     _initializeSessionMetrics();
+    _studySessionService = StudySessionService();
 
     analyticsService.trackSessionStart();
   }
@@ -443,6 +446,11 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
             'Failed to pause audio on app pause: $e', stack);
       });
 
+      // Pause study session tracking
+      if (_studySessionService.isSessionActive) {
+        _studySessionService.pauseSession();
+      }
+
       _saveAppState();
 
       _updateSessionMetrics();
@@ -463,6 +471,9 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
         final backgroundDuration = _resumedAt!.difference(_pausedAt!);
         _handleBackgroundDuration(backgroundDuration);
       }
+
+      // Resume study session tracking
+      _studySessionService.resumeSession();
 
       _restoreAppState();
 
