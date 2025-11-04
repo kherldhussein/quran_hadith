@@ -37,8 +37,13 @@ apps:
       - unity7
       - opengl
     environment:
-      # Ensure media_kit can find libmpv
+      # Ensure media_kit can find libmpv and audio libraries
       LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib:$SNAP/lib/$SNAPCRAFT_ARCH_TRIPLET
+      # PulseAudio configuration
+      PULSE_SERVER: unix:$XDG_RUNTIME_DIR/pulse/native
+      PULSE_RUNTIME_PATH: $XDG_RUNTIME_DIR/pulse
+      # ALSA configuration
+      ALSA_CONFIG_PATH: $SNAP/usr/share/alsa/alsa.conf
 
 parts:
   quran-hadith:
@@ -83,10 +88,26 @@ parts:
       - libkeybinder-3.0-0
       # Core media libraries
       - libmpv1
-      # Audio libraries
+      # Audio output libraries
       - libpulse0
       - libpulse-mainloop-glib0
-      - alsa-lib
+      - libasound2
+      - libasound2-plugins
+      # Audio codec libraries
       - libopus0
       - libvorbis0a
+      - libvorbisenc2
       - libflac8
+      - libmp3lame0
+      - libspeex1
+      # Additional audio/video codecs for mpv
+      - libavcodec58
+      - libavformat58
+      - libavutil56
+      - libswresample3
+      - libswscale5
+      # Sound processing
+      - libsndfile1
+      - libogg0
+      # PulseAudio utilities
+      - pulseaudio-utils
