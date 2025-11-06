@@ -3,7 +3,7 @@ name: quran_hadith
 description: Qur'an & Hadith
 publish_to: none
 repository: https://github.com/kherld-hussein/quran_hadith
-version: 2.0.5+2
+version: 2.0.6+3
 environment:
   sdk: ">=3.3.0 <4.0.0"
 dependencies:
@@ -32,11 +32,9 @@ dependencies:
   get_storage:
   platform_device_id:
   process_run:
-  # Keep media_kit present for desktop/mobile builds, but the app's audio controller uses just_audio.
+  # Using media_kit for desktop audio with classic snap confinement
   media_kit: ^1.1.10
-  # media_kit_video removed to fix Linux build (mpv not available by default)
-  # media_kit_libs_linux removed; not required when not using media_kit_video
-  # Add just_audio for current audio implementation + web support
+  # just_audio for web support
   just_audio: 0.10.5
   just_audio_web: ^0.4.9
   coachmaker:
