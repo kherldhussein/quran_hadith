@@ -96,5 +96,3 @@ WORKDIR /workspace
 # Verify installations
 RUN flutter --version && \
     flutter doctor -v
-
-ENTRYPOINT ["/bin/bash"]

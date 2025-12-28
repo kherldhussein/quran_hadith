@@ -69,5 +69,3 @@ RUN useradd -m -u 1000 -s /bin/bash builder && \
 
 USER builder
 WORKDIR /workspace
-
-ENTRYPOINT ["/bin/bash"]
