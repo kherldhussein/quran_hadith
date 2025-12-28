@@ -22,7 +22,6 @@ slots:
 apps:
   quran-hadith:
     command: quran_hadith
-    extensions: [gnome]
     slots:
       - dbus-quran-hadith
     plugs:
