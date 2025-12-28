@@ -1,0 +1,34 @@
+quran-hadith (2.0.7) stable; urgency=medium
+
+  * Fix audio playback in Snap packages
+  * Bundle libmpv and audio codecs properly
+  * Enhanced desktop integration
+  * Improved system tray support
+  * Native media controls (MPRIS)
+  * Multi-architecture support
+  * Performance optimizations
+
+ -- Khalid Hussein <kherld.hussein@gmail.com>  Sat, 28 Dec 2024 00:00:00 +0000
+
+quran-hadith (2.0.6) stable; urgency=medium
+
+  * Bug fixes and stability improvements
+  * Updated dependencies
+  * Improved error handling
+
+ -- Khalid Hussein <kherld.hussein@gmail.com>  Tue, 05 Nov 2024 00:00:00 +0000
+
+quran-hadith (2.0.0) stable; urgency=medium
+
+  * Major version release
+  * New features and improvements
+  * Enhanced UI/UX
+  * Better performance
+
+ -- Khalid Hussein <kherld.hussein@gmail.com>  Mon, 01 Oct 2024 00:00:00 +0000
+
+quran-hadith (1.0.0) stable; urgency=low
+
+  * Initial release
+
+ -- Khalid Hussein <kherld.hussein@gmail.com>  Sun, 01 Jan 2024 00:00:00 +0000

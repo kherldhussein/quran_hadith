@@ -721,21 +721,28 @@ class _AudioSettingsScreenState extends State<AudioSettingsScreen> {
                                             .withValues(alpha: 0.3),
                                     size: 18,
                                   ),
-                                  onTap: () async {
+                                  onTap: () {
                                     if (!mounted) return;
+
+                                    // Update UI immediately
                                     setState(() {
                                       _selectedReciterId = reciter.id;
                                     });
                                     modalSetState(() {});
-                                    await _saveSetting(
-                                      'selectedReciter',
-                                      reciter.id,
-                                    );
-                                    await SpUtil.setReciter(reciter.id);
+
+                                    // Update ReciterService immediately (notifies all listeners)
                                     ReciterService.instance
                                         .setCurrentReciterId(reciter.id);
+
+                                    // Close modal immediately
+                                    Navigator.of(context).pop();
+
+                                    // Save to storage asynchronously without blocking UI
+                                    _saveSetting('selectedReciter', reciter.id)
+                                        .then((_) => SpUtil.setReciter(reciter.id));
+
+                                    // Show feedback
                                     if (context.mounted) {
-                                      Navigator.of(context).pop();
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         SnackBar(

@@ -77,12 +77,12 @@ class HadithBookTileState extends State<HadithBookTile> {
       onExit: (_) => setState(() => _isHovered = false),
       child: WidgetAnimator(
         Card(
-          elevation: _isHovered ? 3 : 1,
+          elevation: _isHovered ? 4 : 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(widget.radius!),
+            borderRadius: BorderRadius.circular(16),
           ),
-          color: theme.colorScheme.surface,
-          shadowColor: Colors.black.withOpacity(0.1),
+          color: Colors.white,
+          shadowColor: Colors.black.withOpacity(0.08),
           child: InkWell(
             onTap: _navigateToBook,
             onHover: (hovering) {
@@ -90,22 +90,24 @@ class HadithBookTileState extends State<HadithBookTile> {
                 _isHovered = hovering;
               });
             },
-            hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+            hoverColor: theme.colorScheme.primary.withOpacity(0.03),
             onLongPress: () => _showBookInfo(context),
-            borderRadius: BorderRadius.circular(widget.radius!),
-            splashColor: theme.colorScheme.primary.withOpacity(0.1),
-            highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            splashColor: theme.colorScheme.primary.withOpacity(0.08),
+            highlightColor: theme.colorScheme.primary.withOpacity(0.03),
             child: Container(
-              padding: const EdgeInsets.only(
-                  top: 10, bottom: 12, left: 16, right: 12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(widget.radius!),
+                borderRadius: BorderRadius.circular(16),
                 border: _isHovered
                     ? Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        width: 1.5,
+                        color: theme.colorScheme.primary.withOpacity(0.4),
+                        width: 2,
                       )
-                    : null,
+                    : Border.all(
+                        color: Colors.transparent,
+                        width: 2,
+                      ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,19 +119,18 @@ class HadithBookTileState extends State<HadithBookTile> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              widget.colorI ?? theme.colorScheme.primary,
-                              (widget.colorI ?? theme.colorScheme.primary)
-                                  .withOpacity(0.7),
-                            ],
-                          ),
+                          color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Center(
                           child: Text(
@@ -137,78 +138,58 @@ class HadithBookTileState extends State<HadithBookTile> {
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 16,
                               fontFamily: 'Amiri',
                             ),
                           ),
                         ),
                       ),
 
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                      IconButton(
+                        icon: Icon(
+                          widget.isFavorite!
+                              ? Icons.favorite
+                              : Icons.favorite_border_outlined,
                           color: widget.isFavorite!
-                              ? const Color(0xFFFF6B6B).withOpacity(0.05)
-                              : theme.colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.3),
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withOpacity(0.4),
+                          size: 22,
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            widget.isFavorite!
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: widget.isFavorite!
-                                ? const Color(0xFFFF6B6B)
-                                : Theme.of(context).canvasColor,
-                            size: 26,
-                          ),
-                          onPressed: widget.onFavorite,
-                          splashRadius: 16,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
+                        onPressed: widget.onFavorite,
+                        splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: widget.isFavorite!
+                              ? theme.colorScheme.primary.withOpacity(0.1)
+                              : Colors.transparent,
+                          hoverColor: theme.colorScheme.primary.withOpacity(0.08),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   AutoSizeText(
                     widget.name ?? 'Unknown Book',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: theme.textTheme.titleLarge!.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      AutoSizeText(
-                        '•',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.3),
-                          fontSize: 20,
-                        ),
-                      ),
-                      Expanded(
-                        child: AutoSizeText(
-                          '${widget.total ?? 0} hadiths'.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            letterSpacing: 0.3,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 4),
+                  AutoSizeText(
+                    '${widget.total ?? 0} hadiths',
+                    style: theme.textTheme.bodyMedium!.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

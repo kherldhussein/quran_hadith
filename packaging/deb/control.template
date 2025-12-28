@@ -1,0 +1,39 @@
+Package: quran-hadith
+Version: ${VERSION}
+Section: misc
+Priority: optional
+Architecture: ${ARCH}
+Maintainer: Quran Hadith Team <kherld.hussein@gmail.com>
+Homepage: https://github.com/kherld-hussein/quran_hadith
+Bugs: https://github.com/kherld-hussein/quran_hadith/issues
+Installed-Size: ${INSTALLED_SIZE}
+Depends: libgtk-3-0 (>= 3.22),
+         libayatana-appindicator3-1,
+         libstdc++6,
+         liblzma5,
+         libkeybinder-3.0-0,
+         libmpv1,
+         libavcodec58 | libavcodec-extra58,
+         libavformat58,
+         libavutil56,
+         libswresample3,
+         libpulse0,
+         libasound2,
+         libssl3 | libssl1.1,
+         ca-certificates
+Recommends: pulseaudio | pipewire-pulse
+Suggests: libayatana-appindicator3-1
+Description: Quran & Hadith desktop application
+ Quran & Hadith is a desktop application for reading the Quran and
+ browsing Hadith collections. Built with Flutter for a modern,
+ responsive experience.
+ .
+ Features:
+  * Complete Quran with Arabic text and translations
+  * Hadith collections with search and navigation
+  * Audio recitation with multiple reciters
+  * Offline support and bookmarks
+  * Desktop integration with system tray and notifications
+  * Customizable themes and fonts including dyslexia-friendly options
+  * Reading statistics and progress tracking
+  * System media controls (MPRIS) support

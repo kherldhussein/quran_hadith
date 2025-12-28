@@ -437,124 +437,85 @@ class _HomeScreenState extends State<HomeScreen>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      height: 220,
+      height: 200,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary.withOpacity(0.9),
-            colorScheme.primaryContainer.withOpacity(0.8),
-            colorScheme.secondary.withOpacity(0.7),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(24),
+        color: colorScheme.primary,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withOpacity(0.4),
-            blurRadius: 32,
-            spreadRadius: 4,
-            offset: const Offset(0, 12),
+            color: colorScheme.primary.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(32),
-      child: Stack(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Background pattern
-          Positioned(
-            right: -50,
-            top: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.1),
-                    Colors.transparent,
+          Row(
+            children: [
+              // Logo with clean background
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.2),
+                ),
+                child: const ImageIcon(
+                  AssetImage('assets/images/Logo.png'),
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Peace be upon you',
+                      style: textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Reignite your spiritual connection',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-
-          // Content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          const Spacer(),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: [
-              Row(
-                children: [
-                  // Logo with glow effect
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withOpacity(0.3),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child:
-                        const ImageIcon(AssetImage('assets/images/Logo.png')),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Peace be upon you',
-                          style: textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 24,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Reignite your spiritual connection',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.bookOpen,
+                label: 'Continue reading',
+                onTap: _openLastRead,
               ),
-              const Spacer(),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  _buildQuickActionChip(
-                    context,
-                    icon: FontAwesomeIcons.bookOpen,
-                    label: 'Continue reading',
-                    onTap: _openLastRead,
-                  ),
-                  _buildQuickActionChip(
-                    context,
-                    icon: FontAwesomeIcons.play,
-                    label: 'Resume listening',
-                    onTap: _openLastListened,
-                  ),
-                  _buildQuickActionChip(
-                    context,
-                    icon: FontAwesomeIcons.rotateRight,
-                    label: 'Refresh ayah',
-                    onTap: () => _loadDailyAyah(forceRefresh: true),
-                  ),
-                ],
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.play,
+                label: 'Resume listening',
+                onTap: _openLastListened,
+              ),
+              _buildQuickActionChip(
+                context,
+                icon: FontAwesomeIcons.rotateRight,
+                label: 'Refresh ayah',
+                onTap: () => _loadDailyAyah(forceRefresh: true),
               ),
             ],
           ),
@@ -604,110 +565,81 @@ class _HomeScreenState extends State<HomeScreen>
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.surface.withOpacity(0.9),
-            theme.colorScheme.surfaceContainerHighest.withOpacity(0.7),
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: FaIcon(
+                    FontAwesomeIcons.star,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Ayah of the Day',
+                    style: textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _buildAnimatedRefreshButton(),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_loadingDailyAyah && _dailyAyah == null)
+              _buildLoadingShimmer()
+            else if (_dailyAyah != null)
+              _buildDailyAyahContent(context, _dailyAyah!)
+            else
+              _buildErrorState(textTheme),
           ],
         ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.15),
-            blurRadius: 32,
-            offset: const Offset(0, 16),
-          ),
-        ],
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withOpacity(0.2),
-                      theme.colorScheme.secondary.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: FaIcon(
-                  FontAwesomeIcons.star,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Ayah of the Day',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 22,
-                  ),
-                ),
-              ),
-              _buildAnimatedRefreshButton(),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (_loadingDailyAyah && _dailyAyah == null)
-            _buildLoadingShimmer()
-          else if (_dailyAyah != null)
-            _buildDailyAyahContent(context, _dailyAyah!)
-          else
-            _buildErrorState(textTheme),
-        ],
       ),
     );
   }
 
   Widget _buildAnimatedRefreshButton() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: _loadingDailyAyah
-            ? null
-            : LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-                ],
+    final theme = Theme.of(context);
+    return IconButton(
+      tooltip: 'Refresh ayah',
+      onPressed:
+          _loadingDailyAyah ? null : () => _loadDailyAyah(forceRefresh: true),
+      icon: _loadingDailyAyah
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
               ),
-      ),
-      child: IconButton(
-        tooltip: 'Refresh ayah',
-        onPressed:
-            _loadingDailyAyah ? null : () => _loadDailyAyah(forceRefresh: true),
-        icon: _loadingDailyAyah
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              )
-            : FaIcon(
-                FontAwesomeIcons.rotateRight,
-                size: 18,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
-              ),
+            )
+          : FaIcon(
+              FontAwesomeIcons.rotateRight,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+      style: IconButton.styleFrom(
+        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+        hoverColor: theme.colorScheme.primary.withOpacity(0.15),
       ),
     );
   }
@@ -930,93 +862,68 @@ class _HomeScreenState extends State<HomeScreen>
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      child: Material(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colorScheme.surface,
-                  colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                ],
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon with clean background
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: colorScheme.primary,
+                  size: 26,
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.shadowColor.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+              const SizedBox(height: 20),
+
+              // Title
+              Text(
+                title,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
                 ),
-              ],
-              border: Border.all(
-                color: colorScheme.outline.withOpacity(0.1),
-                width: 1,
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Icon with gradient background
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        colorScheme.primary.withOpacity(0.15),
-                        colorScheme.secondary.withOpacity(0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: colorScheme.primary,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(height: 20),
+              const SizedBox(height: 8),
 
-                // Title
-                Text(
-                  title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                  ),
+              // Subtitle
+              Text(
+                subtitle,
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.8),
+                  height: 1.4,
                 ),
-                const SizedBox(height: 8),
+              ),
+              const SizedBox(height: 20),
 
-                // Subtitle
-                Text(
-                  subtitle,
-                  style: textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.8),
-                    height: 1.4,
-                  ),
+              // Footer
+              Text(
+                footer,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.6),
                 ),
-                const SizedBox(height: 20),
+              ),
 
-                // Footer
-                Text(
-                  footer,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-
-                // Action Button
-                if (actionLabel != null) ...[
+              // Action Button
+              if (actionLabel != null) ...[
                   const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
@@ -1059,8 +966,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                 ],
-              ],
-            ),
+            ],
           ),
         ),
       ),

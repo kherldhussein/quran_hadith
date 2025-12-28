@@ -1,0 +1,100 @@
+version: 1
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: com.kherld.quran_hadith
+    name: Quran & Hadith
+    icon: quran-hadith
+    version: !ENV ${VERSION}
+    exec: usr/bin/quran_hadith
+    exec_args: $@
+
+  apt:
+    arch: !ENV ${ARCH:-amd64}
+    sources:
+      - sourceline: 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse'
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C'
+
+    include:
+      # Runtime libraries
+      - libgtk-3-0
+      - libglu1-mesa
+      - liblzma5
+      - libkeybinder-3.0-0
+      - libayatana-appindicator3-1
+      - libstdc++6
+      # Media playback - media_kit requires libmpv
+      - libmpv1
+      - libavcodec58
+      - libavformat58
+      - libavutil56
+      - libswresample3
+      - libswscale5
+      # Audio output
+      - libpulse0
+      - libasound2
+      # SSL for network requests
+      - libssl3
+      - ca-certificates
+      # Additional dependencies
+      - libblkid1
+      - libmount1
+      - libpcre3
+      - libselinux1
+
+    exclude:
+      - humanity-icon-theme
+      - hicolor-icon-theme
+      - adwaita-icon-theme
+      - ubuntu-mono
+      - gnome-icon-theme
+      - oxygen-icon-theme
+
+  files:
+    include:
+      - /usr/lib/x86_64-linux-gnu/libmpv.so*
+      - /usr/lib/x86_64-linux-gnu/libavcodec.so*
+      - /usr/lib/x86_64-linux-gnu/libavformat.so*
+      - /usr/lib/x86_64-linux-gnu/libavutil.so*
+      - /usr/lib/x86_64-linux-gnu/libswresample.so*
+      - /usr/lib/x86_64-linux-gnu/libswscale.so*
+
+    exclude:
+      - usr/share/man
+      - usr/share/doc/*/README.*
+      - usr/share/doc/*/changelog.*
+      - usr/share/doc/*/NEWS.*
+      - usr/share/doc/*/TODO.*
+
+  runtime:
+    env:
+      APPDIR_LIBRARY_PATH: '$APPDIR/usr/lib/x86_64-linux-gnu:$APPDIR/usr/lib:$APPDIR/lib/x86_64-linux-gnu'
+      LD_LIBRARY_PATH: '${APPDIR_LIBRARY_PATH}:$LD_LIBRARY_PATH'
+      PULSE_SERVER: 'unix:$XDG_RUNTIME_DIR/pulse/native'
+      PULSE_RUNTIME_PATH: '$XDG_RUNTIME_DIR/pulse'
+      XDG_DATA_DIRS: '$APPDIR/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}'
+
+  test:
+    fedora-39:
+      image: appimagecrafters/tests-env:fedora-39
+      command: ./AppRun --version
+      use_host_x: true
+    debian-stable:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun --version
+      use_host_x: true
+    archlinux-latest:
+      image: appimagecrafters/tests-env:archlinux-latest
+      command: ./AppRun --version
+      use_host_x: true
+    ubuntu-jammy:
+      image: appimagecrafters/tests-env:ubuntu-jammy
+      command: ./AppRun --version
+      use_host_x: true
+
+AppImage:
+  update-information: gh-releases-zsync|kherld-hussein|quran_hadith|latest|quran-hadith-*x86_64.AppImage.zsync
+  sign-key: None
+  arch: x86_64

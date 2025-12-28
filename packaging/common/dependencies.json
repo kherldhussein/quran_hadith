@@ -1,0 +1,88 @@
+{
+  "runtime": {
+    "common": [
+      "gtk3",
+      "libmpv",
+      "pulseaudio",
+      "alsa",
+      "ffmpeg-codecs"
+    ],
+    "debian": {
+      "libgtk-3-0": ">=3.22",
+      "libayatana-appindicator3-1": "",
+      "liblzma5": "",
+      "libkeybinder-3.0-0": "",
+      "libmpv1": "",
+      "libavcodec58": "",
+      "libavformat58": "",
+      "libavutil56": "",
+      "libswresample3": "",
+      "libpulse0": "",
+      "libasound2": "",
+      "libssl3": "",
+      "ca-certificates": ""
+    },
+    "fedora": {
+      "gtk3": "",
+      "libappindicator-gtk3": "",
+      "xz-libs": "",
+      "keybinder3": "",
+      "mpv-libs": "",
+      "libavcodec-free": "",
+      "libavformat-free": "",
+      "libavutil-free": "",
+      "libswresample-free": "",
+      "pulseaudio-libs": "",
+      "alsa-lib": "",
+      "openssl-libs": "",
+      "ca-certificates": ""
+    },
+    "arch": {
+      "gtk3": "",
+      "libappindicator-gtk3": "",
+      "xz": "",
+      "libkeybinder3": "",
+      "mpv": "",
+      "ffmpeg": "",
+      "pulseaudio": "",
+      "alsa-lib": "",
+      "openssl": "",
+      "ca-certificates": ""
+    }
+  },
+  "build": {
+    "debian": {
+      "clang": "",
+      "cmake": "",
+      "ninja-build": "",
+      "pkg-config": "",
+      "libgtk-3-dev": "",
+      "liblzma-dev": "",
+      "libkeybinder-3.0-dev": "",
+      "libayatana-appindicator3-dev": "",
+      "libmpv-dev": ""
+    },
+    "fedora": {
+      "gcc-c++": "",
+      "cmake": "",
+      "ninja-build": "",
+      "pkg-config": "",
+      "gtk3-devel": "",
+      "xz-devel": "",
+      "keybinder3-devel": "",
+      "libappindicator-gtk3-devel": "",
+      "mpv-libs-devel": ""
+    },
+    "arch": {
+      "gcc": "",
+      "cmake": "",
+      "ninja": "",
+      "pkgconf": "",
+      "gtk3": "",
+      "xz": "",
+      "libkeybinder3": "",
+      "libappindicator-gtk3": "",
+      "mpv": ""
+    }
+  }
+}

@@ -351,23 +351,7 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
   Widget _buildMainContent(ThemeData theme, bool isDesktop) {
     return Container(
       decoration: BoxDecoration(
-        gradient: theme.brightness == Brightness.dark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  kDarkPrimaryColor,
-                  kDarkPrimaryColor.withOpacity(0.9),
-                ],
-              )
-            : const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xffeef2f5),
-                  Color(0xffe8f4f8),
-                ],
-              ),
+        color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
         ),
@@ -448,39 +432,62 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
             ),
           ),
           const SizedBox(width: 16),
-          Container(
-            height: 45,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _sortBy,
-                items: ['Order', 'Alphabet', 'Total Ayah', 'Para']
-                    .map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      'Sort by $value',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _sortBy = newValue!;
-                  });
-                },
-              ),
-            ),
+          _buildSortingSegmentedButton(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortingSegmentedButton(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SegmentedButton<String>(
+        segments: const [
+          ButtonSegment<String>(
+            value: 'Order',
+            label: Text('Serial', style: TextStyle(fontSize: 13)),
+          ),
+          ButtonSegment<String>(
+            value: 'Alphabet',
+            label: Text('Alphabet', style: TextStyle(fontSize: 13)),
+          ),
+          ButtonSegment<String>(
+            value: 'Total Ayah',
+            label: Text('Ayah', style: TextStyle(fontSize: 13)),
+          ),
+          ButtonSegment<String>(
+            value: 'Para',
+            label: Text('Para', style: TextStyle(fontSize: 13)),
           ),
         ],
+        selected: {_sortBy},
+        onSelectionChanged: (Set<String> newSelection) {
+          setState(() {
+            _sortBy = newSelection.first;
+          });
+        },
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith<Color>(
+            (Set<WidgetState> states) {
+              if (states.contains(WidgetState.selected)) {
+                return theme.colorScheme.primary;
+              }
+              return Colors.transparent;
+            },
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith<Color>(
+            (Set<WidgetState> states) {
+              if (states.contains(WidgetState.selected)) {
+                return Colors.white;
+              }
+              return theme.colorScheme.onSurface;
+            },
+          ),
+          side: WidgetStateProperty.all(BorderSide.none),
+        ),
       ),
     );
   }
@@ -960,30 +967,26 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(0.8),
-          ],
-        ),
+        color: theme.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(FontAwesomeIcons.solidStar,
-                  color: Colors.white, size: 14),
+              Icon(FontAwesomeIcons.solidStar,
+                  color: theme.colorScheme.primary, size: 14),
               const SizedBox(width: 8),
               Text(
                 'AYAH OF THE DAY',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.95),
+                style: theme.textTheme.labelMedium!.copyWith(
+                  color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -993,8 +996,8 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
           Text(
             _verseText,
             textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: theme.colorScheme.onPrimaryContainer,
               fontFamily: 'Amiri',
               fontSize: 14,
               height: 1.6,
@@ -1007,19 +1010,18 @@ class _QPageState extends State<QPage> with AutomaticKeepAliveClientMixin {
           InkWell(
             onTap: _showVerseDialog,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Read now',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
+                    'Read more',
+                    style: theme.textTheme.labelLarge!.copyWith(
+                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

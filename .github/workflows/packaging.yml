@@ -1,0 +1,376 @@
+name: Multi-Format Packaging
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        default: 'dev'
+
+concurrency:
+  group: packaging-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  FLUTTER_VERSION: 'stable'
+
+jobs:
+  prepare:
+    name: Prepare Build Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_tag: ${{ steps.version.outputs.version_tag }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            IS_RELEASE="false"
+          elif [[ "${GITHUB_REF}" =~ ^refs/tags/v ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            IS_RELEASE="true"
+          else
+            VERSION="$(git describe --tags --always)-dev"
+            IS_RELEASE="false"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "is_release=${IS_RELEASE}" >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION}"
+
+  build-docker-images:
+    name: Build Docker Images for ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract platform tag
+        id: platform
+        run: |
+          PLATFORM_TAG=$(echo "${{ matrix.platform }}" | sed 's/\//-/g')
+          echo "tag=${PLATFORM_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push builder image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packaging/docker/Dockerfile.builder-${{ steps.platform.outputs.tag }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/quran-hadith-builder:${{ steps.platform.outputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/quran-hadith-builder:${{ needs.prepare.outputs.version }}-${{ steps.platform.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-packages:
+    name: Build ${{ matrix.format }} for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    needs: [prepare, build-docker-images]
+    strategy:
+      fail-fast: false
+      matrix:
+        format: [deb, rpm]
+        arch: [amd64, arm64]
+        # Note: AppImage builds separately due to complexity
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build ${{ matrix.format }} package
+        run: |
+          PLATFORM_TAG="linux-${{ matrix.arch }}"
+          docker run --rm \
+            --platform linux/${{ matrix.arch }} \
+            -v "$(pwd):/workspace" \
+            -w /workspace \
+            -e VERSION="${{ needs.prepare.outputs.version }}" \
+            -e ARCH="${{ matrix.arch }}" \
+            ghcr.io/${{ github.repository_owner }}/quran-hadith-builder:${PLATFORM_TAG} \
+            bash packaging/${{ matrix.format }}/build-${{ matrix.format }}.sh \
+              "${{ needs.prepare.outputs.version }}" \
+              "${{ matrix.arch }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.format }}-${{ matrix.arch }}
+          path: |
+            *.deb
+            *.rpm
+          if-no-files-found: error
+
+  build-appimage:
+    name: Build AppImage for amd64
+    runs-on: ubuntu-latest
+    needs: prepare
+    # Only build for amd64 as AppImage for ARM is experimental
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libmpv-dev \
+            libasound2-dev \
+            libpulse-dev \
+            libkeybinder-3.0-dev \
+            python3-pip \
+            fuse \
+            file
+          pip3 install appimage-builder
+
+      - name: Build Flutter app
+        run: flutter build linux --release
+
+      - name: Build AppImage
+        run: |
+          export VERSION="${{ needs.prepare.outputs.version }}"
+          export ARCH="x86_64"
+          ./packaging/appimage/build-appimage.sh "${{ needs.prepare.outputs.version }}" x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-amd64
+          path: '*.AppImage'
+
+  build-flatpak:
+    name: Build Flatpak for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-23.08
+      options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: quran-hadith-${{ needs.prepare.outputs.version }}-${{ matrix.arch }}.flatpak
+          manifest-path: packaging/flatpak/com.kherld.quran_hadith.yml
+          arch: ${{ matrix.arch }}
+          cache-key: flatpak-builder-${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-${{ matrix.arch }}
+          path: '*.flatpak'
+
+  build-snap:
+    name: Build Snap for ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Snap
+        uses: snapcore/action-build@v1
+        with:
+          snapcraft-args: --enable-experimental-target-arch --target-arch=${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-${{ matrix.arch }}
+          path: '*.snap'
+
+  build-web-container:
+    name: Build Web Container
+    runs-on: ubuntu-latest
+    needs: prepare
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/quran-hadith
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.prepare.outputs.version_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.prepare.outputs.version_tag }}
+            type=raw,value=latest,enable=${{ needs.prepare.outputs.is_release == 'true' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.is_release == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        run: |
+          curl -sSL https://github.com/orhun/git-cliff/releases/download/v1.4.0/git-cliff-1.4.0-x86_64-unknown-linux-gnu.tar.gz | \
+          tar xz -C /usr/local/bin --strip-components=1 git-cliff-1.4.0/git-cliff
+
+      - name: Generate changelog
+        run: |
+          git-cliff --config cliff.toml \
+            --tag "${{ needs.prepare.outputs.version_tag }}" \
+            --strip all \
+            --output RELEASE_NOTES.md
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: RELEASE_NOTES.md
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - build-packages
+      - build-appimage
+      - build-flatpak
+      - build-snap
+      - generate-changelog
+    if: needs.prepare.outputs.is_release == 'true'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize release assets
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.AppImage' -o -name '*.flatpak' -o -name '*.snap' \) \
+            -exec cp {} release/ \;
+          ls -lah release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          body_path: artifacts/changelog/RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-snap:
+    name: Publish to Snap Store
+    runs-on: ubuntu-latest
+    needs: [prepare, build-snap, create-release]
+    if: needs.prepare.outputs.is_release == 'true'
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Download Snap artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap-${{ matrix.arch }}
+
+      - name: Publish to Snap Store
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+        with:
+          snap: '*.snap'
+          release: stable

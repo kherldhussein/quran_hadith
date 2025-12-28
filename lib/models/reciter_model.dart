@@ -46,28 +46,6 @@ class Reciter {
     }
 
     String identifier = '';
-
-    // Priority: identifier (best), slug, audio_url_prefix extraction
-    final jsonIdentifier = json['identifier'];
-    if (jsonIdentifier is String && jsonIdentifier.isNotEmpty) {
-      identifier = jsonIdentifier;
-    } else {
-      final jsonSlug = json['slug'];
-      if (jsonSlug is String && jsonSlug.isNotEmpty) {
-        identifier = jsonSlug;
-      } else if (audioPrefix != null && audioPrefix.isNotEmpty) {
-        final segments = audioPrefix.split('/');
-        if (segments.isNotEmpty) {
-          identifier = segments.last;
-        }
-      }
-    }
-
-    // Ensure identifier is in the expected format
-    if (identifier.isNotEmpty && !_isValidApiIdentifier(identifier)) {
-      identifier = _generateIdentifier(identifier, json);
-    }
-
     String name = 'Unknown Reciter';
     final jsonName = json['name'];
     if (jsonName is String) {
@@ -76,20 +54,59 @@ class Reciter {
       name = translatedName;
     }
 
+    // NEW API FORMAT: Map numeric reciter_id to known identifiers
+    final reciterId = json['reciter_id'];
+    if (reciterId != null) {
+      identifier = _mapReciterIdToIdentifier(reciterId, name);
+    }
+
+    // FALLBACK: Try old parsing methods
+    if (identifier.isEmpty) {
+      // Priority: identifier (best), slug, audio_url_prefix extraction
+      final jsonIdentifier = json['identifier'];
+      if (jsonIdentifier is String && jsonIdentifier.isNotEmpty) {
+        identifier = jsonIdentifier;
+      } else {
+        final jsonSlug = json['slug'];
+        if (jsonSlug is String && jsonSlug.isNotEmpty) {
+          identifier = jsonSlug;
+        } else if (audioPrefix != null && audioPrefix.isNotEmpty) {
+          final segments = audioPrefix.split('/');
+          if (segments.isNotEmpty) {
+            identifier = segments.last;
+          }
+        }
+      }
+
+      // Ensure identifier is in the expected format
+      if (identifier.isNotEmpty && !_isValidApiIdentifier(identifier)) {
+        identifier = _generateIdentifier(identifier, json);
+      }
+    }
+
     String? safeExtract(dynamic value) {
       if (value is String) return value;
       if (value is Map) return null;
       return value?.toString();
     }
 
+    // Extract style from nested object
+    String? styleStr;
+    final styleObj = json['style'];
+    if (styleObj is Map<String, dynamic>) {
+      styleStr = styleObj['name'] as String?;
+    } else if (styleObj is String) {
+      styleStr = styleObj;
+    }
+
     return Reciter(
-      id: identifier.isEmpty ? 'unknown_reciter' : identifier,
+      id: identifier.isEmpty ? 'ar.unknown' : identifier,
       name: name,
       arabicName: safeExtract(json['arabic_name']) ??
           (translatedLanguage == 'Arabic' ? translatedName : null),
       translatedName: translatedName,
-      language: safeExtract(json['language']) ?? translatedLanguage,
-      style: safeExtract(json['style']) ??
+      language: safeExtract(json['language']) ?? translatedLanguage ?? 'Arabic',
+      style: styleStr ??
           safeExtract(json['recitation_style']) ??
           safeExtract(json['type']),
       description: safeExtract(json['description']) ??
@@ -99,6 +116,30 @@ class Reciter {
           safeExtract(json['profile_picture']) ?? safeExtract(json['image']),
       audioUrlPrefix: audioPrefix,
     );
+  }
+
+  /// Map numeric reciter_id from API to our string identifiers
+  static String _mapReciterIdToIdentifier(int reciterId, String name) {
+    // Known mappings from qurancdn API
+    const idMap = {
+      1: 'ar.abdulbasit',
+      2: 'ar.abdurrahmaansudais',
+      3: 'ar.shaatree',
+      4: 'ar.hanirifai',
+      5: 'ar.husary',
+      6: 'ar.alafasy',
+      7: 'ar.minshawi',
+      8: 'ar.saudalshuraim',
+      11: 'ar.khalifah',
+      20: 'ar.yasser',
+    };
+
+    if (idMap.containsKey(reciterId)) {
+      return idMap[reciterId]!;
+    }
+
+    // Generate identifier from name as fallback
+    return _generateIdentifier(name, {'name': name});
   }
 
   /// Validate if an identifier is in the expected format for API calls

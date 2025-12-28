@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.kherld.quran_hadith</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Quran & Hadith</name>
+  <summary>Read and listen to the Quran and Hadith collections</summary>
+
+  <description>
+    <p>
+      Quran &amp; Hadith is a desktop application for reading the Quran and browsing Hadith collections.
+      It features offline support, audio recitation with multiple reciters, search functionality,
+      and bookmarking capabilities.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Complete Quran with Arabic text and translations</li>
+      <li>Hadith collections with search and navigation</li>
+      <li>Audio recitation with multiple reciters</li>
+      <li>Offline support and bookmarks</li>
+      <li>Desktop integration with system tray and notifications</li>
+      <li>Reading statistics and progress tracking</li>
+      <li>Customizable themes and fonts including dyslexia-friendly options</li>
+      <li>System media controls support</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.kherld.quran_hadith.desktop</launchable>
+
+  <provides>
+    <binary>quran_hadith</binary>
+    <dbus type="session">com.kherld.quran_hadith</dbus>
+    <mediatype>application/x-quran-hadith</mediatype>
+  </provides>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main window showing Quran reader</caption>
+      <image>https://raw.githubusercontent.com/kherld-hussein/quran_hadith/main/assets/images/Banner.png</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://github.com/kherld-hussein/quran_hadith</url>
+  <url type="bugtracker">https://github.com/kherld-hussein/quran_hadith/issues</url>
+  <url type="vcs-browser">https://github.com/kherld-hussein/quran_hadith</url>
+
+  <developer_name>Khalid Hussein</developer_name>
+  <update_contact>kherld.hussein_AT_gmail.com</update_contact>
+
+  <releases>
+    <release version="2.0.7" date="2025-12-28">
+      <description>
+        <p>Audio playback improvements and bug fixes:</p>
+        <ul>
+          <li>Fixed audio playback in Snap and Flatpak packages</li>
+          <li>Bundled libmpv for better compatibility</li>
+          <li>Enhanced desktop integration</li>
+          <li>Performance optimizations</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.0.6" date="2024-11-05">
+      <description>
+        <p>Bug fixes and stability improvements</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-cartoon">none</content_attribute>
+    <content_attribute id="violence-fantasy">none</content_attribute>
+    <content_attribute id="violence-realistic">none</content_attribute>
+    <content_attribute id="violence-bloodshed">none</content_attribute>
+    <content_attribute id="violence-sexual">none</content_attribute>
+    <content_attribute id="violence-desecration">none</content_attribute>
+    <content_attribute id="violence-slavery">none</content_attribute>
+    <content_attribute id="violence-worship">none</content_attribute>
+    <content_attribute id="drugs-alcohol">none</content_attribute>
+    <content_attribute id="drugs-narcotics">none</content_attribute>
+    <content_attribute id="drugs-tobacco">none</content_attribute>
+    <content_attribute id="sex-nudity">none</content_attribute>
+    <content_attribute id="sex-themes">none</content_attribute>
+    <content_attribute id="sex-homosexuality">none</content_attribute>
+    <content_attribute id="sex-prostitution">none</content_attribute>
+    <content_attribute id="sex-adultery">none</content_attribute>
+    <content_attribute id="sex-appearance">none</content_attribute>
+    <content_attribute id="language-profanity">none</content_attribute>
+    <content_attribute id="language-humor">none</content_attribute>
+    <content_attribute id="language-discrimination">none</content_attribute>
+    <content_attribute id="social-chat">none</content_attribute>
+    <content_attribute id="social-info">mild</content_attribute>
+    <content_attribute id="social-audio">none</content_attribute>
+    <content_attribute id="social-location">none</content_attribute>
+    <content_attribute id="social-contacts">none</content_attribute>
+    <content_attribute id="money-purchasing">none</content_attribute>
+    <content_attribute id="money-gambling">none</content_attribute>
+  </content_rating>
+
+  <categories>
+    <category>Education</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>Islam</keyword>
+    <keyword>Quran</keyword>
+    <keyword>Hadith</keyword>
+    <keyword>Koran</keyword>
+    <keyword>Muslim</keyword>
+    <keyword>Education</keyword>
+    <keyword>Religion</keyword>
+  </keywords>
+</component>

@@ -1,0 +1,42 @@
+# Multi-arch Flutter build base
+# This serves as the foundation for all architecture-specific builders
+ARG ARCH=amd64
+FROM --platform=linux/${ARCH} ubuntu:22.04 AS flutter-base
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive \
+    FLUTTER_VERSION=stable \
+    FLUTTER_HOME=/opt/flutter \
+    PATH="${PATH}:/opt/flutter/bin" \
+    PUB_CACHE=/opt/flutter/.pub-cache
+
+# Install base system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    libglu1-mesa \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Flutter SDK
+RUN git clone --depth 1 --branch ${FLUTTER_VERSION} \
+    https://github.com/flutter/flutter.git ${FLUTTER_HOME} && \
+    flutter precache --linux && \
+    flutter doctor -v && \
+    flutter config --no-analytics && \
+    rm -rf ${FLUTTER_HOME}/.pub-cache/hosted/pub.dartlang.org/.cache
+
+# Set up non-root user for builds
+RUN useradd -m -u 1000 -s /bin/bash builder && \
+    chown -R builder:builder ${FLUTTER_HOME}
+
+USER builder
+WORKDIR /workspace
+
+# Verify Flutter installation
+RUN flutter --version
+
+CMD ["/bin/bash"]

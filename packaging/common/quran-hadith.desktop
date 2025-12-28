@@ -1,0 +1,19 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Quran & Hadith
+GenericName=Islamic Study Application
+Comment=Read and listen to the Quran and Hadith collections
+Exec=quran-hadith %U
+Icon=quran-hadith
+Terminal=false
+Categories=Education;Utility;
+Keywords=Islam;Quran;Hadith;Education;Flutter;Koran;Muslim;
+StartupNotify=true
+StartupWMClass=quran_hadith
+MimeType=application/x-quran-hadith;
+Actions=NewWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=quran-hadith --new-window

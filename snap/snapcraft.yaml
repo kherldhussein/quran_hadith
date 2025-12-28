@@ -1,5 +1,5 @@
 name: quran-hadith
-version: 2.0.6
+version: 2.0.7
 summary: Qur'ān Hadith
 description: |
   Qur'ān Hadith is an Online Quran and Hadith application with fashion interface,
@@ -37,7 +37,9 @@ apps:
       - unity7
       - opengl
     environment:
-      # PulseAudio configuration for just_audio
+      # Library paths for media_kit (libmpv)
+      LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET:$SNAP/usr/lib
+      # PulseAudio configuration for audio output
       PULSE_SERVER: unix:$XDG_RUNTIME_DIR/pulse/native
       PULSE_RUNTIME_PATH: $XDG_RUNTIME_DIR/pulse
 
@@ -56,10 +58,18 @@ parts:
       - liblzma-dev
       - pkg-config
       - libkeybinder-3.0-dev
+      - libmpv-dev
     stage-packages:
       - libgtk-3-0
       - libglu1-mesa
       - libkeybinder-3.0-0
-      # Audio libraries for just_audio (minimal dependencies)
+      # Core media library for media_kit
+      - libmpv1
+      # Audio output libraries
       - libpulse0
       - libasound2
+      # Essential codec libraries for audio playback
+      - libavcodec58
+      - libavformat58
+      - libavutil56
+      - libswresample3

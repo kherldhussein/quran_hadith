@@ -1,0 +1,131 @@
+app-id: com.kherld.quran_hadith
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: quran_hadith
+
+finish-args:
+  # Network access for downloading Quran/Hadith data
+  - --share=network
+
+  # Audio playback
+  - --socket=pulseaudio
+  - --socket=fallback-x11
+  - --socket=wayland
+
+  # GPU acceleration for smooth rendering
+  - --device=dri
+
+  # File system access
+  - --filesystem=home
+  - --filesystem=xdg-download
+  - --filesystem=xdg-music
+
+  # Desktop integration
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --own-name=com.kherld.quran_hadith
+
+  # System tray support
+  - --talk-name=org.freedesktop.portal.Background
+  - --talk-name=org.ayatana.indicator.application
+
+  # Media controls (MPRIS)
+  - --own-name=org.mpris.MediaPlayer2.quran_hadith.*
+
+modules:
+  # libmpv for media_kit audio playback
+  - name: libmpv
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share/man
+    buildsystem: simple
+    build-commands:
+      - python3 waf configure --prefix=/app --disable-cplayer --enable-libmpv-shared
+        --disable-build-date --disable-manpage-build
+      - python3 waf build
+      - python3 waf install
+    sources:
+      - type: archive
+        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.36.0.tar.gz
+        sha256: 29abc44f8ebee013bb2f9fe14d80b30db19b534c679056e4851ceadf5a5e8bf6
+      - type: file
+        url: https://waf.io/waf-2.0.25
+        sha256: 21199cd220ccf60434133e1fd2ab8c8e5217c3799199c82722543970dc8e38d5
+        dest-filename: waf
+    modules:
+      # FFmpeg for libmpv
+      - name: ffmpeg
+        cleanup:
+          - /include
+          - /lib/pkgconfig
+          - /share/ffmpeg/examples
+        config-opts:
+          - --enable-shared
+          - --disable-static
+          - --enable-gnutls
+          - --disable-doc
+          - --disable-programs
+          - --disable-encoders
+          - --disable-muxers
+          - --enable-encoder=png,libwebp
+          - --enable-libopus
+          - --enable-libvpx
+          - --enable-libvorbis
+          - --enable-libmp3lame
+        sources:
+          - type: archive
+            url: https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz
+            sha256: 57be87c22d9b49c112b6d24bc67d42508660e6b718b3db89c44e47e289137082
+
+  # Flutter SDK and application
+  - name: quran-hadith
+    buildsystem: simple
+    build-commands:
+      # Extract Flutter SDK
+      - tar xf flutter-sdk.tar.xz -C /app/flutter --strip-components=1
+      - export PATH="/app/flutter/bin:$PATH"
+
+      # Configure Flutter
+      - flutter config --enable-linux-desktop --no-analytics
+      - flutter --version
+
+      # Get dependencies
+      - flutter pub get
+
+      # Build the application
+      - flutter build linux --release
+
+      # Install to /app
+      - mkdir -p /app/bin /app/lib/quran-hadith
+      - cp -r build/linux/x64/release/bundle/* /app/lib/quran-hadith/
+
+      # Create wrapper script with proper library paths
+      - |
+        cat > /app/bin/quran_hadith << 'EOF'
+        #!/bin/sh
+        export LD_LIBRARY_PATH="/app/lib:$LD_LIBRARY_PATH"
+        exec /app/lib/quran-hadith/quran_hadith "$@"
+        EOF
+      - chmod +x /app/bin/quran_hadith
+
+      # Install desktop file
+      - install -Dm644 packaging/common/quran-hadith.desktop /app/share/applications/${FLATPAK_ID}.desktop
+
+      # Install icon
+      - install -Dm644 packaging/common/icons/quran-hadith-512.png /app/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
+
+      # Install appdata
+      - install -Dm644 packaging/flatpak/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
+
+    sources:
+      # Flutter SDK
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.6-stable.tar.xz
+        sha256: 58b2bf19d0d7e73c57862eabc1ad5ca6d0c7d7fd9b3ab4f32e97a47e5e6e0c46
+        dest: flutter-sdk
+
+      # Application source
+      - type: dir
+        path: ../..

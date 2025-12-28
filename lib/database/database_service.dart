@@ -106,17 +106,36 @@ class DatabaseService {
   Future<double> getCacheSize() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final hiveDir = Directory('${dir.path}/hive');
-      if (await hiveDir.exists()) {
-        int totalSize = 0;
-        await for (final file in hiveDir.list(recursive: true)) {
-          if (file is File) {
-            totalSize += await file.length();
-          }
+      int totalSize = 0;
+
+      // Calculate size of all Hive boxes
+      final boxes = [
+        _cachedSurahsBox,
+        _bookmarksBox,
+        _readingProgressBox,
+        _listeningProgressBox,
+        _studyNotesBox,
+        _translationsBox,
+        _preferencesBox,
+        _readingGoalsBox,
+        _metaBox,
+        _sessionHistoryBox,
+        _monthlyStatisticsBox,
+      ];
+
+      for (final boxName in boxes) {
+        final hiveFile = File('${dir.path}/$boxName.hive');
+        final lockFile = File('${dir.path}/$boxName.lock');
+
+        if (await hiveFile.exists()) {
+          totalSize += await hiveFile.length();
         }
-        return totalSize / (1024 * 1024);
+        if (await lockFile.exists()) {
+          totalSize += await lockFile.length();
+        }
       }
-      return 0;
+
+      return totalSize / (1024 * 1024); // Convert to MB
     } catch (e) {
       debugPrint('Error calculating cache size: $e');
       return 0;
@@ -266,6 +285,31 @@ class DatabaseService {
   Future<void> clearListeningProgress() async {
     final box = Hive.box(_listeningProgressBox);
     await box.clear();
+  }
+
+  /// Get most listened reciters (returns reciter IDs sorted by listening time)
+  List<String> getMostListenedReciters({int limit = 5}) {
+    try {
+      final progresses = getListeningHistory(limit: 1000);
+      final reciterTimeMap = <String, int>{};
+
+      for (final progress in progresses) {
+        final reciterId = progress.reciter;
+        if (reciterId.isNotEmpty) {
+          reciterTimeMap[reciterId] =
+              (reciterTimeMap[reciterId] ?? 0) + progress.totalListenTimeSeconds;
+        }
+      }
+
+      // Sort by listening time descending
+      final sortedReciters = reciterTimeMap.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      return sortedReciters.take(limit).map((e) => e.key).toList();
+    } catch (e) {
+      debugPrint('Error getting most listened reciters: $e');
+      return [];
+    }
   }
 
   /// Add study note

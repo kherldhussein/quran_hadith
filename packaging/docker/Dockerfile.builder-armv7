@@ -1,0 +1,73 @@
+# ARMv7 Builder (Raspberry Pi 3/4 compatible)
+# Builds: DEB, RPM (limited support)
+# Note: Flutter ARM support is experimental for ARMv7
+ARG BASE_IMAGE=ubuntu:22.04
+FROM --platform=linux/arm/v7 ${BASE_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH="${PATH}:/opt/flutter/bin" \
+    FLUTTER_HOME=/opt/flutter
+
+USER root
+
+# Install base dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    ca-certificates \
+    # Build tools
+    clang \
+    cmake \
+    ninja-build \
+    pkg-config \
+    gcc \
+    g++ \
+    make \
+    # GTK3 and UI dependencies
+    libgtk-3-dev \
+    libgtk-3-0 \
+    # Compression
+    liblzma-dev \
+    liblzma5 \
+    # Desktop integration
+    libkeybinder-3.0-dev \
+    libkeybinder-3.0-0 \
+    # Audio
+    libmpv-dev \
+    libmpv1 \
+    libavcodec58 \
+    libavformat58 \
+    libavutil56 \
+    libswresample3 \
+    libpulse0 \
+    libasound2 \
+    # SSL
+    libssl-dev \
+    libssl3 \
+    # Packaging tools
+    dpkg-dev \
+    debhelper \
+    lintian \
+    fakeroot \
+    rpm \
+    wget \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Note: Flutter SDK for ARMv7 needs to be manually provided or built
+# For now, we'll use a pre-built Flutter SDK downloaded from Flutter's releases
+RUN mkdir -p ${FLUTTER_HOME} && \
+    echo "ARMv7 Flutter support requires manual SDK setup" > ${FLUTTER_HOME}/README.txt
+
+# Set up non-root user
+RUN useradd -m -u 1000 -s /bin/bash builder && \
+    mkdir -p /workspace && \
+    chown -R builder:builder /workspace ${FLUTTER_HOME}
+
+USER builder
+WORKDIR /workspace
+
+ENTRYPOINT ["/bin/bash"]

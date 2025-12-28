@@ -1024,7 +1024,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               final duration = _formatDuration(entry.value);
               final totalTime = _stats['totalListeningTime'] as int? ?? 1;
               final percentage =
-                  ((entry.value / totalTime) * 100).toStringAsFixed(1);
+                  totalTime > 0 ? ((entry.value / totalTime) * 100).toStringAsFixed(1) : '0.0';
+              final progressValue = totalTime > 0 ? (entry.value / totalTime).clamp(0.0, 1.0) : 0.0;
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -1055,7 +1056,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: entry.value / totalTime,
+                        value: progressValue,
                         minHeight: 8,
                         backgroundColor: theme
                             .colorScheme.surfaceContainerHighest

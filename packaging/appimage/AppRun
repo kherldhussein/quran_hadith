@@ -1,0 +1,20 @@
+#!/bin/bash
+# AppImage launcher script for Quran & Hadith
+
+APPDIR="$(dirname "$(readlink -f "${0}")")"
+
+# Set library path to include bundled libraries
+export LD_LIBRARY_PATH="${APPDIR}/usr/lib/x86_64-linux-gnu:${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
+
+# Set PulseAudio socket for audio playback
+export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"
+export PULSE_RUNTIME_PATH="${XDG_RUNTIME_DIR}/pulse"
+
+# Set up data directories for proper desktop integration
+export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# Set GTK theme path
+export GTK_PATH="${APPDIR}/usr/lib/x86_64-linux-gnu/gtk-3.0"
+
+# Execute the application
+exec "${APPDIR}/usr/bin/quran_hadith" "$@"

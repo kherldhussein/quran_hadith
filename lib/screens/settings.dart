@@ -25,6 +25,7 @@ class _SettingsState extends State<Settings> {
   late TextEditingController _userNameController;
   bool _isLoading = true;
   Map<String, dynamic>? _storageStats;
+  List<String> _quickReciters = [];
 
   @override
   void initState() {
@@ -40,10 +41,24 @@ class _SettingsState extends State<Settings> {
       _userNameController = TextEditingController(text: _preferences.userName);
 
       _storageStats = await database.getStorageStats();
+
+      // Load most listened reciters or use defaults
+      _quickReciters = database.getMostListenedReciters(limit: 5);
+      if (_quickReciters.isEmpty) {
+        // Default popular reciters if no listening history
+        _quickReciters = [
+          'ar.alafasy',
+          'ar.abdulbasit',
+          'ar.husary',
+          'ar.minshawi',
+          'ar.muhammadayyoub',
+        ];
+      }
     } catch (e) {
       debugPrint('Error loading preferences: $e');
       _preferences = UserPreferences();
       _userNameController = TextEditingController(text: 'Guest');
+      _quickReciters = ['ar.alafasy', 'ar.abdulbasit', 'ar.husary'];
     }
 
     setState(() => _isLoading = false);
@@ -217,11 +232,11 @@ class _SettingsState extends State<Settings> {
               title: 'Dark Mode',
               subtitle: 'Switch to dark theme',
               value: _preferences.isDarkMode,
-              onChanged: (value) async {
+              onChanged: (value) {
                 setState(() => _preferences.isDarkMode = value);
-                await SpUtil.setThemed(value);
                 themeState.setTheme(value);
-                await _savePreferences();
+                // Save asynchronously without blocking UI
+                SpUtil.setThemed(value).then((_) => _savePreferences());
               },
               theme: theme,
             ),
@@ -328,33 +343,36 @@ class _SettingsState extends State<Settings> {
             ),
             const SizedBox(height: 16),
             _buildDropdown<String>(
-              label: 'Quick Reciter Select',
+              label: 'Quick Reciter Select (Based on Your Listening)',
               value: _preferences.reciter,
-              items: [
-                const DropdownMenuItem(
-                    value: 'ar.alafasy', child: Text('Mishary Alafasy')),
-                const DropdownMenuItem(
-                    value: 'ar.abdulbasit', child: Text('Abdul Basit')),
-                const DropdownMenuItem(
-                    value: 'ar.husary',
-                    child: Text('Mahmoud Khalil Al-Hussary')),
-                const DropdownMenuItem(
-                    value: 'ar.minshawi',
-                    child: Text('Mohamed Siddiq El-Minshawi')),
-                const DropdownMenuItem(
-                    value: 'ar.muhammadayyoub', child: Text('Muhammad Ayyoub')),
-              ],
-              onChanged: (value) async {
+              items: _quickReciters.map((reciterId) {
+                return DropdownMenuItem(
+                  value: reciterId,
+                  child: Text(_getReciterName(reciterId)),
+                );
+              }).toList(),
+              onChanged: (value) {
                 if (value == null || value.isEmpty) return;
+
+                // Update UI immediately
                 setState(() => _preferences.reciter = value);
-                await SpUtil.setReciter(value);
-                await appSP.setString('selectedReciter', value);
+
+                // Update ReciterService immediately (notifies all listeners)
                 ReciterService.instance.setCurrentReciterId(value);
-                await _savePreferences();
+
+                // Save to storage asynchronously without blocking UI
+                SpUtil.setReciter(value).then((_) {
+                  appSP.setString('selectedReciter', value).then((_) {
+                    _savePreferences();
+                  });
+                });
+
+                // Show feedback
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Reciter set to $value'),
+                    content: Text('Reciter changed to ${_getReciterName(value)}'),
                     behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -403,10 +421,10 @@ class _SettingsState extends State<Settings> {
               title: 'Auto Scroll',
               subtitle: 'Automatically scroll during audio playback',
               value: _preferences.autoScroll,
-              onChanged: (value) async {
+              onChanged: (value) {
                 setState(() => _preferences.autoScroll = value);
-                await SpUtil.setAutoScroll(value);
-                await _savePreferences();
+                // Save asynchronously without blocking UI
+                SpUtil.setAutoScroll(value).then((_) => _savePreferences());
               },
               theme: theme,
             ),
@@ -486,9 +504,10 @@ class _SettingsState extends State<Settings> {
               title: 'Enable Global Shortcuts',
               subtitle: 'Control app with keyboard shortcuts',
               value: _preferences.enableGlobalShortcuts,
-              onChanged: (value) async {
+              onChanged: (value) {
                 setState(() => _preferences.enableGlobalShortcuts = value);
-                await _savePreferences();
+                // Save asynchronously without blocking UI
+                _savePreferences();
               },
               theme: theme,
             ),
@@ -856,6 +875,27 @@ class _SettingsState extends State<Settings> {
         SnackBar(content: Text('Import failed: $e')),
       );
     }
+  }
+
+  /// Get the display name for a reciter ID
+  String _getReciterName(String reciterId) {
+    const reciterNames = {
+      'ar.alafasy': 'Mishary Alafasy',
+      'ar.abdulbasit': 'Abdul Basit',
+      'ar.abdurrahmaansudais': 'Abdur-Rahman As-Sudais',
+      'ar.shaatree': 'Abu Bakr Ash-Shaatree',
+      'ar.husary': 'Mahmoud Khalil Al-Hussary',
+      'ar.minshawi': 'Mohamed Siddiq El-Minshawi',
+      'ar.muhammadayyoub': 'Muhammad Ayyub',
+      'ar.hanirifai': 'Hani Ar-Rifai',
+      'ar.hudhaify': 'Ali Al-Hudhaify',
+      'ar.mahermuaiqly': 'Maher Al-Muaiqly',
+      'ar.saudalshuraim': 'Saud Ash-Shuraim',
+      'ar.abdullahbasfar': 'Abdullah Basfar',
+      'ar.yasser': 'Yasser Ad-Dussary',
+      'ar.khalifah': 'Khalifah Al Tunaiji',
+    };
+    return reciterNames[reciterId] ?? reciterId.replaceAll('ar.', '').replaceAll('-', ' ').split(' ').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
   }
 
   @override
