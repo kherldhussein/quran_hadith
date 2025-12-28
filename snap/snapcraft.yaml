@@ -58,10 +58,12 @@ parts:
       - pkg-config
       - libkeybinder-3.0-dev
       - libmpv-dev
+      - libayatana-appindicator3-dev
     stage-packages:
       - libgtk-3-0
       - libglu1-mesa
       - libkeybinder-3.0-0
+      - libayatana-appindicator3-1
       # Core media library for media_kit
       - libmpv1
       # Audio output libraries

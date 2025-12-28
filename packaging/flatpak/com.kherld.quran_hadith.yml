@@ -79,6 +79,39 @@ modules:
             url: https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz
             sha256: 57be87c22d9b49c112b6d24bc67d42508660e6b718b3db89c44e47e289137082
 
+  # libayatana-appindicator for system tray support
+  - name: libayatana-appindicator
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DENABLE_BINDINGS_MONO=NO
+      - -DENABLE_BINDINGS_VALA=NO
+    sources:
+      - type: archive
+        url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.92.tar.gz
+        sha256: 871e47627bdaa51b96bdabca23b5d4e6f8b6b8a7f70559d28a87fdb25e1f7913
+    modules:
+      - name: libayatana-indicator
+        buildsystem: cmake-ninja
+        sources:
+          - type: archive
+            url: https://github.com/AyatanaIndicators/libayatana-indicator/archive/refs/tags/0.9.3.tar.gz
+            sha256: d658bb537cf3e63c4aa869aa5e8bf5fbaabf09c127061b4813096dc47b08b90c
+      - name: libdbusmenu-gtk3
+        buildsystem: autotools
+        build-options:
+          cflags: -Wno-error
+        config-opts:
+          - --with-gtk=3
+          - --disable-dumper
+          - --disable-static
+          - --disable-tests
+          - --enable-introspection=no
+          - --disable-vala
+        sources:
+          - type: archive
+            url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
+            sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
+
   # Flutter SDK and application
   - name: quran-hadith
     buildsystem: simple
