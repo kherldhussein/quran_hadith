@@ -13,7 +13,7 @@ RUN flutter pub get
 # Copy the remainder of the source and build the Flutter web bundle
 COPY . .
 RUN flutter config --enable-web && \
-    flutter build web --${FLUTTER_BUILD_MODE} --web-renderer canvaskit
+    flutter build web --${FLUTTER_BUILD_MODE}
 
 # Runtime stage - Nginx serving with multi-arch support
 FROM cgr.dev/chainguard/nginx:latest AS runtime

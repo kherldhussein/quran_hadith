@@ -123,7 +123,7 @@ modules:
       # Flutter SDK
       - type: archive
         url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.19.6-stable.tar.xz
-        sha256: 58b2bf19d0d7e73c57862eabc1ad5ca6d0c7d7fd9b3ab4f32e97a47e5e6e0c46
+        sha256: db6742a20626d0d2a089eb41ad61b9b2138b996679911e9c8268c1f896191f97
         dest: flutter-sdk
 
       # Application source
