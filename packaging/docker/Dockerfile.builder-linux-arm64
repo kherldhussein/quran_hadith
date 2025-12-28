@@ -74,10 +74,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     debhelper \
     lintian \
     fakeroot \
-    # RPM packaging
+    # RPM packaging (rpm package includes rpmbuild)
     rpm \
-    rpmbuild \
-    createrepo-c \
     # Flatpak
     flatpak \
     flatpak-builder \
