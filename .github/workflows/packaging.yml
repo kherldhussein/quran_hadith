@@ -134,9 +134,7 @@ jobs:
             -e VERSION="${{ needs.prepare.outputs.version }}" \
             -e ARCH="${{ matrix.arch }}" \
             ghcr.io/${{ github.repository_owner }}/quran-hadith-builder:${PLATFORM_TAG} \
-            bash packaging/${{ matrix.format }}/build-${{ matrix.format }}.sh \
-              "${{ needs.prepare.outputs.version }}" \
-              "${{ matrix.arch }}"
+            bash -c "sudo chown -R builder:builder /workspace && bash packaging/${{ matrix.format }}/build-${{ matrix.format }}.sh '${{ needs.prepare.outputs.version }}' '${{ matrix.arch }}'"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

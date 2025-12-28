@@ -90,6 +90,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Utilities
     wget \
     jq \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Install appimage-builder via pip
@@ -104,8 +105,9 @@ RUN wget -O /usr/local/bin/appimagetool \
     mv squashfs-root appimagetool.AppDir && \
     ln -sf /usr/local/bin/appimagetool.AppDir/AppRun /usr/local/bin/appimagetool-real || true
 
-# Set up non-root user
+# Set up non-root user with sudo access
 RUN useradd -m -u 1000 -s /bin/bash builder && \
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     chown -R builder:builder ${FLUTTER_HOME} && \
     mkdir -p /workspace && \
     chown -R builder:builder /workspace

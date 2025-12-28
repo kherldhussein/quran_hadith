@@ -32,10 +32,29 @@ echo ""
 echo "Setting up RPM build tree..."
 mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
-# Build Flutter application
-echo ""
-echo "Building Flutter Linux application..."
-flutter build linux --release
+# Build Flutter application if bundle doesn't exist
+BUILD_DIR="build/linux/x64/release/bundle"
+if [[ ! -d "$BUILD_DIR" ]]; then
+    echo ""
+    echo "Building Flutter Linux application..."
+
+    # Install dependencies
+    flutter pub get
+
+    # Build for Linux
+    flutter build linux --release
+
+    if [[ ! -d "$BUILD_DIR" ]]; then
+        echo "ERROR: Flutter build failed - bundle not found at $BUILD_DIR" >&2
+        exit 1
+    fi
+
+    echo ""
+    echo "Flutter build completed successfully!"
+else
+    echo ""
+    echo "Using existing Flutter bundle at $BUILD_DIR"
+fi
 
 # Create source tarball
 echo ""

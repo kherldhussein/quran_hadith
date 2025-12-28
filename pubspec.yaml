@@ -102,3 +102,4 @@ flutter:
 
 dependency_overrides:
   win32: ^5.14.0
+  meta: ^1.16.0

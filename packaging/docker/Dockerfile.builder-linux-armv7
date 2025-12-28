@@ -55,6 +55,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rpm \
     wget \
     jq \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Note: Flutter SDK for ARMv7 needs to be manually provided or built
@@ -62,8 +63,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p ${FLUTTER_HOME} && \
     echo "ARMv7 Flutter support requires manual SDK setup" > ${FLUTTER_HOME}/README.txt
 
-# Set up non-root user
+# Set up non-root user with sudo access
 RUN useradd -m -u 1000 -s /bin/bash builder && \
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
     mkdir -p /workspace && \
     chown -R builder:builder /workspace ${FLUTTER_HOME}
 

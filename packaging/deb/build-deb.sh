@@ -17,11 +17,26 @@ echo "Version: ${VERSION}"
 echo "Architecture: ${ARCH}"
 echo "=========================================="
 
-# Validate build directory
+# Build Flutter application if bundle doesn't exist
 if [[ ! -d "$BUILD_DIR" ]]; then
-    echo "ERROR: Bundle directory not found at $BUILD_DIR" >&2
-    echo "Please run 'flutter build linux --release' first" >&2
-    exit 1
+    echo ""
+    echo "Bundle directory not found. Building Flutter application..."
+    echo ""
+
+    # Install dependencies
+    flutter pub get
+
+    # Build for Linux
+    flutter build linux --release
+
+    if [[ ! -d "$BUILD_DIR" ]]; then
+        echo "ERROR: Flutter build failed - bundle still not found at $BUILD_DIR" >&2
+        exit 1
+    fi
+
+    echo ""
+    echo "Flutter build completed successfully!"
+    echo ""
 fi
 
 # Create staging directory
